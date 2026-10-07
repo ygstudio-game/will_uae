@@ -36,7 +36,7 @@ export async function POST(
       );
     }
 
-    const name = senderName || session?.account?.fullName || (senderRole === "ADMIN" ? "Legal Admin" : "Client");
+    const name = senderName || session?.name || (senderRole === "ADMIN" ? "Legal Admin" : "Client");
 
     // Create reply
     const reply = await prisma.ticketReply.create({

@@ -176,6 +176,7 @@ export default function WillPrintPage() {
               personId: c.id,
               role: "CHILD" as any,
               appointmentOrder: idx + 1,
+              sharePercentage: undefined,
               person: {
                 id: c.id,
                 applicationId: "app-default",
@@ -185,6 +186,8 @@ export default function WillPrintPage() {
                 dob: c.dob,
                 nationality: c.nationality,
                 passportNumber: c.passportNumber,
+                emiratesId: undefined,
+                address: undefined,
                 isUaeResident: true,
               },
             }))

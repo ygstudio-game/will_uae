@@ -34,7 +34,7 @@ const TOPIC_PRESETS: Record<string, { subject: string; message: string }> = {
   },
 };
 
-export default function CustomerSupportPage() {
+function CustomerSupportContent() {
   const searchParams = useSearchParams();
   const topicParam = searchParams.get("topic");
 
@@ -282,5 +282,13 @@ export default function CustomerSupportPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CustomerSupportPage() {
+  return (
+    <React.Suspense fallback={<div className="min-h-screen bg-[#FBF9F5] flex items-center justify-center p-8 text-gray-400">Loading Support...</div>}>
+      <CustomerSupportContent />
+    </React.Suspense>
   );
 }

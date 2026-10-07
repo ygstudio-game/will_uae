@@ -50,6 +50,7 @@ export interface PersonData {
   isArabicApproved: boolean;
   dob?: string | null;
   nationality?: string | null;
+  relationship?: string | null;
   passportNumber?: string | null;
   emiratesId?: string | null;
   isUaeResident: boolean;

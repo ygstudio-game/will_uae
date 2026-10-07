@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/auth-otp";
 
+export const dynamic = "force-dynamic";
+
 // GET /api/persons?applicationId=xyz
 export async function GET(req: NextRequest) {
   try {

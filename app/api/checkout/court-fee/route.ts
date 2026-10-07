@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
     await prisma.auditEvent.create({
       data: {
         applicationId: application.id,
-        actor: session.account.email,
+        actor: session.email,
         action: "COURT_FEE_PAID",
         details: {
           amountAed,

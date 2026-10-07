@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { prisma } from "./prisma";
 
-const SESSION_COOKIE_NAME = "will_session";
+export const SESSION_COOKIE_NAME = "will_session";
 const SESSION_SECRET = process.env.SESSION_SECRET || "owa-uae-will-dev-secret-key-32bytes-secure!";
 
 export interface SessionPayload {

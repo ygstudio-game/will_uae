@@ -64,7 +64,7 @@ export function ADJDBilingualWillDocument({
 
             <div className="grid grid-cols-2 divide-x divide-[#E5E0D8]">
               {/* English Left */}
-              <div className="p-4 sm:p-5 font-serif text-xs sm:text-sm leading-relaxed space-y-3">
+              <div className="p-4 sm:p-5 font-serif text-xs sm:text-sm leading-relaxed space-y-3" dir="ltr">
                 <p>
                   I, <strong>{testator.fullName}</strong>
                 </p>

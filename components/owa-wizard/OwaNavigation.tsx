@@ -1,13 +1,15 @@
 "use client";
 
 import React from "react";
-import { ArrowLeft, ArrowRight, Save, CheckCircle2, Loader2, HelpCircle } from "lucide-react";
+import Link from "next/link";
+import { CheckCircle2, Shield, User, Users, FileText, HeartHandshake, Eye, AlertCircle } from "lucide-react";
 import { OwaSectionId, OWA_SECTIONS } from "@/types/owa";
+import { useOwaStore } from "@/store/useOwaStore";
 
 interface OwaNavigationProps {
-  currentSection: OwaSectionId;
-  onNext: () => void;
-  onPrev: () => void;
+  currentSection?: OwaSectionId;
+  onNext?: () => void;
+  onPrev?: () => void;
   onOpenSupport?: () => void;
   isSaving?: boolean;
   canContinue?: boolean;
@@ -15,73 +17,100 @@ interface OwaNavigationProps {
 }
 
 export function OwaNavigation({
-  currentSection,
+  currentSection: propSection,
   onNext,
   onPrev,
   onOpenSupport,
-  isSaving,
+  isSaving: propSaving,
   canContinue = true,
   saveError,
-}: OwaNavigationProps) {
-  const currentIndex = OWA_SECTIONS.findIndex((s) => s.id === currentSection);
-  const isFirst = currentIndex === 0;
-  const isLast = currentIndex === OWA_SECTIONS.length - 1;
+}: OwaNavigationProps = {}) {
+  const {
+    currentSection: storeSection,
+    application,
+    activeWillIndex,
+    isSaving: storeSaving,
+    isSectionComplete,
+  } = useOwaStore();
+
+  const currentSection = propSection || storeSection;
+  const isSaving = propSaving ?? storeSaving;
+  const isCouples = application?.packageType === "COUPLES";
+  const activeWill = application?.wills?.find((w) => w.willIndex === activeWillIndex);
+
+  const getSectionIcon = (id: OwaSectionId) => {
+    switch (id) {
+      case "details":
+        return <User className="w-3.5 h-3.5" />;
+      case "children":
+        return <Users className="w-3.5 h-3.5" />;
+      case "executors":
+        return <Shield className="w-3.5 h-3.5" />;
+      case "guardians":
+        return <HeartHandshake className="w-3.5 h-3.5" />;
+      case "beneficiaries":
+        return <FileText className="w-3.5 h-3.5" />;
+      case "review":
+        return <Eye className="w-3.5 h-3.5" />;
+      default:
+        return <CheckCircle2 className="w-3.5 h-3.5" />;
+    }
+  };
 
   return (
-    <div className="sticky bottom-0 bg-white/95 backdrop-blur border-t border-[#E5E0D8] py-4 px-4 sm:px-8 mt-8 shadow-md">
-      <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
-        {/* Left: Back button & Support */}
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onPrev}
-            disabled={isFirst}
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg border border-[#E5E0D8] text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">Back</span>
-          </button>
+    <div className="bg-white border-b border-[#E5E0D8] sticky top-0 z-30 shadow-2xs">
+      <div className="max-w-6xl mx-auto px-4 sm:px-8 py-3">
+        {/* Top Header: Will index & Package badge */}
+        <div className="flex items-center justify-between text-xs pb-3 border-b border-[#E5E0D8]/60">
+          <div className="flex items-center gap-2">
+            <span className="font-serif font-bold text-sm text-[#0B1528]">
+              Abu Dhabi Civil Court Non-Muslim Will
+            </span>
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[#A37E44]/10 text-[#A37E44]">
+              {application?.packageType || "INDIVIDUAL"}
+            </span>
+          </div>
 
-          {onOpenSupport && (
-            <button
-              type="button"
-              onClick={onOpenSupport}
-              className="inline-flex items-center gap-1.5 text-xs text-[#A37E44] hover:text-[#8C6B37] font-semibold transition-all px-2 py-1"
-            >
-              <HelpCircle className="w-4 h-4" />
-              <span className="hidden sm:inline">Submit Support Request</span>
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            {isCouples && (
+              <span className="text-[11px] font-semibold text-gray-600 bg-gray-100 px-2.5 py-0.5 rounded-full">
+                Active: Will #{activeWillIndex} ({activeWill?.testatorPerson?.fullName || "Partner"})
+              </span>
+            )}
+            <span className="text-[11px] text-gray-400 font-mono hidden sm:inline-block">
+              {isSaving ? "Saving changes..." : "Auto-saved"}
+            </span>
+          </div>
         </div>
 
-        {/* Center: Save state indicator */}
-        <div className="text-center">
-          {isSaving ? (
-            <span className="inline-flex items-center gap-1.5 text-xs text-gray-500">
-              <Loader2 className="w-3.5 h-3.5 animate-spin text-[#A37E44]" />
-              <span>Saving to Neon DB...</span>
-            </span>
-          ) : saveError ? (
-            <span className="text-xs text-red-600">{saveError}</span>
-          ) : (
-            <span className="inline-flex items-center gap-1 text-[11px] text-[#047857] font-medium">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Saved to database</span>
-            </span>
-          )}
-        </div>
+        {/* 6-Section Stepper Pills */}
+        <div className="pt-3 overflow-x-auto scrollbar-none flex items-center gap-2 sm:gap-3">
+          {OWA_SECTIONS.map((sec, idx) => {
+            const isCurrent = sec.id === currentSection;
+            const isCompleted = isSectionComplete(sec.id);
+            const queryStr = application?.id ? `?applicationId=${application.id}` : "";
 
-        {/* Right: Continue button */}
-        <div>
-          <button
-            type="button"
-            onClick={onNext}
-            disabled={!canContinue}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-[#A37E44] hover:bg-[#8C6B37] text-white text-xs font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
-          >
-            <span>{isLast ? "Review Draft" : "Save & Continue"}</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
+            return (
+              <Link
+                key={sec.id}
+                href={`/wizard/${sec.id}${queryStr}`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border ${
+                  isCurrent
+                    ? "bg-[#0B1528] text-white border-[#0B1528] shadow-sm"
+                    : isCompleted
+                    ? "bg-[#FAF7F2] text-gray-800 border-[#E5E0D8] hover:border-gray-400"
+                    : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <span className="opacity-70 font-mono text-[10px]">0{idx + 1}.</span>
+                {getSectionIcon(sec.id)}
+                <span>{sec.label}</span>
+                {isCompleted && !isCurrent && (
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600 ml-0.5" />
+                )}
+              </Link>
+            );
+          })}
         </div>
       </div>
     </div>

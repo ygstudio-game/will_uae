@@ -1,42 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSessionUser } from "@/lib/auth";
-import { WillStatus, WillType } from "@prisma/client";
+import { getCurrentSession } from "@/lib/auth-otp";
 
-// GET /api/wills - List user's wills
+// GET /api/wills - List wills for active session
 export async function GET(req: NextRequest) {
   try {
-    const user = await getSessionUser(req);
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const session = await getCurrentSession();
+
+    const whereClause: any = {};
+    if (session) {
+      whereClause.application = { accountId: session.accountId };
     }
 
     const wills = await prisma.will.findMany({
-      where: { userId: user.id },
+      where: whereClause,
       include: {
-        _count: {
-          select: {
-            parties: true,
-            children: true,
-            assets: true,
-            documents: true,
-          },
-        },
+        application: true,
+        testatorPerson: true,
+        roleAssignments: { include: { person: true } },
       },
       orderBy: { updatedAt: "desc" },
     });
 
     const formattedWills = wills.map((w) => ({
       id: w.id,
-      willNumber: w.willNumber,
-      status: w.status,
-      currentStep: w.currentStep,
-      willType: w.willType,
-      fullName: w.fullName || "Untitled Will Draft",
-      arabicName: w.arabicName,
+      willNumber: w.willIndex,
+      versionTag: w.versionTag,
+      fullName: w.testatorPerson?.fullName || "Untitled Will Draft",
+      arabicName: w.testatorPerson?.arabicName,
       createdAt: w.createdAt,
       updatedAt: w.updatedAt,
-      counts: w._count,
+      packageType: w.application.packageType,
+      status: w.application.status,
     }));
 
     return NextResponse.json({
@@ -49,34 +44,46 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST /api/wills - Create a new will draft
+// POST /api/wills - Create a new will
 export async function POST(req: NextRequest) {
   try {
-    const user = await getSessionUser(req);
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+    const session = await getCurrentSession();
     const body = await req.json().catch(() => ({}));
-    const requestedType = body.willType === "MIRROR" ? WillType.MIRROR : WillType.INDIVIDUAL;
+
+    // Find or create application
+    let app = session
+      ? await prisma.application.findFirst({
+          where: { accountId: session.accountId },
+        })
+      : null;
+
+    if (!app) {
+      let targetAccountId = session?.accountId;
+      if (!targetAccountId) {
+        const createdAccount = await prisma.account.create({
+          data: {
+            email: `client-${Date.now()}@uae-court.ae`,
+            fullName: "Prospective Testator",
+          },
+        });
+        targetAccountId = createdAccount.id;
+      }
+
+      app = await prisma.application.create({
+        data: {
+          accountId: targetAccountId,
+          packageType: body.packageType || "INDIVIDUAL",
+          status: "IN_PROGRESS",
+        },
+      });
+    }
 
     const will = await prisma.will.create({
       data: {
-        userId: user.id,
-        willType: requestedType,
-        status: WillStatus.DRAFT,
-        currentStep: 1,
-        fullName: user.name || "",
-        emailAddress: user.email,
-        isUaeResident: true,
-      },
-      select: {
-        id: true,
-        willNumber: true,
-        willType: true,
-        currentStep: true,
-        status: true,
-        createdAt: true,
+        applicationId: app.id,
+        willIndex: 1,
+        versionTag: "ADJD-NM0723-07-03",
+        domicileCountry: "United Kingdom",
       },
     });
 
@@ -86,6 +93,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error("Create will error:", error);
-    return NextResponse.json({ error: "Failed to create will draft" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to create will" }, { status: 500 });
   }
 }

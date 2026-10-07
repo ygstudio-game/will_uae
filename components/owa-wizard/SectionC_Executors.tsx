@@ -29,7 +29,7 @@ const EXECUTOR_SLOTS: ExecutorSlot[] = [
     isRequired: false,
   },
   {
-    role: "EXECUTOR_FURTHER_SUB",
+    role: "EXECUTOR_FURTHER",
     title: "Further Substitute Executor",
     order: 3,
     subtitle: "Optional · Secondary backup in case both previous executors cannot act",

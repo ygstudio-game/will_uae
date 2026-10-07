@@ -14,7 +14,7 @@ import {
   Sparkles,
 } from "lucide-react";
 
-export default function CourtFeeCheckoutPage() {
+function CourtFeeCheckoutContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const applicationId = searchParams.get("applicationId");
@@ -280,5 +280,13 @@ export default function CourtFeeCheckoutPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function CourtFeeCheckoutPage() {
+  return (
+    <React.Suspense fallback={<div className="min-h-screen bg-[#FBF9F5] flex items-center justify-center p-8 text-gray-400">Loading Checkout...</div>}>
+      <CourtFeeCheckoutContent />
+    </React.Suspense>
   );
 }

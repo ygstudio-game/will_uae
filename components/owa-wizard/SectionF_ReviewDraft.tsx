@@ -46,49 +46,6 @@ export function SectionF_ReviewDraft() {
     setIsCopying(false);
   };
 
-  // Construct payload for ADJDBilingualWillDocument
-  const willDocData = {
-    courtCode: "ADJD-NM0723-07-03",
-    testator: {
-      fullName: activeWill?.testatorPerson?.fullName || "Not Specified",
-      arabicName: activeWill?.testatorPerson?.arabicName || "غير محدد",
-      nationality: activeWill?.testatorPerson?.nationality || "British",
-      passportNumber: activeWill?.testatorPerson?.passportNumber || "P12345678",
-      emiratesId: activeWill?.testatorPerson?.emiratesId,
-      address: activeWill?.testatorPerson?.address || "Abu Dhabi, United Arab Emirates",
-      domicileCountry: activeWill?.domicileCountry || "United Kingdom",
-    },
-    executors: executors.map((e) => ({
-      role: e.role,
-      name: e.person?.fullName || "Executor",
-      arabicName: e.person?.arabicName,
-      relationship: e.person?.relationship || "Trusted Representative",
-      nationality: e.person?.nationality || "British",
-      passportNumber: e.person?.passportNumber || "",
-      address: e.person?.address || "Abu Dhabi, UAE",
-    })),
-    guardians: (activeWill?.roleAssignments.filter((ra) => ra.role.startsWith("GUARDIAN_")) || []).map(
-      (g) => ({
-        role: g.role,
-        name: g.person?.fullName || "Guardian",
-        arabicName: g.person?.arabicName,
-        relationship: g.person?.relationship || "Guardian",
-        nationality: g.person?.nationality || "British",
-        passportNumber: g.person?.passportNumber || "",
-        address: g.person?.address || "Abu Dhabi, UAE",
-      })
-    ),
-    beneficiaries: beneficiaries.map((b) => ({
-      name: b.person?.fullName || "Beneficiary",
-      arabicName: b.person?.arabicName,
-      relationship: b.person?.relationship || "Family Member",
-      sharePercentage: b.sharePercentage || 0,
-      nationality: b.person?.nationality || "British",
-      passportNumber: b.person?.passportNumber || "",
-      address: b.person?.address || "Abu Dhabi, UAE",
-    })),
-  };
-
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
       <div>
@@ -208,7 +165,17 @@ export function SectionF_ReviewDraft() {
         </div>
 
         <div className="p-4 sm:p-8 bg-[#FBF9F5] max-h-[700px] overflow-y-auto">
-          <ADJDBilingualWillDocument {...willDocData} />
+          {activeWill && activeWill.testatorPerson ? (
+            <ADJDBilingualWillDocument
+              will={activeWill}
+              testator={activeWill.testatorPerson}
+              assignments={activeWill.roleAssignments}
+            />
+          ) : (
+            <div className="text-center py-12 text-gray-500 text-xs">
+              Complete Section A details to preview your official ADJD bilingual will.
+            </div>
+          )}
         </div>
       </div>
 

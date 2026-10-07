@@ -46,7 +46,7 @@ export function Navbar() {
             <span>Abu Dhabi Judicial Department (ADJD) Civil Family Court Compliant</span>
           </div>
           <div className="hidden sm:flex items-center gap-4 text-white/70">
-            <span className="hover:text-court-tan cursor-pointer transition-colors">ADJD Form ADJD-NM1221-06-01</span>
+            <span className="hover:text-court-tan cursor-pointer transition-colors">ADJD Form ADJD-NM0723-07-03</span>
             <span className="text-white/20">|</span>
             <span className="font-arabic text-sm hover:text-court-tan cursor-pointer transition-colors" dir="rtl">
               العربية
@@ -73,20 +73,23 @@ export function Navbar() {
         </Link>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-white/80">
+        <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-white/80">
           <Link href="/dashboard" className="hover:text-court-tan transition-colors flex items-center gap-1.5">
             <FileText className="w-4 h-4 text-court-bronze" />
             <span>Dashboard</span>
           </Link>
-          <Link href="/wizard/1" className="hover:text-court-tan transition-colors flex items-center gap-1.5">
+          <Link href="/start" className="hover:text-court-tan transition-colors flex items-center gap-1.5">
             <Shield className="w-4 h-4 text-court-bronze" />
-            <span>Prepare Will</span>
+            <span>Start Will</span>
           </Link>
-          <Link href="/#how-it-works" className="hover:text-court-tan transition-colors">
-            How It Works
+          <Link href="/wizard/details" className="hover:text-court-tan transition-colors">
+            Questionnaire
           </Link>
-          <Link href="/#legal-framework" className="hover:text-court-tan transition-colors">
-            Court Framework
+          <Link href="/dashboard/support" className="hover:text-court-tan transition-colors">
+            Support
+          </Link>
+          <Link href="/admin" className="hover:text-court-tan transition-colors text-[#A37E44] font-semibold">
+            Admin Portal
           </Link>
         </nav>
 
@@ -121,7 +124,7 @@ export function Navbar() {
                 Sign In
               </Link>
               <Link
-                href="/wizard/1"
+                href="/start"
                 className="text-xs uppercase tracking-wider font-semibold bg-court-bronze hover:bg-court-bronze-dark text-white px-4 py-2 rounded-md shadow-sm transition-all duration-200 flex items-center gap-1.5"
               >
                 <span>Start Will</span>

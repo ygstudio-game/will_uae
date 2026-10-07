@@ -23,8 +23,8 @@ export async function POST(req: NextRequest) {
 
     const normalizedEmail = email.toLowerCase().trim();
 
-    // Check if user already exists
-    const existing = await prisma.user.findUnique({
+    // Check if account already exists
+    const existing = await prisma.account.findUnique({
       where: { email: normalizedEmail },
     });
 
@@ -35,26 +35,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Hash password and insert
-    const passwordHash = await hashPassword(password);
-    const user = await prisma.user.create({
+    const account = await prisma.account.create({
       data: {
-        name: name.trim(),
+        fullName: name.trim(),
         email: normalizedEmail,
-        passwordHash,
       },
       select: {
         id: true,
         email: true,
-        name: true,
+        fullName: true,
       },
     });
 
+    const safeUser = { id: account.id, email: account.email, name: account.fullName };
+
     // Create session token and set HTTP-only cookie
-    const token = await createSessionToken(user);
+    const token = await createSessionToken(safeUser);
     const response = NextResponse.json({
       success: true,
-      user,
+      user: safeUser,
     });
 
     response.cookies.set({

@@ -101,17 +101,22 @@ export async function getSessionUser(req?: Request): Promise<{ id: string; email
     }
   }
 
+  if (!token) {
+    return null;
+  }
+
   try {
     const payload = await verifySessionToken(token);
     if (!payload) return null;
 
-    // Verify user still exists in database
-    const user = await prisma.user.findUnique({
+    // Verify account still exists in database
+    const account = await prisma.account.findUnique({
       where: { id: payload.userId },
-      select: { id: true, email: true, name: true },
+      select: { id: true, email: true, fullName: true },
     });
 
-    return user;
+    if (!account) return null;
+    return { id: account.id, email: account.email, name: account.fullName };
   } catch (err) {
     console.error("getSessionUser error:", err);
     return null;

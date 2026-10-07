@@ -43,7 +43,7 @@ const OWA_SECTIONS: OwaSectionId[] = [
   "review",
 ];
 
-export default function WizardStepPage() {
+function WizardStepContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -238,5 +238,13 @@ export default function WizardStepPage() {
         validationMessage={!isValid ? "Please complete all required fields above" : undefined}
       />
     </div>
+  );
+}
+
+export default function WizardStepPage() {
+  return (
+    <React.Suspense fallback={<div className="min-h-screen bg-[#FBF9F5] flex items-center justify-center p-8 text-gray-400">Loading Wizard...</div>}>
+      <WizardStepContent />
+    </React.Suspense>
   );
 }

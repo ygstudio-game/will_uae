@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/auth-otp";
 import { TicketStatus } from "@prisma/client";
 
+export const dynamic = "force-dynamic";
+
 // GET /api/tickets
 export async function GET(req: NextRequest) {
   try {
@@ -26,7 +28,7 @@ export async function GET(req: NextRequest) {
       if (appId) {
         whereClause.applicationId = appId;
       } else if (session) {
-        whereClause.application = { accountId: session.account.id };
+        whereClause.application = { accountId: session.accountId };
       }
     }
 
@@ -66,7 +68,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const name = senderName || session?.account?.fullName || "Testator";
+    const name = senderName || session?.name || "Testator";
 
     const ticket = await prisma.ticket.create({
       data: {
@@ -90,7 +92,7 @@ export async function POST(req: NextRequest) {
     await prisma.auditEvent.create({
       data: {
         applicationId,
-        actor: session?.account?.email || name,
+        actor: session?.email || name,
         action: "TICKET_OPENED",
         details: {
           ticketId: ticket.id,

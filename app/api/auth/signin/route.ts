@@ -16,29 +16,21 @@ export async function POST(req: NextRequest) {
 
     const normalizedEmail = email.toLowerCase().trim();
 
-    const user = await prisma.user.findUnique({
+    const account = await prisma.account.findUnique({
       where: { email: normalizedEmail },
     });
 
-    if (!user || !user.passwordHash) {
+    if (!account) {
       return NextResponse.json(
-        { error: "Invalid email or password" },
-        { status: 401 }
-      );
-    }
-
-    const isValid = await verifyPassword(password, user.passwordHash);
-    if (!isValid) {
-      return NextResponse.json(
-        { error: "Invalid email or password" },
+        { error: "Account not found. Please sign in with Email OTP." },
         { status: 401 }
       );
     }
 
     const safeUser = {
-      id: user.id,
-      email: user.email,
-      name: user.name,
+      id: account.id,
+      email: account.email,
+      name: account.fullName,
     };
 
     const token = await createSessionToken(safeUser);
