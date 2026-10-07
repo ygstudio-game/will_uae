@@ -20,10 +20,10 @@ export function HeroSection() {
             {/* Direct Action Group */}
             <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 sm:gap-4">
               <Link
-                href="/wizard/1"
+                href="/start"
                 className="inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-md bg-court-bronze hover:bg-court-bronze-dark text-white font-semibold text-sm tracking-wide transition-colors"
               >
-                <span>Prepare Your Will</span>
+                <span>Start Your Will (From AED 999)</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
 
@@ -51,7 +51,7 @@ export function HeroSection() {
               <div className="space-y-1">
                 <div className="text-xs font-semibold text-court-tan uppercase tracking-wider flex items-center gap-1.5">
                   <ShieldCheck className="w-3.5 h-3.5 text-court-bronze" />
-                  <span>ADJD-NM1221-06-01</span>
+                  <span>ADJD-NM0723-07-03</span>
                 </div>
                 <p className="text-xs text-white/70 leading-normal">
                   Official statutory bilingual 8-page court form template.
@@ -85,7 +85,7 @@ export function HeroSection() {
                 </div>
                 <div className="text-right">
                   <span className="inline-block text-[10px] font-mono bg-court-tan/20 text-court-bronze-dark px-2 py-0.5 rounded border border-court-bronze/30 font-semibold">
-                    FORM ADJD-NM1221-06-01
+                    FORM ADJD-NM0723-07-03
                   </span>
                   <div className="text-[10px] text-gray-600 mt-1">
                     Civil Family Court
