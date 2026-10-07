@@ -68,11 +68,30 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    let targetAppId = applicationId;
+    let existingApp = await prisma.application.findUnique({ where: { id: targetAppId } }).catch(() => null);
+    if (!existingApp) {
+      if (session) {
+        existingApp = await prisma.application.findFirst({
+          where: { accountId: session.accountId },
+          orderBy: { createdAt: "desc" },
+        });
+      }
+      if (!existingApp) {
+        existingApp = await prisma.application.findFirst({
+          orderBy: { createdAt: "desc" },
+        });
+      }
+      if (existingApp) {
+        targetAppId = existingApp.id;
+      }
+    }
+
     const name = senderName || session?.name || "Testator";
 
     const ticket = await prisma.ticket.create({
       data: {
-        applicationId,
+        applicationId: targetAppId,
         subject,
         status: "OPEN",
         replies: {
