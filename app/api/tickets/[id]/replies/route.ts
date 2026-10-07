@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/auth-otp";
 import { TicketStatus } from "@prisma/client";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
