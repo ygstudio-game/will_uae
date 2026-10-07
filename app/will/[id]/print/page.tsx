@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useWillStore } from "@/store/useWillStore";
-import { BilingualWillDocument } from "@/components/court/BilingualWillDocument";
+import { ADJDBilingualWillDocument } from "@/components/court/ADJDBilingualWillDocument";
 import { Printer, ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Party, Child, TestatorDetails } from "@/types/will";
@@ -122,10 +122,73 @@ export default function WillPrintPage() {
       </div>
 
       <div className="max-w-5xl mx-auto px-4">
-        <BilingualWillDocument
-          testator={willData.testator}
-          parties={willData.parties}
-          children={willData.children}
+        <ADJDBilingualWillDocument
+          will={{
+            id: willId,
+            applicationId: "app-default",
+            willIndex: 1,
+            versionTag: "ADJD-NM0723-07-03",
+            domicileCountry: willData.testator.domicileCountry || "United Kingdom",
+            declarationConfirmed: true,
+            hasChildrenUnder18: willData.children.length > 0,
+            isDraftConfirmed: true,
+            roleAssignments: [],
+          }}
+          testator={{
+            id: "testator-id",
+            applicationId: "app-default",
+            fullName: willData.testator.fullName,
+            arabicName: willData.testator.arabicName,
+            isArabicApproved: willData.testator.isArabicApproved,
+            dob: willData.testator.dob,
+            nationality: willData.testator.nationality,
+            passportNumber: willData.testator.passportNumber,
+            emiratesId: willData.testator.emiratesId,
+            isUaeResident: willData.testator.isUaeResident,
+            address: willData.testator.residentialAddress,
+            email: willData.testator.emailAddress,
+            phone: willData.testator.contactNumber,
+          }}
+          assignments={willData.parties.map((p, idx) => ({
+            id: p.id,
+            willId,
+            personId: p.id,
+            role: p.role as any,
+            appointmentOrder: idx + 1,
+            sharePercentage: p.sharePercentage,
+            person: {
+              id: p.id,
+              applicationId: "app-default",
+              fullName: p.fullName,
+              arabicName: p.arabicName,
+              isArabicApproved: p.isArabicApproved,
+              dob: p.dob,
+              nationality: p.nationality,
+              passportNumber: p.passportNumber,
+              emiratesId: p.emiratesId,
+              isUaeResident: p.isUaeResident,
+              address: p.address,
+            },
+          })).concat(
+            willData.children.map((c, idx) => ({
+              id: c.id,
+              willId,
+              personId: c.id,
+              role: "CHILD" as any,
+              appointmentOrder: idx + 1,
+              person: {
+                id: c.id,
+                applicationId: "app-default",
+                fullName: c.fullName,
+                arabicName: c.arabicName,
+                isArabicApproved: true,
+                dob: c.dob,
+                nationality: c.nationality,
+                passportNumber: c.passportNumber,
+                isUaeResident: true,
+              },
+            }))
+          )}
         />
       </div>
     </div>
