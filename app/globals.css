@@ -1,0 +1,113 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+
+:root {
+  --font-playfair: 'Playfair Display', Georgia, serif;
+  --font-inter: 'Inter', system-ui, sans-serif;
+  --font-amiri: 'Amiri', 'Noto Naskh Arabic', serif;
+}
+
+body {
+  background-color: #FBF9F5;
+  color: #111827;
+  font-family: var(--font-inter);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Browser surface theming (Craft Floor: Theme browser defaults from palette) */
+::selection {
+  background-color: #0B1528;
+  color: #FBF9F5;
+}
+
+:focus-visible {
+  outline: 2px solid #A37E44;
+  outline-offset: 2px;
+}
+
+input, select, textarea, button {
+  caret-color: #A37E44;
+}
+
+/* Tabular figures for numbers, dates, and financial assets */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Editorial typography balance */
+h1, h2, h3, h4, h5, h6 {
+  text-wrap: balance;
+  letter-spacing: -0.025em;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+/* Custom scrollbar for legal document reading */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F1ECE4;
+}
+::-webkit-scrollbar-thumb {
+  background: #C5A880;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #A37E44;
+}
+
+/* Legal Court Document Print Engine */
+@media print {
+  @page {
+    size: A4;
+    margin: 15mm 20mm;
+  }
+  
+  body {
+    background-color: #FFFFFF !important;
+    color: #000000 !important;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-only {
+    display: block !important;
+  }
+  
+  .page-break-before {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+  
+  .page-break-after {
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+  
+  .avoid-break {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+}
+
+/* RTL Utilities */
+[dir="rtl"] {
+  text-align: right;
+  font-family: var(--font-amiri);
+}

@@ -1,0 +1,284 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum PackageType {
+  INDIVIDUAL
+  COUPLES
+}
+
+enum ApplicationStatus {
+  IN_PROGRESS
+  DRAFT_READY
+  COURT_FEE_PENDING
+  AWAITING_ADMIN_VERIFICATION
+  UNDER_ADMIN_REVIEW
+  ACTION_REQUIRED
+  READY_FOR_SUBMISSION
+  SUBMITTED_TO_ADJD
+  REGISTRATION_COMPLETED
+}
+
+enum PaymentMilestone {
+  INITIAL_SERVICE_FEE
+  COURT_FEE
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum RoleType {
+  TESTATOR
+  EXECUTOR_PRIMARY
+  EXECUTOR_SUBSTITUTE
+  EXECUTOR_FURTHER
+  BENEFICIARY
+  GUARDIAN_PERMANENT
+  GUARDIAN_SUBSTITUTE_PERM
+  GUARDIAN_TEMPORARY
+  CHILD
+}
+
+enum DocumentType {
+  PASSPORT
+  EMIRATES_ID
+  PROOF_OF_ADDRESS
+  TITLE_DEED
+  SUPPORTING_DOC
+}
+
+enum TicketStatus {
+  OPEN
+  AWAITING_CUSTOMER
+  RESOLVED
+}
+
+enum FlagSeverity {
+  INFO
+  WARNING
+  ERROR
+}
+
+model Account {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  fullName     String
+  phoneNumber  String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  applications Application[]
+  otps         OtpToken[]
+}
+
+model OtpToken {
+  id        String   @id @default(cuid())
+  accountId String
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Application {
+  id                 String             @id @default(cuid())
+  accountId          String
+  account            Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  packageType        PackageType        @default(INDIVIDUAL)
+  status             ApplicationStatus  @default(IN_PROGRESS)
+  
+  // Qualification answers
+  qualTestatorAge21  Boolean            @default(true)
+  qualNonUaeNational Boolean            @default(true)
+  qualUaeAssets      Boolean            @default(true)
+  qualMarried        Boolean            @default(false)
+  qualChildrenUnder18 Boolean           @default(false)
+  
+  // Partner qualification answers (Couples only)
+  qualPartnerAge21   Boolean?
+  qualPartnerNonUae  Boolean?
+  qualPartnerAssets  Boolean?
+  qualPartnerMarried Boolean?
+  qualPartnerChildrenUnder18 Boolean?
+
+  wills              Will[]
+  persons            Person[]
+  payments           Payment[]
+  tickets            Ticket[]
+  reviewFlags        ReviewFlag[]
+  auditEvents        AuditEvent[]
+  
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+}
+
+model Will {
+  id                   String            @id @default(cuid())
+  applicationId        String
+  application          Application       @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  willIndex            Int               @default(1) // 1 for primary testator, 2 for partner
+  versionTag           String            @default("ADJD-NM0723-07-03")
+  
+  // Section A: Testator profile reference
+  testatorPersonId     String?
+  testatorPerson       Person?           @relation("TestatorWill", fields: [testatorPersonId], references: [id])
+  domicileCountry      String            @default("United Kingdom")
+  
+  // Statutory confirmations
+  declarationConfirmed Boolean           @default(false)
+  hasChildrenUnder18   Boolean           @default(false)
+  
+  // Section F: Draft confirmation
+  isDraftConfirmed     Boolean           @default(false)
+  confirmedAt          DateTime?
+  
+  roleAssignments      RoleAssignment[]
+  generatedDrafts      GeneratedDraft[]
+  
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+}
+
+model Person {
+  id              String             @id @default(cuid())
+  applicationId   String
+  application     Application        @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  fullName        String
+  arabicName      String?
+  isArabicApproved Boolean           @default(false)
+  dob             DateTime?
+  nationality     String?
+  passportNumber  String?
+  emiratesId      String?
+  isUaeResident   Boolean            @default(true)
+  address         String?
+  email           String?
+  phone           String?
+  
+  testatorWills   Will[]             @relation("TestatorWill")
+  roleAssignments RoleAssignment[]
+  documents       UploadedDocument[]
+  
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+}
+
+model RoleAssignment {
+  id              String       @id @default(cuid())
+  willId          String
+  will            Will         @relation(fields: [willId], references: [id], onDelete: Cascade)
+  personId        String
+  person          Person       @relation(fields: [personId], references: [id], onDelete: Cascade)
+  role            RoleType
+  appointmentOrder Int         @default(1)
+  sharePercentage Float?       // 0 to 100 for beneficiaries
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
+
+model UploadedDocument {
+  id              String       @id @default(cuid())
+  personId        String
+  person          Person       @relation(fields: [personId], references: [id], onDelete: Cascade)
+  documentType    DocumentType
+  fileName        String
+  fileUrl         String
+  fileSizeBytes   Int?
+  mimeType        String?
+  extractedData   Json?
+  ocrConfidence   Float?
+  isExpired       Boolean      @default(false)
+  expiresAt       DateTime?    // 1-year auto-purge
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
+
+model Payment {
+  id              String           @id @default(cuid())
+  applicationId   String
+  application     Application      @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  milestone       PaymentMilestone
+  amountAed       Decimal          @db.Decimal(10, 2)
+  status          PaymentStatus    @default(COMPLETED)
+  transactionRef  String           @unique
+  receiptUrl      String?
+  createdAt       DateTime         @default(now())
+}
+
+model Ticket {
+  id              String        @id @default(cuid())
+  applicationId   String
+  application     Application   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  ticketNumber    Int           @default(autoincrement())
+  subject         String
+  status          TicketStatus  @default(OPEN)
+  replies         TicketReply[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model TicketReply {
+  id         String   @id @default(cuid())
+  ticketId   String
+  ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  senderRole String   // "CUSTOMER" or "ADMIN"
+  senderName String
+  message    String
+  fileUrl    String?
+  createdAt  DateTime @default(now())
+}
+
+model ReviewFlag {
+  id            String       @id @default(cuid())
+  applicationId String
+  application   Application  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  fieldPath     String
+  severity      FlagSeverity @default(WARNING)
+  message       String
+  isResolved    Boolean      @default(false)
+  resolvedBy    String?
+  resolutionNotes String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+model GeneratedDraft {
+  id          String   @id @default(cuid())
+  willId      String
+  will        Will     @relation(fields: [willId], references: [id], onDelete: Cascade)
+  versionNum  Int      @default(1)
+  htmlContent String
+  docxUrl     String?
+  pdfUrl      String?
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model AuditEvent {
+  id            String      @id @default(cuid())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  actor         String
+  action        String
+  details       Json?
+  createdAt     DateTime    @default(now())
+}
+
+// Retain legacy User for backward compatibility during migration
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String?
+  name         String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
