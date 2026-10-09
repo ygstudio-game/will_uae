@@ -223,7 +223,7 @@ export function Step15Review() {
           <div className="flex items-center justify-between p-2.5 rounded-lg bg-alabaster/80 border border-court-border">
             <span className="flex items-center gap-2 font-medium text-gray-800">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>Section SEVEN: Estate Beneficiaries (100%)</span>
+              <span>Section SEVEN: Beneficiaries (Primary 100% & Substitute 100%)</span>
             </span>
             <Link href="/wizard/9" className="text-court-bronze hover:underline font-semibold">
               Edit

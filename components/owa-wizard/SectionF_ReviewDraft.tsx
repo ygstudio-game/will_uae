@@ -26,11 +26,25 @@ export function SectionF_ReviewDraft() {
   const hasTestator = !!(activeWill?.testatorPerson?.fullName && activeWill?.testatorPerson?.passportNumber);
   const executors = activeWill?.roleAssignments.filter((ra) => ra.role.startsWith("EXECUTOR_")) || [];
   const hasPrimaryExecutor = executors.some((ra) => ra.role === "EXECUTOR_PRIMARY");
-  const beneficiaries = activeWill?.roleAssignments.filter((ra) => ra.role === "BENEFICIARY") || [];
-  const totalBeneficiaryShare = beneficiaries.reduce((sum, b) => sum + (Number(b.sharePercentage) || 0), 0);
-  const isBeneficiary100 = Math.abs(totalBeneficiaryShare - 100) < 0.01;
+  const primaries = activeWill?.roleAssignments.filter(
+    (ra) => (ra.role === "BENEFICIARY_PRIMARY" || ra.role === "BENEFICIARY") && ra.person
+  ) || [];
+  const primaryTotal = primaries.reduce((sum, b) => sum + (Number(b.sharePercentage) || 0), 0);
+  const isPrimaryValid =
+    primaries.length >= 1 &&
+    primaries.length <= 3 &&
+    Math.abs(primaryTotal - 100) < 0.01;
 
-  const allAuditsPassed = hasTestator && hasPrimaryExecutor && isBeneficiary100;
+  const substitutes = activeWill?.roleAssignments.filter(
+    (ra) => ra.role === "BENEFICIARY_SUBSTITUTE" && ra.person
+  ) || [];
+  const substituteTotal = substitutes.reduce((sum, b) => sum + (Number(b.sharePercentage) || 0), 0);
+  const isSubstituteValid =
+    substitutes.length >= 1 &&
+    substitutes.length <= 2 &&
+    Math.abs(substituteTotal - 100) < 0.01;
+
+  const allAuditsPassed = hasTestator && hasPrimaryExecutor && isPrimaryValid && isSubstituteValid;
 
   const handleConfirmAndProceed = async () => {
     if (!confirmed || !allAuditsPassed) return;
@@ -102,7 +116,7 @@ export function SectionF_ReviewDraft() {
           Pre-Court Registration Readiness Audit
         </h3>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
           <div className="p-4 rounded-xl bg-[#FBF9F5] border border-[#E5E0D8] flex items-start gap-3">
             {hasTestator ? (
               <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
@@ -132,17 +146,33 @@ export function SectionF_ReviewDraft() {
           </div>
 
           <div className="p-4 rounded-xl bg-[#FBF9F5] border border-[#E5E0D8] flex items-start gap-3">
-            {isBeneficiary100 ? (
+            {isPrimaryValid ? (
               <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
             ) : (
               <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
             )}
             <div>
-              <h4 className="text-xs font-bold text-[#0B1528]">100% Asset Allocation</h4>
+              <h4 className="text-xs font-bold text-[#0B1528]">Primary Residue (100%)</h4>
               <p className="text-[11px] text-gray-500 mt-0.5">
-                {isBeneficiary100
-                  ? "Clause 7 shares sum strictly to 100%"
-                  : `Currently ${totalBeneficiaryShare}% (must equal 100%)`}
+                {isPrimaryValid
+                  ? `${primaries.length} primary beneficiary · 100%`
+                  : `Currently ${primaryTotal}% (must equal 100%)`}
+              </p>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-xl bg-[#FBF9F5] border border-[#E5E0D8] flex items-start gap-3">
+            {isSubstituteValid ? (
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+            ) : (
+              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
+            )}
+            <div>
+              <h4 className="text-xs font-bold text-[#0B1528]">Substitute Group (100%)</h4>
+              <p className="text-[11px] text-gray-500 mt-0.5">
+                {isSubstituteValid
+                  ? `${substitutes.length} substitute (A/B) · 100%`
+                  : `Currently ${substituteTotal}% (must equal 100%)`}
               </p>
             </div>
           </div>

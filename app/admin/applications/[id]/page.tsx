@@ -292,7 +292,11 @@ export default function AdminApplicationDetailPage() {
                     {roleAssignments.map((ra: any) => (
                       <tr key={ra.id} className="hover:bg-gray-50/50">
                         <td className="px-3 py-3 font-mono font-bold text-[11px] text-[#A37E44]">
-                          {ra.role} #{ra.appointmentOrder}
+                          {ra.role === "BENEFICIARY_PRIMARY"
+                            ? `PRIMARY BENEFICIARY #${ra.appointmentOrder}`
+                            : ra.role === "BENEFICIARY_SUBSTITUTE"
+                            ? `SUBSTITUTE BENEFICIARY (${ra.appointmentOrder === 1 ? "A" : "B"})`
+                            : `${ra.role} #${ra.appointmentOrder}`}
                         </td>
                         <td className="px-3 py-3">
                           <div className="font-semibold text-[#0B1528]">{ra.person.fullName}</div>
