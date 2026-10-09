@@ -428,10 +428,33 @@ export const useWillStore = create<WillState>()(
             return state.confirmations.jurisdiction;
           case 8:
             return state.confirmations.insurance;
-          case 9:
-            return state.parties.some(
+          case 9: {
+            const primaries = state.parties.filter(
               (p) => p.role === "PRIMARY_BENEFICIARY" && p.fullName?.trim()
             );
+            const substitutes = state.parties.filter(
+              (p) => p.role === "SUBSTITUTE_BENEFICIARY" && p.fullName?.trim()
+            );
+
+            // Primary group validation
+            if (primaries.length < 1 || primaries.length > 3) return false;
+            const primarySum = primaries.reduce((acc, p) => acc + (p.sharePercentage || 0), 0);
+            if (Math.abs(primarySum - 100) >= 0.01) return false;
+            if (primaries.some((p) => (p.sharePercentage || 0) <= 0)) return false;
+
+            // Substitute group validation
+            if (substitutes.length < 1 || substitutes.length > 2) return false;
+            const subSum = substitutes.reduce((acc, p) => acc + (p.sharePercentage || 0), 0);
+            if (Math.abs(subSum - 100) >= 0.01) return false;
+            if (substitutes.some((p) => (p.sharePercentage || 0) <= 0)) return false;
+
+            // Cross-group check (no primary as substitute)
+            if (substitutes.some((s) => primaries.some((p) => p.fullName.trim().toLowerCase() === s.fullName.trim().toLowerCase()))) {
+              return false;
+            }
+
+            return true;
+          }
           case 10:
             return !state.testator.hasTitledAssets || state.assets.length > 0;
           case 11:

@@ -299,11 +299,39 @@ export const useOwaStore = create<OwaState>()(
             const hasPerm = will.roleAssignments.some((ra) => ra.role === "GUARDIAN_PERMANENT");
             const hasSubPerm = will.roleAssignments.some((ra) => ra.role === "GUARDIAN_SUBSTITUTE_PERM");
             return hasPerm && hasSubPerm;
-          case "beneficiaries":
-            const bens = will.roleAssignments.filter((ra) => ra.role === "BENEFICIARY");
-            if (bens.length === 0) return false;
-            const sum = bens.reduce((acc, b) => acc + (b.sharePercentage || 0), 0);
-            return Math.abs(sum - 100) < 0.01;
+          case "beneficiaries": {
+            const primaries = will.roleAssignments.filter(
+              (ra) => ra.role === "BENEFICIARY_PRIMARY" || ra.role === "BENEFICIARY"
+            );
+            const substitutes = will.roleAssignments.filter(
+              (ra) => ra.role === "BENEFICIARY_SUBSTITUTE"
+            );
+
+            // 1. Primary rules: 1 to 3 appointments, positive shares summing to 100%
+            if (primaries.length < 1 || primaries.length > 3) return false;
+            const primarySum = primaries.reduce((acc, b) => acc + (Number(b.sharePercentage) || 0), 0);
+            if (Math.abs(primarySum - 100) >= 0.01) return false;
+            if (primaries.some((b) => (Number(b.sharePercentage) || 0) <= 0)) return false;
+            if (new Set(primaries.map((p) => p.personId)).size !== primaries.length) return false;
+
+            // 2. Substitute rules: 1 (A) or 2 (A & B) appointments, positive shares summing to 100%
+            if (substitutes.length < 1 || substitutes.length > 2) return false;
+            const subSum = substitutes.reduce((acc, b) => acc + (Number(b.sharePercentage) || 0), 0);
+            if (Math.abs(subSum - 100) >= 0.01) return false;
+            if (substitutes.some((b) => (Number(b.sharePercentage) || 0) <= 0)) return false;
+            if (new Set(substitutes.map((s) => s.personId)).size !== substitutes.length) return false;
+
+            // 3. Safeguards: Testator cannot be beneficiary; no primary can be substitute
+            const testatorId = will.testatorPersonId;
+            if (testatorId && (primaries.some((p) => p.personId === testatorId) || substitutes.some((s) => s.personId === testatorId))) {
+              return false;
+            }
+            if (substitutes.some((s) => primaries.some((p) => p.personId === s.personId))) {
+              return false;
+            }
+
+            return true;
+          }
           case "review":
             return will.isDraftConfirmed;
           default:
