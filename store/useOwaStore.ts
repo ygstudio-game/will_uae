@@ -44,193 +44,343 @@ interface OwaState {
   isSectionComplete: (section: OwaSectionId) => boolean;
 }
 
+const DEFAULT_APPLICATION_ID = "draft-app-local";
+const DEFAULT_WILL_ID = "draft-will-local";
+const DEFAULT_TESTATOR_ID = "draft-testator-local";
+
+export const createDefaultDraftApplication = (): ApplicationData => {
+  const defaultTestator: PersonData = {
+    id: DEFAULT_TESTATOR_ID,
+    applicationId: DEFAULT_APPLICATION_ID,
+    fullName: "Daniel Michael Carter",
+    arabicName: "دانيال مايكل كارتر",
+    isArabicApproved: true,
+    dob: "1982-05-14",
+    nationality: "British",
+    relationship: "Self",
+    passportNumber: "GBR12345678",
+    emiratesId: "784-1982-1234567-1",
+    isUaeResident: true,
+    address: "Villa 14, Saadiyat Beach Residences, Abu Dhabi, UAE",
+    email: "daniel.carter@example.com",
+    phone: "+971 50 123 4567",
+    documents: [],
+  };
+
+  const defaultWill: WillData = {
+    id: DEFAULT_WILL_ID,
+    applicationId: DEFAULT_APPLICATION_ID,
+    willIndex: 1,
+    versionTag: "ADJD-NM0723-07-03",
+    testatorPersonId: DEFAULT_TESTATOR_ID,
+    testatorPerson: defaultTestator,
+    domicileCountry: "United Kingdom",
+    declarationConfirmed: true,
+    hasChildrenUnder18: false,
+    isDraftConfirmed: false,
+    roleAssignments: [],
+  };
+
+  return {
+    id: DEFAULT_APPLICATION_ID,
+    accountId: "draft-account-local",
+    packageType: "INDIVIDUAL",
+    status: "IN_PROGRESS",
+    qualTestatorAge21: true,
+    qualNonUaeNational: true,
+    qualUaeAssets: true,
+    qualMarried: true,
+    qualChildrenUnder18: true,
+    account: {
+      id: "draft-account-local",
+      email: "daniel.carter@example.com",
+      fullName: "Daniel Michael Carter",
+      phoneNumber: "+971 50 123 4567",
+    },
+    persons: [defaultTestator],
+    wills: [defaultWill],
+    payments: [],
+    tickets: [],
+    reviewFlags: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+};
+
 export const useOwaStore = create<OwaState>()(
   persist(
-    (set, get) => ({
-      applicationId: null,
-      activeWillIndex: 1,
-      currentSection: "details",
-      application: null,
-      isSaving: false,
-      saveError: null,
+    (set, get) => {
+      const initialApp = createDefaultDraftApplication();
+      return {
+        applicationId: initialApp.id,
+        activeWillIndex: 1,
+        currentSection: "details",
+        application: initialApp,
+        isSaving: false,
+        saveError: null,
 
-      setApplicationId: (id) => set({ applicationId: id }),
-      setActiveWillIndex: (index) => set({ activeWillIndex: index }),
-      setCurrentSection: (section) => set({ currentSection: section }),
-      setApplication: (app) => set({ application: app }),
+        setApplicationId: (id) => set({ applicationId: id }),
+        setActiveWillIndex: (index) => set({ activeWillIndex: index }),
+        setCurrentSection: (section) => set({ currentSection: section }),
+        setApplication: (app) => set({ application: app }),
 
-      loadApplicationFromDb: async (id: string) => {
-        try {
-          const res = await fetch(`/api/applications/${id}`);
-          const data = await res.json();
-          if (data.success && data.application) {
-            set({
-              applicationId: id,
-              application: data.application,
-              saveError: null,
-            });
+        loadApplicationFromDb: async (id: string) => {
+          if (!id || id.startsWith("draft-")) return false;
+          try {
+            const res = await fetch(`/api/applications/${id}`);
+            const data = await res.json();
+            if (data.success && data.application) {
+              set({
+                applicationId: id,
+                application: data.application,
+                saveError: null,
+              });
+              return true;
+            }
+            return false;
+          } catch (err: any) {
+            console.error("Failed to load application from DB:", err);
+            return false;
+          }
+        },
+
+        saveCurrentSectionToDb: async () => {
+          const state = get();
+          if (!state.application) return false;
+          if (!state.applicationId || state.applicationId.startsWith("draft-")) {
             return true;
           }
-          return false;
-        } catch (err: any) {
-          console.error("Failed to load application from DB:", err);
-          return false;
-        }
-      },
 
-      saveCurrentSectionToDb: async () => {
-        const state = get();
-        if (!state.applicationId || !state.application) return false;
+          const activeWill = state.application.wills.find(
+            (w) => w.willIndex === state.activeWillIndex
+          );
+          if (!activeWill) return false;
 
-        const activeWill = state.application.wills.find(
-          (w) => w.willIndex === state.activeWillIndex
-        );
-        if (!activeWill) return false;
+          set({ isSaving: true, saveError: null });
 
-        set({ isSaving: true, saveError: null });
+          try {
+            const res = await fetch(`/api/applications/${state.applicationId}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                willId: activeWill.id,
+                domicileCountry: activeWill.domicileCountry,
+                isDraftConfirmed: activeWill.isDraftConfirmed,
+                roleAssignments: activeWill.roleAssignments.map((ra) => ({
+                  personId: ra.personId,
+                  role: ra.role,
+                  appointmentOrder: ra.appointmentOrder,
+                  sharePercentage: ra.sharePercentage,
+                })),
+              }),
+            });
 
-        try {
-          const res = await fetch(`/api/applications/${state.applicationId}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              willId: activeWill.id,
-              domicileCountry: activeWill.domicileCountry,
-              isDraftConfirmed: activeWill.isDraftConfirmed,
-              roleAssignments: activeWill.roleAssignments.map((ra) => ({
-                personId: ra.personId,
-                role: ra.role,
-                appointmentOrder: ra.appointmentOrder,
-                sharePercentage: ra.sharePercentage,
-              })),
-            }),
-          });
-
-          const data = await res.json();
-          if (!data.success) {
-            throw new Error(data.error || "Save failed.");
-          }
-
-          set({ isSaving: false });
-          return true;
-        } catch (err: any) {
-          console.error("Save error:", err);
-          set({ isSaving: false, saveError: err.message });
-          return false;
-        }
-      },
-
-      addOrUpdatePerson: async (personData: Partial<PersonData>) => {
-        const state = get();
-        if (!state.applicationId) return null;
-
-        try {
-          const res = await fetch("/api/persons", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              ...personData,
-              applicationId: state.applicationId,
-            }),
-          });
-
-          const data = await res.json();
-          if (data.success && data.person) {
-            const currentApp = state.application;
-            if (currentApp) {
-              const existingIdx = currentApp.persons.findIndex((p) => p.id === data.person.id);
-              let updatedPersons = [...currentApp.persons];
-              if (existingIdx >= 0) {
-                updatedPersons[existingIdx] = data.person;
-              } else {
-                updatedPersons.push(data.person);
-              }
-              set({
-                application: {
-                  ...currentApp,
-                  persons: updatedPersons,
-                },
-              });
+            const data = await res.json();
+            if (!data.success) {
+              throw new Error(data.error || "Save failed.");
             }
-            return data.person;
+
+            set({ isSaving: false });
+            return true;
+          } catch (err: any) {
+            console.error("Save error:", err);
+            set({ isSaving: false, saveError: err.message });
+            return false;
           }
-          return null;
-        } catch (err) {
-          console.error("Add/Update person error:", err);
-          return null;
-        }
-      },
+        },
 
-      assignPersonToRole: (personId, role, order = 1, sharePercentage) => {
-        const state = get();
-        if (!state.application) return;
+        addOrUpdatePerson: async (personData: Partial<PersonData>): Promise<PersonData | null> => {
+          const state = get();
+          const currentApp = state.application || createDefaultDraftApplication();
+          const currentAppId = currentApp.id || state.applicationId || "draft-app-local";
 
-        const activeWillIdx = state.application.wills.findIndex(
-          (w) => w.willIndex === state.activeWillIndex
-        );
-        if (activeWillIdx < 0) return;
+          const personId =
+            personData.id || `person-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+          const existingPerson = currentApp.persons.find((p) => p.id === personId);
 
-        const activeWill = state.application.wills[activeWillIdx];
-        const person = state.application.persons.find((p) => p.id === personId);
+          const updatedPerson: PersonData = {
+            id: personId,
+            applicationId: currentAppId,
+            fullName:
+              personData.fullName !== undefined
+                ? personData.fullName
+                : existingPerson?.fullName || "",
+            arabicName:
+              personData.arabicName !== undefined
+                ? personData.arabicName
+                : existingPerson?.arabicName || null,
+            isArabicApproved:
+              personData.isArabicApproved !== undefined
+                ? personData.isArabicApproved
+                : existingPerson?.isArabicApproved || false,
+            dob:
+              personData.dob !== undefined
+                ? personData.dob
+                : existingPerson?.dob || null,
+            nationality:
+              personData.nationality !== undefined
+                ? personData.nationality
+                : existingPerson?.nationality || "British",
+            relationship:
+              personData.relationship !== undefined
+                ? personData.relationship
+                : existingPerson?.relationship || null,
+            passportNumber:
+              personData.passportNumber !== undefined
+                ? personData.passportNumber
+                : existingPerson?.passportNumber || null,
+            emiratesId:
+              personData.emiratesId !== undefined
+                ? personData.emiratesId
+                : existingPerson?.emiratesId || null,
+            isUaeResident:
+              personData.isUaeResident !== undefined
+                ? personData.isUaeResident
+                : existingPerson?.isUaeResident ?? true,
+            address:
+              personData.address !== undefined
+                ? personData.address
+                : existingPerson?.address || null,
+            email:
+              personData.email !== undefined
+                ? personData.email
+                : existingPerson?.email || null,
+            phone:
+              personData.phone !== undefined
+                ? personData.phone
+                : existingPerson?.phone || null,
+            documents: personData.documents || existingPerson?.documents || [],
+          };
 
-        // Filter out existing assignment if this role is single (e.g. EXECUTOR_PRIMARY)
-        let filtered = activeWill.roleAssignments.filter(
-          (ra) => !(ra.role === role && ra.appointmentOrder === order)
-        );
+          const existingIdx = currentApp.persons.findIndex((p) => p.id === personId);
+          let updatedPersons = [...currentApp.persons];
+          if (existingIdx >= 0) {
+            updatedPersons[existingIdx] = updatedPerson;
+          } else {
+            updatedPersons.push(updatedPerson);
+          }
 
-        const newAssignment: RoleAssignmentData = {
-          id: `temp-${Date.now()}-${Math.random()}`,
-          willId: activeWill.id,
-          personId,
-          role,
-          appointmentOrder: order,
-          sharePercentage: sharePercentage || null,
-          person,
-        };
+          const updatedWills = currentApp.wills.map((will) => ({
+            ...will,
+            testatorPerson:
+              will.testatorPersonId === personId ? updatedPerson : will.testatorPerson,
+            roleAssignments: will.roleAssignments.map((ra) =>
+              ra.personId === personId ? { ...ra, person: updatedPerson } : ra
+            ),
+          }));
 
-        filtered.push(newAssignment);
+          set({
+            applicationId: currentAppId,
+            application: {
+              ...currentApp,
+              persons: updatedPersons,
+              wills: updatedWills,
+            },
+          });
 
-        const updatedWills = [...state.application.wills];
-        updatedWills[activeWillIdx] = {
-          ...activeWill,
-          roleAssignments: filtered,
-          isDraftConfirmed: false, // Invalidate draft confirmation when assignments change
-        };
+          // Server background sync if authenticated and not in local-only draft mode
+          if (currentAppId && !currentAppId.startsWith("draft-")) {
+            try {
+              fetch("/api/persons", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  ...personData,
+                  id: personData.id,
+                  applicationId: currentAppId,
+                }),
+              }).catch(() => {});
+            } catch (_) {}
+          }
 
-        set({
-          application: {
-            ...state.application,
-            wills: updatedWills,
-          },
-        });
-      },
+          return updatedPerson;
+        },
 
-      removeRoleAssignment: (roleAssignmentId) => {
-        const state = get();
-        if (!state.application) return;
+        assignPersonToRole: (personId, role, order = 1, sharePercentage) => {
+          const state = get();
+          let currentApp = state.application || createDefaultDraftApplication();
 
-        const activeWillIdx = state.application.wills.findIndex(
-          (w) => w.willIndex === state.activeWillIndex
-        );
-        if (activeWillIdx < 0) return;
+          let activeWillIdx = currentApp.wills.findIndex(
+            (w) => w.willIndex === state.activeWillIndex
+          );
+          let updatedWills = [...currentApp.wills];
+          if (activeWillIdx < 0) {
+            const defaultWill: WillData = {
+              id: `will-${state.activeWillIndex}-${Date.now()}`,
+              applicationId: currentApp.id,
+              willIndex: state.activeWillIndex,
+              versionTag: "ADJD-NM0723-07-03",
+              domicileCountry: "United Kingdom",
+              declarationConfirmed: true,
+              hasChildrenUnder18: false,
+              isDraftConfirmed: false,
+              roleAssignments: [],
+            };
+            updatedWills.push(defaultWill);
+            activeWillIdx = updatedWills.length - 1;
+          }
 
-        const activeWill = state.application.wills[activeWillIdx];
-        const filtered = activeWill.roleAssignments.filter((ra) => ra.id !== roleAssignmentId);
+          const activeWill = updatedWills[activeWillIdx];
+          const person = currentApp.persons.find((p) => p.id === personId);
 
-        const updatedWills = [...state.application.wills];
-        updatedWills[activeWillIdx] = {
-          ...activeWill,
-          roleAssignments: filtered,
-          isDraftConfirmed: false,
-        };
+          let filtered = activeWill.roleAssignments.filter(
+            (ra) => !(ra.role === role && ra.appointmentOrder === order)
+          );
 
-        set({
-          application: {
-            ...state.application,
-            wills: updatedWills,
-          },
-        });
-      },
+          const newAssignment: RoleAssignmentData = {
+            id: `role-assign-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+            willId: activeWill.id,
+            personId,
+            role,
+            appointmentOrder: order,
+            sharePercentage: sharePercentage !== undefined ? sharePercentage : null,
+            person,
+          };
+
+          filtered.push(newAssignment);
+
+          updatedWills[activeWillIdx] = {
+            ...activeWill,
+            roleAssignments: filtered,
+            isDraftConfirmed: false,
+          };
+
+          set({
+            application: {
+              ...currentApp,
+              wills: updatedWills,
+            },
+          });
+        },
+
+        removeRoleAssignment: (roleAssignmentId) => {
+          const state = get();
+          if (!state.application) return;
+
+          const activeWillIdx = state.application.wills.findIndex(
+            (w) => w.willIndex === state.activeWillIndex
+          );
+          if (activeWillIdx < 0) return;
+
+          const activeWill = state.application.wills[activeWillIdx];
+          const filtered = activeWill.roleAssignments.filter(
+            (ra) => ra.id !== roleAssignmentId
+          );
+
+          const updatedWills = [...state.application.wills];
+          updatedWills[activeWillIdx] = {
+            ...activeWill,
+            roleAssignments: filtered,
+            isDraftConfirmed: false,
+          };
+
+          set({
+            application: {
+              ...state.application,
+              wills: updatedWills,
+            },
+          });
+        },
 
       copyWillToPartnerWill: async () => {
         const state = get();
@@ -338,13 +488,15 @@ export const useOwaStore = create<OwaState>()(
             return false;
         }
       },
-    }),
+    };
+  },
     {
       name: "owa_application_store",
       partialize: (state) => ({
         applicationId: state.applicationId,
         activeWillIndex: state.activeWillIndex,
         currentSection: state.currentSection,
+        application: state.application,
       }),
     }
   )

@@ -27,7 +27,9 @@ export function SectionF_ReviewDraft() {
   const executors = activeWill?.roleAssignments.filter((ra) => ra.role.startsWith("EXECUTOR_")) || [];
   const hasPrimaryExecutor = executors.some((ra) => ra.role === "EXECUTOR_PRIMARY");
   const primaries = activeWill?.roleAssignments.filter(
-    (ra) => (ra.role === "BENEFICIARY_PRIMARY" || ra.role === "BENEFICIARY") && ra.person
+    (ra) =>
+      (ra.role === "BENEFICIARY_PRIMARY" || ra.role === "BENEFICIARY") &&
+      (ra.person || application?.persons.some((p) => p.id === ra.personId))
   ) || [];
   const primaryTotal = primaries.reduce((sum, b) => sum + (Number(b.sharePercentage) || 0), 0);
   const isPrimaryValid =
@@ -36,7 +38,9 @@ export function SectionF_ReviewDraft() {
     Math.abs(primaryTotal - 100) < 0.01;
 
   const substitutes = activeWill?.roleAssignments.filter(
-    (ra) => ra.role === "BENEFICIARY_SUBSTITUTE" && ra.person
+    (ra) =>
+      ra.role === "BENEFICIARY_SUBSTITUTE" &&
+      (ra.person || application?.persons.some((p) => p.id === ra.personId))
   ) || [];
   const substituteTotal = substitutes.reduce((sum, b) => sum + (Number(b.sharePercentage) || 0), 0);
   const isSubstituteValid =

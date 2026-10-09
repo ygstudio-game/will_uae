@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Users,
   Plus,
@@ -139,6 +139,24 @@ export function SectionE_Beneficiaries() {
       );
     }
   };
+
+  // Auto-initialize Primary 1 if none exists (per OWA client spec: "Initially show one card labelled Primary beneficiary 1, with 100%")
+  const hasAutoInitializedPrimary = useRef(false);
+  useEffect(() => {
+    if (!hasAutoInitializedPrimary.current && primaryAssignments.length === 0) {
+      hasAutoInitializedPrimary.current = true;
+      handleAddPrimary();
+    }
+  }, [primaryAssignments.length]);
+
+  // Auto-initialize Substitute A if user visits sub-page 1 and none exists (per OWA client spec)
+  const hasAutoInitializedSubstitute = useRef(false);
+  useEffect(() => {
+    if (subPage === 1 && !hasAutoInitializedSubstitute.current && substituteAssignments.length === 0) {
+      hasAutoInitializedSubstitute.current = true;
+      handleAddSubstitute();
+    }
+  }, [subPage, substituteAssignments.length]);
 
   const handleRemoveSubstitute = (assignmentId: string) => {
     removeRoleAssignment(assignmentId);
@@ -328,7 +346,9 @@ export function SectionE_Beneficiaries() {
               )}
 
               {primaryAssignments.map((assignment, index) => {
-                const person = assignment.person;
+                const person =
+                  existingPersons.find((p) => p.id === assignment.personId) ||
+                  assignment.person;
                 const personId = assignment.personId;
                 const isTestatorSelected = testatorId && personId === testatorId;
 
@@ -563,7 +583,9 @@ export function SectionE_Beneficiaries() {
 
               {substituteAssignments.map((assignment, index) => {
                 const slotLabel = index === 0 ? "A" : "B";
-                const person = assignment.person;
+                const person =
+                  existingPersons.find((p) => p.id === assignment.personId) ||
+                  assignment.person;
                 const personId = assignment.personId;
 
                 return (
@@ -729,7 +751,11 @@ export function SectionE_Beneficiaries() {
                   className="w-full py-3.5 border-2 border-dashed border-[#A37E44]/40 hover:border-[#A37E44] bg-[#FBF9F5] hover:bg-[#A37E44]/5 text-[#A37E44] rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>+ Add substitute beneficiary B ({substituteAssignments.length}/2)</span>
+                  <span>
+                    {substituteAssignments.length === 0
+                      ? "+ Add substitute beneficiary A (100%)"
+                      : "+ Add substitute beneficiary B (1/2)"}
+                  </span>
                 </button>
               )}
             </div>
@@ -803,16 +829,20 @@ export function SectionE_Beneficiaries() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#E5E0D8]">
-                    {primaryAssignments.map((ra) => (
-                      <tr key={ra.id} className="hover:bg-gray-50/50">
-                        <td className="px-4 py-3 font-medium text-gray-900">
-                          {ra.person?.fullName || "Not selected"}
-                        </td>
-                        <td className="px-4 py-3 text-right font-bold text-[#0B1528]">
-                          {ra.sharePercentage}%
-                        </td>
-                      </tr>
-                    ))}
+                    {primaryAssignments.map((ra) => {
+                      const person =
+                        existingPersons.find((p) => p.id === ra.personId) || ra.person;
+                      return (
+                        <tr key={ra.id} className="hover:bg-gray-50/50">
+                          <td className="px-4 py-3 font-medium text-gray-900">
+                            {person?.fullName || "Not selected"}
+                          </td>
+                          <td className="px-4 py-3 text-right font-bold text-[#0B1528]">
+                            {ra.sharePercentage}%
+                          </td>
+                        </tr>
+                      );
+                    })}
                     <tr className="bg-[#FAF7F2]/60 font-bold">
                       <td className="px-4 py-2.5 text-gray-700">Total Primary Allocation</td>
                       <td className="px-4 py-2.5 text-right text-[#A37E44]">
@@ -854,19 +884,23 @@ export function SectionE_Beneficiaries() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#E5E0D8]">
-                    {substituteAssignments.map((ra, idx) => (
-                      <tr key={ra.id} className="hover:bg-gray-50/50">
-                        <td className="px-4 py-3 font-medium text-gray-900">
-                          <span className="font-bold text-[#A37E44] mr-1.5">
-                            {idx === 0 ? "A ·" : "B ·"}
-                          </span>
-                          {ra.person?.fullName || "Not selected"}
-                        </td>
-                        <td className="px-4 py-3 text-right font-bold text-[#0B1528]">
-                          {ra.sharePercentage}%
-                        </td>
-                      </tr>
-                    ))}
+                    {substituteAssignments.map((ra, idx) => {
+                      const person =
+                        existingPersons.find((p) => p.id === ra.personId) || ra.person;
+                      return (
+                        <tr key={ra.id} className="hover:bg-gray-50/50">
+                          <td className="px-4 py-3 font-medium text-gray-900">
+                            <span className="font-bold text-[#A37E44] mr-1.5">
+                              {idx === 0 ? "A ·" : "B ·"}
+                            </span>
+                            {person?.fullName || "Not selected"}
+                          </td>
+                          <td className="px-4 py-3 text-right font-bold text-[#0B1528]">
+                            {ra.sharePercentage}%
+                          </td>
+                        </tr>
+                      );
+                    })}
                     <tr className="bg-[#FAF7F2]/60 font-bold">
                       <td className="px-4 py-2.5 text-gray-700">Total Substitute Allocation</td>
                       <td className="px-4 py-2.5 text-right text-[#A37E44]">
