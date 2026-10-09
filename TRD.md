@@ -15,7 +15,7 @@
 │  - Auth (Sign In / Register)                                           │
 │  - Dashboard (Drafts & Final Wills)                                    │
 │  - 16-Step Stepper & Form State Engine (Zustand / React Hook Form)     │
-│  - Bilingual Court Preview Component (LTR & RTL synchronized layout)  │
+│  - Bilingual Court Preview Component (LTR & RTL synchronized layout)   │
 └───────────────────────────────────┬────────────────────────────────────┘
                                     │
                                     ▼

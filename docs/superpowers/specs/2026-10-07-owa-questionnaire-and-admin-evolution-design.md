@@ -3,7 +3,7 @@
 **Date:** 2026-10-07  
 **Author:** AI Engineering & PM Alignment  
 **Governing Court Template:** `Will Form (3).pdf` (`ADJD-NM0723-07-03` — Abu Dhabi Civil Family Court)  
-**Authoritative Product Specification:** `OWA_Questionnaire_and_Admin_Specification (4).md`  
+**Authoritative Product Specification:** [`v3-OWA_Questionnaire_and_Admin_Specification.md`](../../client-specs/v3-OWA_Questionnaire_and_Admin_Specification.md)  
 **Target Architecture:** Next.js 14+ (App Router), TypeScript, Neon Serverless PostgreSQL, Prisma ORM, Tailwind CSS
 
 ---

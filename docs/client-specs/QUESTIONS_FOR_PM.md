@@ -1,7 +1,7 @@
 # Questions for the Project Manager (PM) — STATUS: RESOLVED
 ## UAE Will Preparation Platform (ADJD Non-Muslim Will)
 
-All architectural and policy questions have been reviewed and confirmed by the Project Manager (see `summary.md`). Below is the resolved record of decisions.
+All architectural and policy questions have been reviewed and confirmed by the Project Manager (see [`summary.md`](./summary.md)). Below is the resolved record of decisions.
 
 ---
 
@@ -40,5 +40,5 @@ All architectural and policy questions have been reviewed and confirmed by the P
 
 ### Reference Fixtures & Pending Documents:
 - **Reference Questionnaire Fixture**: `Reference YB WILLS/Wills_Questionnaire_ADJD_2026_FILLED_DUMMY.docx.pdf` contains the exact question set and filled sample data used to generate the ADJD template.
-- **Specification Status**: `OWA_Questionnaire_and_Admin_Specification.md` is strictly **ON HOLD** (not finalized) and must not be implemented until formally approved.
+- **Specification Status**: Initial specification [`v1-OWA_Questionnaire_and_Admin_Specification.md`](./v1-OWA_Questionnaire_and_Admin_Specification.md) was placed on hold. Please refer to [`v3-OWA_Questionnaire_and_Admin_Specification.md`](./v3-OWA_Questionnaire_and_Admin_Specification.md) for the latest active product specification and delivery plan.
 

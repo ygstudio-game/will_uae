@@ -100,7 +100,7 @@ The design avoids generic software looks; it embodies **understated legal luxury
 7. **Reference Test Data**:
    - `Reference YB WILLS/Wills_Questionnaire_ADJD_2026_FILLED_DUMMY.docx.pdf` provides verified client questionnaire data (Testator: *Daniel Michael Carter*, Spouse: *Emma Claire Carter*, Children: *Liam & Noah Carter*, Executors & Guardians: *Sarah Elizabeth Carter* & *James Robert Carter*).
 8. **Pending Administrative Specification**:
-   - `OWA_Questionnaire_and_Admin_Specification.md` is currently **ON HOLD** pending final stakeholder review. The active design and technical blueprint is guided by the 18 screenshots in `Reference YB WILLS/SS/` and the ADJD statutory template.
+   - Client specifications and questionnaires are cataloged in [`docs/client-specs/`](./docs/client-specs/README.md) (with `v3-OWA_Questionnaire_and_Admin_Specification.md` as latest version and `v1-OWA_Questionnaire_and_Admin_Specification.md` archived). The active design and technical blueprint is guided by the 18 screenshots in `Reference YB WILLS/SS/` and the ADJD statutory template.
 
 ---
 

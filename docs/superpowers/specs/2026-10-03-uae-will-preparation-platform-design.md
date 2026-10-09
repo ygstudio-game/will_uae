@@ -1,7 +1,7 @@
 # Design Specification: UAE Will Preparation Platform (ADJD Non-Muslim Will)
 
 **Date**: 2026-10-03  
-**Status**: Confirmed & Approved by PM (`summary.md`)  
+**Status**: Confirmed & Approved by PM ([`summary.md`](../../client-specs/summary.md))  
 **Target Jurisdiction**: Abu Dhabi Judicial Department (ADJD) Civil Family Court  
 **Template Specification**: Official Court Form `ADJD-NM1221-06-01`  
 
@@ -17,7 +17,7 @@ The system replicates the exact visual design, typography, color palette, and mu
 
 ## 2. Confirmed Product & Architectural Decisions
 
-Following alignment with the Project Manager (recorded in `summary.md` and `QUESTIONS_FOR_PM.md`):
+Following alignment with the Project Manager (recorded in [`summary.md`](../../client-specs/summary.md) and [`QUESTIONS_FOR_PM.md`](../../client-specs/QUESTIONS_FOR_PM.md)):
 
 1. **Database & Zero-Cost Infrastructure**:
    - **Neon Serverless PostgreSQL** paired with **Prisma ORM**.
@@ -40,7 +40,7 @@ Following alignment with the Project Manager (recorded in `summary.md` and `QUES
 8. **Reference Data Fixture**:
    - `Reference YB WILLS/Wills_Questionnaire_ADJD_2026_FILLED_DUMMY.docx.pdf` serves as the golden questionnaire fixture (*Daniel Michael Carter* sample estate).
 9. **Pending Administrative Specification**:
-   - `OWA_Questionnaire_and_Admin_Specification.md` is strictly **ON HOLD** (not finalized) and is not implemented in this phase.
+   - [`v1-OWA_Questionnaire_and_Admin_Specification.md`](../../client-specs/v1-OWA_Questionnaire_and_Admin_Specification.md) is strictly **ON HOLD** (not finalized) and is not implemented in this phase. (Note: superseded by `v3-OWA_Questionnaire_and_Admin_Specification.md` in [`docs/client-specs/`](../../client-specs/README.md)).
 
 ---
 
