@@ -12,7 +12,7 @@ interface BilingualWillProps {
 export function BilingualWillDocument({ testator, parties, children = [] }: BilingualWillProps) {
   const primaryExec = parties.find((p) => p.role === "PRIMARY_EXECUTOR");
   const substituteExec = parties.find((p) => p.role === "SUBSTITUTE_EXECUTOR");
-  const primaryBen = parties.find((p) => p.role === "PRIMARY_BENEFICIARY");
+  const primaryBens = parties.filter((p) => p.role === "PRIMARY_BENEFICIARY");
   const substituteBens = parties.filter((p) => p.role === "SUBSTITUTE_BENEFICIARY");
   const permGuardian = parties.find((p) => p.role === "PERMANENT_GUARDIAN");
   const tempGuardian = parties.find((p) => p.role === "TEMPORARY_GUARDIAN");
@@ -176,39 +176,73 @@ export function BilingualWillDocument({ testator, parties, children = [] }: Bili
           <div className="p-4 sm:p-5 font-serif text-xs sm:text-sm leading-relaxed text-gray-900 space-y-3">
             <p className="font-bold text-obsidian">SECTION SEVEN: DISTRIBUTION OF ESTATE</p>
             <p>
-              7.1 I give, devise and bequeath the whole of my real and personal estate in the United Arab Emirates to my Trustees upon trust to pay the whole residue of my estate to my spouse, <strong>{primaryBen?.fullName}</strong> (holder of passport no. {primaryBen?.passportNumber}), for her/his own use and benefit absolutely.
+              7.1 I direct my trustees to make over the whole residue and remainder of my means and estate to the following primary beneficiaries in the specified percentage shares:
             </p>
-            {substituteBens.length > 0 && (
-              <p>
-                7.2 If my said spouse shall die before me, my Trustees shall hold the residue of my estate upon trust for the following substitute beneficiaries in the specified percentage shares:
-              </p>
-            )}
-            {substituteBens.map((ben, idx) => (
+            {primaryBens.map((ben, idx) => (
               <p key={idx} className="pl-3">
-                • <strong>{ben.fullName}</strong> ({ben.sharePercentage}% share)
+                • <strong>{ben.fullName}</strong> ({ben.sharePercentage || 100}% share, passport no. {ben.passportNumber || "_______________"})
               </p>
             ))}
-            <p>
-              7.3 If any beneficiary entitled hereunder has not attained 21 years of age, their share shall be held in trust with full discretionary powers of maintenance and education until they reach 21.
+            <p className="pt-1 text-xs text-gray-700 italic">
+              7.2 If any of my primary beneficiaries predeceases me, their share shall be divided among surviving primary beneficiaries in proportion to their original shares. If only one survives, they receive 100% of the estate residue.
+            </p>
+            {substituteBens.length > 0 && (
+              <>
+                <p className="pt-2 font-bold text-obsidian text-xs">
+                  7.3 Substitute Beneficiaries (If No Primary Beneficiary Survives Me):
+                </p>
+                {substituteBens.map((ben, idx) => (
+                  <div key={idx} className="pl-3 space-y-0.5">
+                    <p>
+                      • <strong>Substitute {idx === 0 ? "A" : "B"}: {ben.fullName}</strong> ({ben.sharePercentage || 100}% share, passport no. {ben.passportNumber || "_______________"})
+                    </p>
+                    {idx === 0 && (
+                      <p className="text-[11px] text-gray-600 italic pl-3">
+                        If the said {ben.fullName} does not survive me or fails to take a vested interest, then his/her share shall pass to his/her surviving children equally.
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </>
+            )}
+            <p className="pt-1">
+              7.4 If any beneficiary entitled hereunder has not attained 21 years of age, their share shall be held in trust with full discretionary powers of maintenance and education until they reach 21.
             </p>
           </div>
           <div className="p-4 sm:p-5 font-arabic text-sm sm:text-base leading-loose text-gray-900 space-y-3 bg-alabaster/30" dir="rtl">
             <p className="font-bold text-obsidian">البند السابع: توزيع التركة</p>
             <p>
-              7.1 أوصي وأهب كامل أموالي العقارية والمنقولة في دولة الإمارات العربية المتحدة إلى الأمناء لدفع ونقل كامل التركة إلى زوجي/زوجتي، <strong>{primaryBen?.arabicName || primaryBen?.fullName}</strong> (حامل جواز سفر رقم {primaryBen?.passportNumber})، لتكون ملكاً خالصاً له/لها.
+              7.1 أوجه أوصيائي بأن يحولوا كامل الباقي من ممتلكاتي إلى المستفيدين الأساسيين الآتين بالنسب المحددة:
             </p>
-            {substituteBens.length > 0 && (
-              <p>
-                7.2 وفي حال وفاة زوجي/زوجتي قبلي، يحتفظ الأمناء بتركتي لصالح المستفيدين البدلاء الآتين بالنسب والأنصبة المحددة:
-              </p>
-            )}
-            {substituteBens.map((ben, idx) => (
+            {primaryBens.map((ben, idx) => (
               <p key={idx} className="pr-3">
-                • <strong>{ben.arabicName || ben.fullName}</strong> (بنسبة {ben.sharePercentage}%)
+                • <strong>{ben.arabicName || ben.fullName}</strong> (بنسبة {ben.sharePercentage || 100}%، جواز سفر رقم {ben.passportNumber || "_______________"})
               </p>
             ))}
-            <p>
-              7.3 وإذا لم يبلغ أي مستفيد سن 21 عاماً، فتُحفظ حصته على سبيل الأمانة مع كامل سلطات الصرف لنفقات الرعاية والتعليم حتى بلوغه سن 21 عاماً.
+            <p className="pt-1 text-xs text-gray-700 italic">
+              7.2 وفي حال وفاة أيٍّ من المستفيدين الأساسيين قبلي، تُوزع حصته على المستفيدين الأساسيين الباقين على قيد الحياة تناسبياً مع حصصهم الأصلية، وإذا بقي مستفيد أساسي واحد فقط فإنه يحوز 100% من التركة.
+            </p>
+            {substituteBens.length > 0 && (
+              <>
+                <p className="pt-2 font-bold text-obsidian text-xs">
+                  7.3 المستفيدون البدلاء (في حال لم يبقَ أي مستفيد أساسي على قيد الحياة):
+                </p>
+                {substituteBens.map((ben, idx) => (
+                  <div key={idx} className="pr-3 space-y-0.5">
+                    <p>
+                      • <strong>المستفيد البديل {idx === 0 ? "أ" : "ب"}: {ben.arabicName || ben.fullName}</strong> (بنسبة {ben.sharePercentage || 100}%، جواز سفر رقم {ben.passportNumber || "_______________"})
+                    </p>
+                    {idx === 0 && (
+                      <p className="text-xs text-gray-600 italic pr-3">
+                        وفي حال لم يبقَ المذكور/ المذكورة أعلاه على قيد الحياة أو لم يحز على حصة مستقرة، تؤول حصته إلى أولاده الباقين على قيد الحياة بالتساوي.
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </>
+            )}
+            <p className="pt-1">
+              7.4 وإذا لم يبلغ أي مستفيد سن 21 عاماً، فتُحفظ حصته على سبيل الأمانة مع كامل سلطات الصرف لنفقات الرعاية والتعليم حتى بلوغه سن 21 عاماً.
             </p>
           </div>
         </div>

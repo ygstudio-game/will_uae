@@ -19,9 +19,14 @@ export function ADJDBilingualWillDocument({
   const exec2 = assignments.find((a) => a.role === "EXECUTOR_SUBSTITUTE")?.person;
   const exec3 = assignments.find((a) => a.role === "EXECUTOR_FURTHER")?.person;
 
-  // Extract Beneficiaries (1 to 5)
-  const beneficiaries = assignments
-    .filter((a) => a.role === "BENEFICIARY" && a.person)
+  // Extract Primary Beneficiaries (1 to 3)
+  const primaryBeneficiaries = assignments
+    .filter((a) => (a.role === "BENEFICIARY_PRIMARY" || a.role === "BENEFICIARY") && a.person)
+    .sort((a, b) => a.appointmentOrder - b.appointmentOrder);
+
+  // Extract Substitute Beneficiaries (A and optional B)
+  const substituteBeneficiaries = assignments
+    .filter((a) => a.role === "BENEFICIARY_SUBSTITUTE" && a.person)
     .sort((a, b) => a.appointmentOrder - b.appointmentOrder);
 
   // Extract Guardians
@@ -321,8 +326,8 @@ export function ADJDBilingualWillDocument({
               </div>
             </div>
 
-            {/* Beneficiaries List (1 to 5 Simultaneous) */}
-            {beneficiaries.map((ben, idx) => {
+            {/* Primary Beneficiaries List (1 to 3) */}
+            {primaryBeneficiaries.map((ben, idx) => {
               const letter = String.fromCharCode(97 + idx); // a, b, c...
               const p = ben.person;
               return (
@@ -348,6 +353,74 @@ export function ADJDBilingualWillDocument({
                 </div>
               );
             })}
+
+            {/* Proportional Redistribution Clause among Surviving Primaries */}
+            <div className="grid grid-cols-2 divide-x divide-[#E5E0D8] border-b border-[#E5E0D8] bg-[#FAF7F2]/20">
+              <div className="p-3.5 sm:p-4 font-serif text-xs leading-relaxed text-gray-800">
+                If any of my said primary beneficiaries shall predecease me, then I direct that their share of the residue shall be divided among my surviving primary beneficiaries in proportion to their original percentage shares. If only one primary beneficiary survives me, such sole surviving primary beneficiary shall receive the whole of my estate residue.
+              </div>
+              <div className="p-3.5 sm:p-4 font-arabic text-xs sm:text-sm leading-relaxed text-gray-800 bg-[#FAF7F2]/40" dir="rtl">
+                وفي حال وفاة أيٍّ من المستفيدين الأساسيين المذكورين أعلاه قبلي، فإنني أوجه بأن تُوزع حصته من التركة على المستفيدين الأساسيين الباقين على قيد الحياة تناسبياً وفقاً لنسب حصصهم الأصلية. وفي حال بقي مستفيد أساسي واحد فقط على قيد الحياة، فإنه يحوز كامل باقي تركتي.
+              </div>
+            </div>
+
+            {/* Shared Substitute Group (Trigger: If none of the primaries survive) */}
+            {substituteBeneficiaries.length > 0 && (
+              <>
+                <div className="grid grid-cols-2 divide-x divide-[#E5E0D8] border-b border-[#E5E0D8] bg-[#A37E44]/10 text-xs font-bold py-2 px-4 text-[#0B1528]">
+                  <div>SUBSTITUTE BENEFICIARY CLAUSE (IF NO PRIMARY SURVIVES):</div>
+                  <div className="text-right font-arabic" dir="rtl">
+                    بند المستفيدين البدلاء (في حال عدم بقاء أي مستفيد أساسي):
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 divide-x divide-[#E5E0D8] border-b border-[#E5E0D8]">
+                  <div className="p-3.5 sm:p-4 font-serif text-xs leading-relaxed text-gray-800">
+                    If none of my above-named primary beneficiaries survives me, then I direct my trustees to hold the residue of my estate upon trust for the following substitute beneficiaries:
+                  </div>
+                  <div className="p-3.5 sm:p-4 font-arabic text-xs sm:text-sm leading-relaxed text-gray-800 bg-[#FAF7F2]/40" dir="rtl">
+                    وفي حال لم يبقَ أيٌّ من المستفيدين الأساسيين المذكورين أعلاه على قيد الحياة، فإنني أوجه أوصيائي بالاحتفاظ بباقي تركتي كأمانة لصالح المستفيدين البدلاء التاليين:
+                  </div>
+                </div>
+
+                {substituteBeneficiaries.map((sub, idx) => {
+                  const slotLabel = idx === 0 ? "A" : "B";
+                  const p = sub.person;
+                  return (
+                    <div key={sub.id} className="grid grid-cols-2 divide-x divide-[#E5E0D8] border-b border-[#E5E0D8]">
+                      <div className="p-4 sm:p-5 font-serif text-xs sm:text-sm leading-relaxed space-y-2">
+                        <p className="font-bold text-[#0B1528]">
+                          Substitute Beneficiary {slotLabel}) As to a (<strong>{sub.sharePercentage || 100}%</strong>) percentage share of residue to:
+                        </p>
+                        <p><strong>{p?.fullName}</strong></p>
+                        <p>born on: <strong>{formatDate(p?.dob)}</strong></p>
+                        <p>holder of Passport Number: <strong>{p?.passportNumber || "_______________"}</strong></p>
+                        <p>with UAE Identity Card No (if applicable): <strong>{p?.emiratesId || "N/A"}</strong></p>
+                        {idx === 0 && (
+                          <p className="pt-2 text-xs text-gray-700 italic border-t border-gray-100">
+                            If the said <strong>{p?.fullName}</strong> does not survive me or fails to take a vested interest, then his/her share of residue shall pass to his/her surviving children in equal shares.
+                          </p>
+                        )}
+                      </div>
+                      <div className="p-4 sm:p-5 font-arabic text-sm sm:text-base leading-loose space-y-2 bg-[#FAF7F2]/40" dir="rtl">
+                        <p className="font-bold text-[#0B1528]">
+                          المستفيد البديل {slotLabel}) نسبة (<strong>{sub.sharePercentage || 100} ٪</strong>) بالمائة من حصصي الباقية تؤول إلى:
+                        </p>
+                        <p><strong>{p?.arabicName || p?.fullName}</strong></p>
+                        <p>المولود في: <strong>{formatDate(p?.dob)}</strong></p>
+                        <p>حامل جواز سفر رقم: <strong>{p?.passportNumber || "_______________"}</strong></p>
+                        <p>وبطاقة هوية الإمارات رقم (إن وجدت): <strong>{p?.emiratesId || "لا ينطبق"}</strong></p>
+                        {idx === 0 && (
+                          <p className="pt-2 text-xs sm:text-sm text-gray-700 italic border-t border-gray-200">
+                            وفي حال لم يبقَ المذكور/ المذكورة أعلاه على قيد الحياة أو لم يحز على حصة مستقرة، تؤول حصته من التركة إلى أولاده الباقين على قيد الحياة بالتساوي بينهم.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </>
+            )}
           </div>
         </div>
 
