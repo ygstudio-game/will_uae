@@ -79,7 +79,7 @@ export function SectionD_Guardians() {
     const newPerson = await addOrUpdatePerson({
       fullName: `New ${slot.title}`,
       relationship: slot.order === 3 ? "UAE Resident Friend" : "Family Member",
-      nationality: "British",
+      nationality: "",
       isUaeResident: slot.order === 3,
     });
 
@@ -304,7 +304,7 @@ export function SectionD_Guardians() {
                       </label>
                       <input
                         type="text"
-                        defaultValue={guardianPerson.nationality || "British"}
+                        defaultValue={guardianPerson.nationality || ""}
                         onBlur={(e) =>
                           handleUpdateGuardian(guardianPerson.id, {
                             nationality: e.target.value,

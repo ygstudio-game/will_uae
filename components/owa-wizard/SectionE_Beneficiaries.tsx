@@ -83,7 +83,7 @@ export function SectionE_Beneficiaries() {
     const newPerson = await addOrUpdatePerson({
       fullName: `Primary Beneficiary ${primaryAssignments.length + 1}`,
       relationship: "Beneficiary",
-      nationality: "British",
+      nationality: "",
     });
 
     if (newPerson) {
@@ -127,7 +127,7 @@ export function SectionE_Beneficiaries() {
     const newPerson = await addOrUpdatePerson({
       fullName: `Substitute Beneficiary ${slotLabel}`,
       relationship: "Substitute Beneficiary",
-      nationality: "British",
+      nationality: "",
     });
 
     if (newPerson) {

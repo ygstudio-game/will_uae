@@ -27,21 +27,21 @@ interface QualificationFormProps {
 
 export function QualificationForm({ onComplete, initialData }: QualificationFormProps) {
   const [fullName, setFullName] = useState(initialData?.fullName || "");
-  const [packageType, setPackageType] = useState<PackageType>(initialData?.packageType || "INDIVIDUAL");
+  const [packageType, setPackageType] = useState<PackageType | null>(initialData?.packageType || null);
 
-  // Primary Testator Answers
-  const [testatorAge21, setTestatorAge21] = useState<boolean>(initialData?.testatorAge21 ?? true);
-  const [nonUaeNational, setNonUaeNational] = useState<boolean>(initialData?.nonUaeNational ?? true);
-  const [uaeAssets, setUaeAssets] = useState<boolean>(initialData?.uaeAssets ?? true);
-  const [married, setMarried] = useState<boolean>(initialData?.married ?? false);
-  const [childrenUnder18, setChildrenUnder18] = useState<boolean>(initialData?.childrenUnder18 ?? false);
+  // Primary Testator Answers - start unselected (null) so user must choose manually
+  const [testatorAge21, setTestatorAge21] = useState<boolean | null>(initialData?.testatorAge21 ?? null);
+  const [nonUaeNational, setNonUaeNational] = useState<boolean | null>(initialData?.nonUaeNational ?? null);
+  const [uaeAssets, setUaeAssets] = useState<boolean | null>(initialData?.uaeAssets ?? null);
+  const [married, setMarried] = useState<boolean | null>(initialData?.married ?? null);
+  const [childrenUnder18, setChildrenUnder18] = useState<boolean | null>(initialData?.childrenUnder18 ?? null);
 
-  // Partner Answers (if Couples)
-  const [partnerAge21, setPartnerAge21] = useState<boolean>(initialData?.partnerAge21 ?? true);
-  const [partnerNonUae, setPartnerNonUae] = useState<boolean>(initialData?.partnerNonUae ?? true);
-  const [partnerAssets, setPartnerAssets] = useState<boolean>(initialData?.partnerAssets ?? true);
-  const [partnerMarried, setPartnerMarried] = useState<boolean>(initialData?.partnerMarried ?? true);
-  const [partnerChildrenUnder18, setPartnerChildrenUnder18] = useState<boolean>(initialData?.partnerChildrenUnder18 ?? false);
+  // Partner Answers (if Couples) - start unselected
+  const [partnerAge21, setPartnerAge21] = useState<boolean | null>(initialData?.partnerAge21 ?? null);
+  const [partnerNonUae, setPartnerNonUae] = useState<boolean | null>(initialData?.partnerNonUae ?? null);
+  const [partnerAssets, setPartnerAssets] = useState<boolean | null>(initialData?.partnerAssets ?? null);
+  const [partnerMarried, setPartnerMarried] = useState<boolean | null>(initialData?.partnerMarried ?? null);
+  const [partnerChildrenUnder18, setPartnerChildrenUnder18] = useState<boolean | null>(initialData?.partnerChildrenUnder18 ?? null);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -52,31 +52,59 @@ export function QualificationForm({ onComplete, initialData }: QualificationForm
       return;
     }
 
+    if (!packageType) {
+      setError("Please select who you would like to prepare a Will for (Myself or My Partner & Me).");
+      return;
+    }
+
+    if (
+      testatorAge21 === null ||
+      nonUaeNational === null ||
+      uaeAssets === null ||
+      married === null ||
+      childrenUnder18 === null
+    ) {
+      setError("Please answer all eligibility questions before proceeding.");
+      return;
+    }
+
     if (!testatorAge21) {
       setError("The platform is restricted to individuals aged 21 and above per UAE court rules.");
       return;
     }
 
-    if (packageType === "COUPLES" && !partnerAge21) {
-      setError("Both partners must be aged 21 and above.");
-      return;
+    if (packageType === "COUPLES") {
+      if (
+        partnerAge21 === null ||
+        partnerNonUae === null ||
+        partnerAssets === null ||
+        partnerChildrenUnder18 === null
+      ) {
+        setError("Please answer all questions regarding your partner.");
+        return;
+      }
+
+      if (!partnerAge21) {
+        setError("Both partners must be aged 21 and above.");
+        return;
+      }
     }
 
     setError(null);
     onComplete({
       fullName: fullName.trim(),
       packageType,
-      testatorAge21,
-      nonUaeNational,
-      uaeAssets,
-      married,
-      childrenUnder18,
+      testatorAge21: Boolean(testatorAge21),
+      nonUaeNational: Boolean(nonUaeNational),
+      uaeAssets: Boolean(uaeAssets),
+      married: Boolean(married),
+      childrenUnder18: Boolean(childrenUnder18),
       ...(packageType === "COUPLES" && {
-        partnerAge21,
-        partnerNonUae,
-        partnerAssets,
-        partnerMarried,
-        partnerChildrenUnder18,
+        partnerAge21: Boolean(partnerAge21),
+        partnerNonUae: Boolean(partnerNonUae),
+        partnerAssets: Boolean(partnerAssets),
+        partnerMarried: Boolean(partnerMarried),
+        partnerChildrenUnder18: Boolean(partnerChildrenUnder18),
       }),
     });
   };
@@ -171,21 +199,29 @@ export function QualificationForm({ onComplete, initialData }: QualificationForm
         {/* Q3 */}
         <div className="flex items-center justify-between p-3.5 rounded-lg border border-[#E5E0D8] bg-[#FAF7F2]/40">
           <div>
-            <p className="text-xs font-bold text-gray-900">3. Are you aged 21 or above?</p>
+            <p className="text-xs font-bold text-gray-900">3. Are you aged 21 or above? *</p>
             <p className="text-[11px] text-gray-500">Legal platform age threshold for testators.</p>
           </div>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => setTestatorAge21(true)}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold ${testatorAge21 ? "bg-[#0B1528] text-white" : "bg-white border text-gray-700"}`}
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                testatorAge21 === true
+                  ? "bg-[#0B1528] text-white"
+                  : "bg-white border border-[#E5E0D8] text-gray-700 hover:border-gray-400"
+              }`}
             >
               Yes
             </button>
             <button
               type="button"
               onClick={() => setTestatorAge21(false)}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold ${!testatorAge21 ? "bg-[#0B1528] text-white" : "bg-white border text-gray-700"}`}
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                testatorAge21 === false
+                  ? "bg-[#0B1528] text-white"
+                  : "bg-white border border-[#E5E0D8] text-gray-700 hover:border-gray-400"
+              }`}
             >
               No
             </button>
@@ -195,21 +231,29 @@ export function QualificationForm({ onComplete, initialData }: QualificationForm
         {/* Q4 */}
         <div className="flex items-center justify-between p-3.5 rounded-lg border border-[#E5E0D8] bg-[#FAF7F2]/40">
           <div>
-            <p className="text-xs font-bold text-gray-900">4. Are you a non-UAE national?</p>
+            <p className="text-xs font-bold text-gray-900">4. Are you a non-UAE national? *</p>
             <p className="text-[11px] text-gray-500">Governed under the Abu Dhabi Civil Family Court.</p>
           </div>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => setNonUaeNational(true)}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold ${nonUaeNational ? "bg-[#0B1528] text-white" : "bg-white border text-gray-700"}`}
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                nonUaeNational === true
+                  ? "bg-[#0B1528] text-white"
+                  : "bg-white border border-[#E5E0D8] text-gray-700 hover:border-gray-400"
+              }`}
             >
               Yes
             </button>
             <button
               type="button"
               onClick={() => setNonUaeNational(false)}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold ${!nonUaeNational ? "bg-[#0B1528] text-white" : "bg-white border text-gray-700"}`}
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                nonUaeNational === false
+                  ? "bg-[#0B1528] text-white"
+                  : "bg-white border border-[#E5E0D8] text-gray-700 hover:border-gray-400"
+              }`}
             >
               No
             </button>
@@ -219,21 +263,29 @@ export function QualificationForm({ onComplete, initialData }: QualificationForm
         {/* Q5 */}
         <div className="flex items-center justify-between p-3.5 rounded-lg border border-[#E5E0D8] bg-[#FAF7F2]/40">
           <div>
-            <p className="text-xs font-bold text-gray-900">5. Do you own any assets in the UAE?</p>
+            <p className="text-xs font-bold text-gray-900">5. Do you own any assets in the UAE? *</p>
             <p className="text-[11px] text-gray-500">Bank accounts, property, cars, or end-of-service gratuity.</p>
           </div>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => setUaeAssets(true)}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold ${uaeAssets ? "bg-[#0B1528] text-white" : "bg-white border text-gray-700"}`}
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                uaeAssets === true
+                  ? "bg-[#0B1528] text-white"
+                  : "bg-white border border-[#E5E0D8] text-gray-700 hover:border-gray-400"
+              }`}
             >
               Yes
             </button>
             <button
               type="button"
               onClick={() => setUaeAssets(false)}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold ${!uaeAssets ? "bg-[#0B1528] text-white" : "bg-white border text-gray-700"}`}
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                uaeAssets === false
+                  ? "bg-[#0B1528] text-white"
+                  : "bg-white border border-[#E5E0D8] text-gray-700 hover:border-gray-400"
+              }`}
             >
               No
             </button>
@@ -243,21 +295,29 @@ export function QualificationForm({ onComplete, initialData }: QualificationForm
         {/* Q6 */}
         <div className="flex items-center justify-between p-3.5 rounded-lg border border-[#E5E0D8] bg-[#FAF7F2]/40">
           <div>
-            <p className="text-xs font-bold text-gray-900">6. Are you married?</p>
+            <p className="text-xs font-bold text-gray-900">6. Are you married? *</p>
             <p className="text-[11px] text-gray-500">Captures legal context without forcing appointments.</p>
           </div>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => setMarried(true)}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold ${married ? "bg-[#0B1528] text-white" : "bg-white border text-gray-700"}`}
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                married === true
+                  ? "bg-[#0B1528] text-white"
+                  : "bg-white border border-[#E5E0D8] text-gray-700 hover:border-gray-400"
+              }`}
             >
               Yes
             </button>
             <button
               type="button"
               onClick={() => setMarried(false)}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold ${!married ? "bg-[#0B1528] text-white" : "bg-white border text-gray-700"}`}
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                married === false
+                  ? "bg-[#0B1528] text-white"
+                  : "bg-white border border-[#E5E0D8] text-gray-700 hover:border-gray-400"
+              }`}
             >
               No
             </button>
@@ -267,21 +327,29 @@ export function QualificationForm({ onComplete, initialData }: QualificationForm
         {/* Q7 */}
         <div className="flex items-center justify-between p-3.5 rounded-lg border border-[#E5E0D8] bg-[#FAF7F2]/40">
           <div>
-            <p className="text-xs font-bold text-gray-900">7. Do you have any children under 18?</p>
+            <p className="text-xs font-bold text-gray-900">7. Do you have any children under 18? *</p>
             <p className="text-[11px] text-gray-500">Controls minor children declaration and guardianship section.</p>
           </div>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => setChildrenUnder18(true)}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold ${childrenUnder18 ? "bg-[#0B1528] text-white" : "bg-white border text-gray-700"}`}
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                childrenUnder18 === true
+                  ? "bg-[#0B1528] text-white"
+                  : "bg-white border border-[#E5E0D8] text-gray-700 hover:border-gray-400"
+              }`}
             >
               Yes
             </button>
             <button
               type="button"
               onClick={() => setChildrenUnder18(false)}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold ${!childrenUnder18 ? "bg-[#0B1528] text-white" : "bg-white border text-gray-700"}`}
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                childrenUnder18 === false
+                  ? "bg-[#0B1528] text-white"
+                  : "bg-white border border-[#E5E0D8] text-gray-700 hover:border-gray-400"
+              }`}
             >
               No
             </button>
@@ -298,20 +366,28 @@ export function QualificationForm({ onComplete, initialData }: QualificationForm
 
           <div className="flex items-center justify-between p-3.5 rounded-lg border border-[#E5E0D8] bg-[#FAF7F2]/40">
             <div>
-              <p className="text-xs font-bold text-gray-900">Is your partner aged 21 or above?</p>
+              <p className="text-xs font-bold text-gray-900">Is your partner aged 21 or above? *</p>
             </div>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => setPartnerAge21(true)}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold ${partnerAge21 ? "bg-[#0B1528] text-white" : "bg-white border text-gray-700"}`}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                  partnerAge21 === true
+                    ? "bg-[#0B1528] text-white"
+                    : "bg-white border border-[#E5E0D8] text-gray-700 hover:border-gray-400"
+                }`}
               >
                 Yes
               </button>
               <button
                 type="button"
                 onClick={() => setPartnerAge21(false)}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold ${!partnerAge21 ? "bg-[#0B1528] text-white" : "bg-white border text-gray-700"}`}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                  partnerAge21 === false
+                    ? "bg-[#0B1528] text-white"
+                    : "bg-white border border-[#E5E0D8] text-gray-700 hover:border-gray-400"
+                }`}
               >
                 No
               </button>
@@ -320,20 +396,28 @@ export function QualificationForm({ onComplete, initialData }: QualificationForm
 
           <div className="flex items-center justify-between p-3.5 rounded-lg border border-[#E5E0D8] bg-[#FAF7F2]/40">
             <div>
-              <p className="text-xs font-bold text-gray-900">Is your partner a non-UAE national?</p>
+              <p className="text-xs font-bold text-gray-900">Is your partner a non-UAE national? *</p>
             </div>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => setPartnerNonUae(true)}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold ${partnerNonUae ? "bg-[#0B1528] text-white" : "bg-white border text-gray-700"}`}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                  partnerNonUae === true
+                    ? "bg-[#0B1528] text-white"
+                    : "bg-white border border-[#E5E0D8] text-gray-700 hover:border-gray-400"
+                }`}
               >
                 Yes
               </button>
               <button
                 type="button"
                 onClick={() => setPartnerNonUae(false)}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold ${!partnerNonUae ? "bg-[#0B1528] text-white" : "bg-white border text-gray-700"}`}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                  partnerNonUae === false
+                    ? "bg-[#0B1528] text-white"
+                    : "bg-white border border-[#E5E0D8] text-gray-700 hover:border-gray-400"
+                }`}
               >
                 No
               </button>
@@ -342,20 +426,28 @@ export function QualificationForm({ onComplete, initialData }: QualificationForm
 
           <div className="flex items-center justify-between p-3.5 rounded-lg border border-[#E5E0D8] bg-[#FAF7F2]/40">
             <div>
-              <p className="text-xs font-bold text-gray-900">Does your partner own assets in the UAE?</p>
+              <p className="text-xs font-bold text-gray-900">Does your partner own assets in the UAE? *</p>
             </div>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => setPartnerAssets(true)}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold ${partnerAssets ? "bg-[#0B1528] text-white" : "bg-white border text-gray-700"}`}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                  partnerAssets === true
+                    ? "bg-[#0B1528] text-white"
+                    : "bg-white border border-[#E5E0D8] text-gray-700 hover:border-gray-400"
+                }`}
               >
                 Yes
               </button>
               <button
                 type="button"
                 onClick={() => setPartnerAssets(false)}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold ${!partnerAssets ? "bg-[#0B1528] text-white" : "bg-white border text-gray-700"}`}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                  partnerAssets === false
+                    ? "bg-[#0B1528] text-white"
+                    : "bg-white border border-[#E5E0D8] text-gray-700 hover:border-gray-400"
+                }`}
               >
                 No
               </button>
@@ -364,20 +456,28 @@ export function QualificationForm({ onComplete, initialData }: QualificationForm
 
           <div className="flex items-center justify-between p-3.5 rounded-lg border border-[#E5E0D8] bg-[#FAF7F2]/40">
             <div>
-              <p className="text-xs font-bold text-gray-900">Does your partner have children under 18?</p>
+              <p className="text-xs font-bold text-gray-900">Does your partner have children under 18? *</p>
             </div>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => setPartnerChildrenUnder18(true)}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold ${partnerChildrenUnder18 ? "bg-[#0B1528] text-white" : "bg-white border text-gray-700"}`}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                  partnerChildrenUnder18 === true
+                    ? "bg-[#0B1528] text-white"
+                    : "bg-white border border-[#E5E0D8] text-gray-700 hover:border-gray-400"
+                }`}
               >
                 Yes
               </button>
               <button
                 type="button"
                 onClick={() => setPartnerChildrenUnder18(false)}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold ${!partnerChildrenUnder18 ? "bg-[#0B1528] text-white" : "bg-white border text-gray-700"}`}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                  partnerChildrenUnder18 === false
+                    ? "bg-[#0B1528] text-white"
+                    : "bg-white border border-[#E5E0D8] text-gray-700 hover:border-gray-400"
+                }`}
               >
                 No
               </button>

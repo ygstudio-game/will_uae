@@ -67,7 +67,7 @@ export function SectionC_Executors() {
     const newPerson = await addOrUpdatePerson({
       fullName: `New ${slot.title}`,
       relationship: slot.order === 1 ? "Spouse" : "Relative",
-      nationality: "British",
+      nationality: "",
     });
 
     if (newPerson) {
@@ -246,7 +246,7 @@ export function SectionC_Executors() {
                       </label>
                       <input
                         type="text"
-                        defaultValue={executorPerson.nationality || "British"}
+                        defaultValue={executorPerson.nationality || ""}
                         onBlur={(e) =>
                           handleUpdateExecutor(executorPerson.id, { nationality: e.target.value })
                         }

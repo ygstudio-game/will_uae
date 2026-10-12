@@ -22,7 +22,7 @@ export function SectionB_Children() {
     const newPerson = await addOrUpdatePerson({
       fullName: `Child ${childAssignments.length + 1}`,
       relationship: "Child",
-      nationality: activeWill?.testatorPerson?.nationality || "British",
+      nationality: activeWill?.testatorPerson?.nationality || "",
     });
 
     if (newPerson) {
@@ -224,7 +224,7 @@ export function SectionB_Children() {
                     </label>
                     <input
                       type="text"
-                      defaultValue={child?.nationality || "British"}
+                      defaultValue={child?.nationality || ""}
                       onBlur={(e) =>
                         handleUpdateChild(assignment.id, personId, { nationality: e.target.value })
                       }
