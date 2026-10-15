@@ -4,6 +4,7 @@ import React from "react";
 import { Plus, Trash2, Shield, HeartHandshake, UserCheck, AlertCircle, FileText, Upload } from "lucide-react";
 import { useOwaStore } from "@/store/useOwaStore";
 import { RoleType } from "@/types/owa";
+import { transliterateToName } from "@/lib/transliterate";
 
 interface GuardianSlot {
   role: RoleType;
@@ -95,9 +96,37 @@ export function SectionD_Guardians() {
     });
   };
 
-  const handleAssignSpouseAsPermanent = () => {
-    if (!potentialSpouse) return;
-    assignPersonToRole(potentialSpouse.id, "GUARDIAN_PERMANENT", 1);
+  const handleAppointSurvivingSpouse = async () => {
+    if (potentialSpouse) {
+      assignPersonToRole(potentialSpouse.id, "GUARDIAN_PERMANENT", 1);
+    } else {
+      const newPerson = await addOrUpdatePerson({
+        fullName: "",
+        relationship: "Spouse",
+        nationality: "",
+        isUaeResident: true,
+      });
+      if (newPerson) {
+        assignPersonToRole(newPerson.id, "GUARDIAN_PERMANENT", 1);
+      }
+    }
+  };
+
+  const handleGuardianNameBlur = async (
+    personId: string,
+    fullNameValue: string,
+    currentArabic?: string | null
+  ) => {
+    await handleUpdateGuardian(personId, { fullName: fullNameValue });
+    if (fullNameValue.trim() && !currentArabic?.trim()) {
+      const transliterated = await transliterateToName(fullNameValue);
+      if (transliterated) {
+        await handleUpdateGuardian(personId, {
+          fullName: fullNameValue,
+          arabicName: transliterated,
+        });
+      }
+    }
   };
 
   return (
@@ -127,23 +156,28 @@ export function SectionD_Guardians() {
       )}
 
       {/* Quick Spouse Appointment Banner */}
-      {potentialSpouse && !getAssignment("GUARDIAN_PERMANENT", 1) && (
-        <div className="bg-[#0B1528] text-white p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+      {!getAssignment("GUARDIAN_PERMANENT", 1) && (
+        <div className="bg-[#0B1528] text-white p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm border border-[#A37E44]/30">
           <div className="flex items-center gap-3">
             <HeartHandshake className="w-6 h-6 text-[#A37E44] shrink-0" />
             <div>
-              <h4 className="text-sm font-semibold">Quick Appointment: Appoint Spouse</h4>
+              <h4 className="text-sm font-semibold">Surviving Spouse Guardianship (Clause 5)</h4>
               <p className="text-xs text-gray-300 mt-0.5">
-                Set <strong>{potentialSpouse.fullName}</strong> as your Primary Permanent Guardian (Section 5).
+                {potentialSpouse ? (
+                  <>Set <strong>{potentialSpouse.fullName}</strong> as your Primary Permanent Guardian.</>
+                ) : (
+                  <>Under ADJD rules, parental guardianship vests primarily in your surviving spouse upon demise.</>
+                )}
               </p>
             </div>
           </div>
           <button
             type="button"
-            onClick={handleAssignSpouseAsPermanent}
-            className="px-4 py-2 bg-[#A37E44] hover:bg-[#B38D48] text-white text-xs font-semibold rounded-lg shadow transition-all whitespace-nowrap"
+            onClick={handleAppointSurvivingSpouse}
+            className="px-4 py-2 bg-[#A37E44] hover:bg-[#B38D48] text-white text-xs font-semibold rounded-lg shadow transition-all whitespace-nowrap flex items-center gap-1.5"
           >
-            Appoint Spouse as Permanent Guardian
+            <HeartHandshake className="w-3.5 h-3.5" />
+            Appoint Surviving Spouse
           </button>
         </div>
       )}
@@ -154,6 +188,7 @@ export function SectionD_Guardians() {
           const assignment = getAssignment(slot.role, slot.order);
           const guardianPerson = assignment?.person;
           const isAssigned = !!assignment && !!guardianPerson;
+          const isSpouse = guardianPerson?.relationship?.toLowerCase() === "spouse" || guardianPerson?.relationship?.toLowerCase() === "wife" || guardianPerson?.relationship?.toLowerCase() === "husband";
 
           return (
             <div
@@ -173,6 +208,12 @@ export function SectionD_Guardians() {
                     <h3 className="text-base font-serif font-bold text-[#0B1528]">
                       {slot.title} ({slot.clause})
                     </h3>
+                    {isAssigned && isSpouse && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-900 border border-amber-300">
+                        <HeartHandshake className="w-3 h-3 text-[#A37E44]" />
+                        Surviving Spouse
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-gray-500 mt-0.5">{slot.subtitle}</p>
                   <p className="text-[11px] text-[#A37E44] font-medium mt-0.5 italic">
@@ -198,6 +239,16 @@ export function SectionD_Guardians() {
                     Select a person from your saved repository or create a new guardian record:
                   </p>
                   <div className="flex flex-wrap gap-3">
+                    {slot.order === 1 && (
+                      <button
+                        type="button"
+                        onClick={handleAppointSurvivingSpouse}
+                        className="px-4 py-2 bg-[#A37E44] hover:bg-[#B38D48] text-white text-xs font-semibold rounded-lg shadow-sm flex items-center gap-1.5 transition-all"
+                      >
+                        <HeartHandshake className="w-3.5 h-3.5" />
+                        Appoint Surviving Spouse
+                      </button>
+                    )}
                     {existingPersons.length > 0 && (
                       <select
                         onChange={(e) => handleSelectExistingPerson(slot, e.target.value)}
@@ -255,8 +306,13 @@ export function SectionD_Guardians() {
                       <input
                         type="text"
                         defaultValue={guardianPerson.fullName || ""}
+                        key={`guardian-name-${guardianPerson.fullName}`}
                         onBlur={(e) =>
-                          handleUpdateGuardian(guardianPerson.id, { fullName: e.target.value })
+                          handleGuardianNameBlur(
+                            guardianPerson.id,
+                            e.target.value,
+                            guardianPerson.arabicName
+                          )
                         }
                         placeholder="e.g. Sarah Jenkins"
                         className="w-full px-3.5 py-2.5 rounded-lg border border-[#E5E0D8] text-sm focus:outline-none focus:border-[#A37E44]"
@@ -271,6 +327,7 @@ export function SectionD_Guardians() {
                         type="text"
                         dir="rtl"
                         defaultValue={guardianPerson.arabicName || ""}
+                        key={`guardian-arabic-${guardianPerson.arabicName}`}
                         onBlur={(e) =>
                           handleUpdateGuardian(guardianPerson.id, {
                             arabicName: e.target.value,

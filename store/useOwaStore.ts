@@ -52,18 +52,18 @@ export const createDefaultDraftApplication = (): ApplicationData => {
   const defaultTestator: PersonData = {
     id: DEFAULT_TESTATOR_ID,
     applicationId: DEFAULT_APPLICATION_ID,
-    fullName: "Daniel Michael Carter",
-    arabicName: "دانيال مايكل كارتر",
-    isArabicApproved: true,
-    dob: "1982-05-14",
-    nationality: "British",
+    fullName: "",
+    arabicName: "",
+    isArabicApproved: false,
+    dob: null,
+    nationality: "",
     relationship: "Self",
-    passportNumber: "GBR12345678",
-    emiratesId: "784-1982-1234567-1",
-    isUaeResident: true,
-    address: "Villa 14, Saadiyat Beach Residences, Abu Dhabi, UAE",
-    email: "daniel.carter@example.com",
-    phone: "+971 50 123 4567",
+    passportNumber: "",
+    emiratesId: "",
+    isUaeResident: false,
+    address: "",
+    email: "",
+    phone: "",
     documents: [],
   };
 
@@ -74,8 +74,8 @@ export const createDefaultDraftApplication = (): ApplicationData => {
     versionTag: "ADJD-NM0723-07-03",
     testatorPersonId: DEFAULT_TESTATOR_ID,
     testatorPerson: defaultTestator,
-    domicileCountry: "United Kingdom",
-    declarationConfirmed: true,
+    domicileCountry: "",
+    declarationConfirmed: false,
     hasChildrenUnder18: false,
     isDraftConfirmed: false,
     roleAssignments: [],
@@ -89,13 +89,13 @@ export const createDefaultDraftApplication = (): ApplicationData => {
     qualTestatorAge21: true,
     qualNonUaeNational: true,
     qualUaeAssets: true,
-    qualMarried: true,
-    qualChildrenUnder18: true,
+    qualMarried: false,
+    qualChildrenUnder18: false,
     account: {
       id: "draft-account-local",
-      email: "daniel.carter@example.com",
-      fullName: "Daniel Michael Carter",
-      phoneNumber: "+971 50 123 4567",
+      email: "",
+      fullName: "",
+      phoneNumber: "",
     },
     persons: [defaultTestator],
     wills: [defaultWill],
@@ -363,6 +363,9 @@ export const useOwaStore = create<OwaState>()(
           if (activeWillIdx < 0) return;
 
           const activeWill = state.application.wills[activeWillIdx];
+          const targetAssignment = activeWill.roleAssignments.find(
+            (ra) => ra.id === roleAssignmentId
+          );
           const filtered = activeWill.roleAssignments.filter(
             (ra) => ra.id !== roleAssignmentId
           );
@@ -374,9 +377,25 @@ export const useOwaStore = create<OwaState>()(
             isDraftConfirmed: false,
           };
 
+          // Clean up orphan person if not used elsewhere
+          let updatedPersons = state.application.persons;
+          if (targetAssignment?.personId) {
+            const isUsedElsewhere = updatedWills.some(
+              (w) =>
+                w.roleAssignments.some((ra) => ra.personId === targetAssignment.personId) ||
+                w.testatorPersonId === targetAssignment.personId
+            );
+            if (!isUsedElsewhere) {
+              updatedPersons = updatedPersons.filter(
+                (p) => p.id !== targetAssignment.personId
+              );
+            }
+          }
+
           set({
             application: {
               ...state.application,
+              persons: updatedPersons,
               wills: updatedWills,
             },
           });

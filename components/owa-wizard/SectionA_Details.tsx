@@ -15,6 +15,8 @@ import {
   Info,
 } from "lucide-react";
 import { useOwaStore } from "@/store/useOwaStore";
+import { transliterateToName } from "@/lib/transliterate";
+import { UploadedDocumentData, DocumentType } from "@/types/owa";
 
 export function SectionA_Details() {
   const { application, activeWillIndex, addOrUpdatePerson } = useOwaStore();
@@ -58,6 +60,37 @@ export function SectionA_Details() {
   const [justExtractedBanner, setJustExtractedBanner] = useState<string | null>(null);
   const [analyzingType, setAnalyzingType] = useState<string | null>(null);
 
+  // Helper to persist uploaded documents to testator record
+  const saveDocument = async (
+    docType: DocumentType,
+    fileName: string,
+    ocrConfidence?: number,
+    extracted?: Record<string, unknown>
+  ) => {
+    const existingDocs = testator?.documents || [];
+    const filtered = existingDocs.filter((d) => d.documentType !== docType);
+    const newDoc: UploadedDocumentData = {
+      id: `doc-${docType.toLowerCase()}-${Date.now()}`,
+      personId: testator?.id || "",
+      documentType: docType,
+      fileName,
+      fileUrl: "",
+      fileSizeBytes: 1024 * 50,
+      mimeType: fileName.endsWith(".pdf") ? "application/pdf" : "image/jpeg",
+      extractedData: extracted || null,
+      ocrConfidence: ocrConfidence || 95,
+      isExpired: false,
+    };
+    const updatedDocs = [...filtered, newDoc];
+    if (testator?.id) {
+      await addOrUpdatePerson({
+        id: testator.id,
+        documents: updatedDocs,
+      });
+    }
+    return updatedDocs;
+  };
+
   // Sync state if active testator changes
   useEffect(() => {
     if (testator) {
@@ -76,6 +109,25 @@ export function SectionA_Details() {
       if (testator.address) setAddress(testator.address);
       if (testator.email) setEmail(testator.email);
       if (testator.phone) setPhone(testator.phone);
+
+      // Restore document upload states if present in store
+      if (testator.documents && testator.documents.length > 0) {
+        const pDoc = testator.documents.find((d) => d.documentType === "PASSPORT");
+        if (pDoc) {
+          setPassportUploaded(true);
+          setPassportFileName(pDoc.fileName);
+        }
+        const eDoc = testator.documents.find((d) => d.documentType === "EMIRATES_ID");
+        if (eDoc) {
+          setEmiratesIdUploaded(true);
+          setEmiratesIdFileName(eDoc.fileName);
+        }
+        const aDoc = testator.documents.find((d) => d.documentType === "PROOF_OF_ADDRESS");
+        if (aDoc) {
+          setAddressProofUploaded(true);
+          setAddressProofFileName(aDoc.fileName);
+        }
+      }
     }
     if (activeWill?.domicileCountry) {
       setDomicileCountry(activeWill.domicileCountry);
@@ -103,6 +155,21 @@ export function SectionA_Details() {
 
   const handleBlur = () => {
     syncToStore();
+  };
+
+  const handleFullNameBlur = async () => {
+    syncToStore();
+    if (fullName.trim() && !arabicName.trim()) {
+      const transliterated = await transliterateToName(fullName);
+      if (transliterated) {
+        setArabicName(transliterated);
+        setAutofilledFields((prev) => ({
+          ...prev,
+          arabicName: "Auto-Transliterated",
+        }));
+        syncToStore({ arabicName: transliterated });
+      }
+    }
   };
 
   // --- Document Handlers & Gemini Vision OCR Integration ---
@@ -140,6 +207,7 @@ export function SectionA_Details() {
       }));
 
       setJustExtractedBanner("Sample passport parsed! Personal details autofilled below for your review.");
+      await saveDocument("PASSPORT", filename, 98, extractedData);
       syncToStore(extractedData as any);
       return;
     }
@@ -162,6 +230,7 @@ export function SectionA_Details() {
 
       const ocr = json.data;
       setPassportUploaded(true);
+      await saveDocument("PASSPORT", file.name, ocr.confidence, ocr);
       const extractedData: any = {};
       if (ocr.fullName) {
         setFullName(ocr.fullName);
@@ -204,6 +273,7 @@ export function SectionA_Details() {
       console.error("Passport OCR error:", err);
       setJustExtractedBanner(`OCR Note: ${err.message || "Could not auto-read file"}. You may fill details manually.`);
       setPassportUploaded(true);
+      await saveDocument("PASSPORT", file.name, 75);
     } finally {
       setAnalyzingType(null);
     }
@@ -234,6 +304,7 @@ export function SectionA_Details() {
       }));
 
       setJustExtractedBanner("Emirates ID parsed! Official Arabic name & Emirates ID populated below.");
+      await saveDocument("EMIRATES_ID", filename, 98, extractedData);
       syncToStore(extractedData as any);
       return;
     }
@@ -257,6 +328,7 @@ export function SectionA_Details() {
       const ocr = json.data;
       setEmiratesIdUploaded(true);
       setIsUaeResident(true);
+      await saveDocument("EMIRATES_ID", file.name, ocr.confidence, ocr);
 
       const extractedData: any = { isUaeResident: true };
       if (ocr.arabicName) {
@@ -284,6 +356,7 @@ export function SectionA_Details() {
       console.error("Emirates ID OCR error:", err);
       setJustExtractedBanner(`OCR Note: ${err.message || "Could not auto-read file"}. You may fill details manually.`);
       setEmiratesIdUploaded(true);
+      await saveDocument("EMIRATES_ID", file.name, 75);
     } finally {
       setAnalyzingType(null);
     }
@@ -295,7 +368,7 @@ export function SectionA_Details() {
       setAddressProofUploaded(true);
       setAddressProofFileName(filename);
 
-      const extractedAddress = address || "Villa 14, Saadiyat Beach Residences, Abu Dhabi, UAE";
+      const extractedAddress = address || "";
       setAddress(extractedAddress);
 
       setAutofilledFields((prev) => ({
@@ -303,6 +376,7 @@ export function SectionA_Details() {
         address: "Proof of Address",
       }));
 
+      await saveDocument("PROOF_OF_ADDRESS", filename, 95, { address: extractedAddress });
       syncToStore({ address: extractedAddress } as any);
       return;
     }
@@ -325,6 +399,7 @@ export function SectionA_Details() {
 
       const ocr = json.data;
       setAddressProofUploaded(true);
+      await saveDocument("PROOF_OF_ADDRESS", file.name, ocr.confidence, ocr);
       if (ocr.residentialAddress) {
         setAddress(ocr.residentialAddress);
         setAutofilledFields((prev) => ({
@@ -337,6 +412,7 @@ export function SectionA_Details() {
     } catch (err: any) {
       console.error("Proof of Address OCR error:", err);
       setAddressProofUploaded(true);
+      await saveDocument("PROOF_OF_ADDRESS", file.name, 75);
     } finally {
       setAnalyzingType(null);
     }
@@ -645,7 +721,7 @@ export function SectionA_Details() {
               required
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              onBlur={handleBlur}
+              onBlur={handleFullNameBlur}
               placeholder="e.g. Daniel Michael Carter"
               className="w-full px-3.5 py-2.5 rounded-lg border border-[#E5E0D8] text-sm focus:outline-none focus:border-[#A37E44]"
             />

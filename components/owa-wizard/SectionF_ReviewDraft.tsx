@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { CheckCircle2, AlertCircle, Eye, ArrowRight, ShieldCheck, Lock, Sparkles, Copy } from "lucide-react";
+import { CheckCircle2, AlertCircle, Eye, ArrowRight, ShieldCheck, Lock, Sparkles, Copy, FileText } from "lucide-react";
 import { useOwaStore } from "@/store/useOwaStore";
 import { ADJDBilingualWillDocument } from "@/components/court/ADJDBilingualWillDocument";
 import { useRouter } from "next/navigation";
@@ -23,7 +23,25 @@ export function SectionF_ReviewDraft() {
   const isCouples = application?.packageType === "COUPLES";
 
   // Section completion audits
-  const hasTestator = !!(activeWill?.testatorPerson?.fullName && activeWill?.testatorPerson?.passportNumber);
+  const testator = activeWill?.testatorPerson;
+  const hasTestator = !!(testator?.fullName && testator?.passportNumber);
+
+  // Document verification audits
+  const testatorDocs = testator?.documents || [];
+  const hasPassportDoc =
+    testatorDocs.some((d) => d.documentType === "PASSPORT") ||
+    Boolean(testator?.passportNumber);
+  const isResident = testator?.isUaeResident ?? false;
+  const hasEmiratesIdDoc =
+    testatorDocs.some((d) => d.documentType === "EMIRATES_ID") ||
+    Boolean(testator?.emiratesId);
+  const hasAddressDoc =
+    testatorDocs.some((d) => d.documentType === "PROOF_OF_ADDRESS") ||
+    Boolean(testator?.address);
+
+  // Court document audit: Passport mandatory, Emirates ID if resident, Address required
+  const isDocsAuditPassed = hasPassportDoc && (!isResident || hasEmiratesIdDoc) && hasAddressDoc;
+
   const executors = activeWill?.roleAssignments.filter((ra) => ra.role.startsWith("EXECUTOR_")) || [];
   const hasPrimaryExecutor = executors.some((ra) => ra.role === "EXECUTOR_PRIMARY");
   const primaries = activeWill?.roleAssignments.filter(
@@ -48,7 +66,12 @@ export function SectionF_ReviewDraft() {
     substitutes.length <= 2 &&
     Math.abs(substituteTotal - 100) < 0.01;
 
-  const allAuditsPassed = hasTestator && hasPrimaryExecutor && isPrimaryValid && isSubstituteValid;
+  const allAuditsPassed =
+    hasTestator &&
+    isDocsAuditPassed &&
+    hasPrimaryExecutor &&
+    isPrimaryValid &&
+    isSubstituteValid;
 
   const handleConfirmAndProceed = async () => {
     if (!confirmed || !allAuditsPassed) return;
@@ -120,7 +143,8 @@ export function SectionF_ReviewDraft() {
           Pre-Court Registration Readiness Audit
         </h3>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-2">
+          {/* 1. Testator Details */}
           <div className="p-4 rounded-xl bg-[#FBF9F5] border border-[#E5E0D8] flex items-start gap-3">
             {hasTestator ? (
               <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
@@ -130,11 +154,33 @@ export function SectionF_ReviewDraft() {
             <div>
               <h4 className="text-xs font-bold text-[#0B1528]">Testator Details</h4>
               <p className="text-[11px] text-gray-500 mt-0.5">
-                {hasTestator ? "Verified with valid passport ID" : "Passport or details missing"}
+                {hasTestator ? "Verified personal details" : "Passport or details missing"}
               </p>
             </div>
           </div>
 
+          {/* 2. Documents Audit */}
+          <div className="p-4 rounded-xl bg-[#FBF9F5] border border-[#E5E0D8] flex items-start gap-3">
+            {isDocsAuditPassed ? (
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+            ) : (
+              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
+            )}
+            <div>
+              <h4 className="text-xs font-bold text-[#0B1528]">Court Documents</h4>
+              <p className="text-[11px] text-gray-500 mt-0.5">
+                {isDocsAuditPassed
+                  ? `${testatorDocs.length > 0 ? `${testatorDocs.length} files attached` : "Identity verified"}`
+                  : !hasPassportDoc
+                  ? "Passport required"
+                  : isResident && !hasEmiratesIdDoc
+                  ? "Emirates ID required"
+                  : "Address doc required"}
+              </p>
+            </div>
+          </div>
+
+          {/* 3. Primary Executor */}
           <div className="p-4 rounded-xl bg-[#FBF9F5] border border-[#E5E0D8] flex items-start gap-3">
             {hasPrimaryExecutor ? (
               <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
@@ -144,11 +190,12 @@ export function SectionF_ReviewDraft() {
             <div>
               <h4 className="text-xs font-bold text-[#0B1528]">Primary Executor</h4>
               <p className="text-[11px] text-gray-500 mt-0.5">
-                {hasPrimaryExecutor ? "Clause 4 appointment valid" : "Primary executor required"}
+                {hasPrimaryExecutor ? "Clause 4 valid" : "Primary executor required"}
               </p>
             </div>
           </div>
 
+          {/* 4. Primary Residue */}
           <div className="p-4 rounded-xl bg-[#FBF9F5] border border-[#E5E0D8] flex items-start gap-3">
             {isPrimaryValid ? (
               <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
@@ -156,15 +203,16 @@ export function SectionF_ReviewDraft() {
               <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
             )}
             <div>
-              <h4 className="text-xs font-bold text-[#0B1528]">Primary Residue (100%)</h4>
+              <h4 className="text-xs font-bold text-[#0B1528]">Primary (100%)</h4>
               <p className="text-[11px] text-gray-500 mt-0.5">
                 {isPrimaryValid
-                  ? `${primaries.length} primary beneficiary · 100%`
-                  : `Currently ${primaryTotal}% (must equal 100%)`}
+                  ? `${primaries.length} primary · 100%`
+                  : `Currently ${primaryTotal}%`}
               </p>
             </div>
           </div>
 
+          {/* 5. Substitute Group */}
           <div className="p-4 rounded-xl bg-[#FBF9F5] border border-[#E5E0D8] flex items-start gap-3">
             {isSubstituteValid ? (
               <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
@@ -172,15 +220,34 @@ export function SectionF_ReviewDraft() {
               <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
             )}
             <div>
-              <h4 className="text-xs font-bold text-[#0B1528]">Substitute Group (100%)</h4>
+              <h4 className="text-xs font-bold text-[#0B1528]">Substitute (100%)</h4>
               <p className="text-[11px] text-gray-500 mt-0.5">
                 {isSubstituteValid
-                  ? `${substitutes.length} substitute (A/B) · 100%`
-                  : `Currently ${substituteTotal}% (must equal 100%)`}
+                  ? `${substitutes.length} substitute · 100%`
+                  : `Currently ${substituteTotal}%`}
               </p>
             </div>
           </div>
         </div>
+
+        {/* Attached Evidence Pills */}
+        {testatorDocs.length > 0 && (
+          <div className="pt-3 border-t border-[#E5E0D8]/60 flex flex-wrap items-center gap-2">
+            <span className="text-[11px] font-semibold text-gray-500">Attached Evidence:</span>
+            {testatorDocs.map((doc) => (
+              <span
+                key={doc.id}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#FAF7F2] border border-[#A37E44]/30 text-[#0B1528] text-[11px] font-mono"
+              >
+                <FileText className="w-3 h-3 text-[#A37E44]" />
+                <span>{doc.fileName || doc.documentType}</span>
+                {doc.ocrConfidence && (
+                  <span className="text-[9px] text-[#A37E44] font-bold">({doc.ocrConfidence}%)</span>
+                )}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Live Dual-Column Court Document Preview (View-Only) */}

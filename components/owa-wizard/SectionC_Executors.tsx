@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Plus, Trash2, UserCheck, ShieldCheck, AlertCircle, FileText, Upload } from "lucide-react";
 import { useOwaStore } from "@/store/useOwaStore";
+import { transliterateToName } from "@/lib/transliterate";
 import { RoleType } from "@/types/owa";
 
 interface ExecutorSlot {
@@ -83,6 +84,23 @@ export function SectionC_Executors() {
       id: personId,
       ...updates,
     });
+  };
+
+  const handleExecutorNameBlur = async (
+    personId: string,
+    fullNameValue: string,
+    currentArabic?: string | null
+  ) => {
+    await handleUpdateExecutor(personId, { fullName: fullNameValue });
+    if (fullNameValue.trim() && !currentArabic?.trim()) {
+      const transliterated = await transliterateToName(fullNameValue);
+      if (transliterated) {
+        await handleUpdateExecutor(personId, {
+          fullName: fullNameValue,
+          arabicName: transliterated,
+        });
+      }
+    }
   };
 
   return (
@@ -201,8 +219,13 @@ export function SectionC_Executors() {
                       <input
                         type="text"
                         defaultValue={executorPerson.fullName || ""}
+                        key={`exec-name-${executorPerson.fullName}`}
                         onBlur={(e) =>
-                          handleUpdateExecutor(executorPerson.id, { fullName: e.target.value })
+                          handleExecutorNameBlur(
+                            executorPerson.id,
+                            e.target.value,
+                            executorPerson.arabicName
+                          )
                         }
                         placeholder="e.g. David Alan Whitfield"
                         className="w-full px-3.5 py-2.5 rounded-lg border border-[#E5E0D8] text-sm focus:outline-none focus:border-[#A37E44]"
@@ -217,6 +240,7 @@ export function SectionC_Executors() {
                         type="text"
                         dir="rtl"
                         defaultValue={executorPerson.arabicName || ""}
+                        key={`exec-arabic-${executorPerson.arabicName}`}
                         onBlur={(e) =>
                           handleUpdateExecutor(executorPerson.id, { arabicName: e.target.value })
                         }
@@ -256,7 +280,7 @@ export function SectionC_Executors() {
 
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
-                        Passport Number / National ID *
+                        Passport Number *
                       </label>
                       <input
                         type="text"

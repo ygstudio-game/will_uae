@@ -14,9 +14,79 @@ import {
   ShieldAlert,
   Info,
   Edit2,
+  HeartHandshake,
 } from "lucide-react";
 import { useOwaStore } from "@/store/useOwaStore";
 import { useRouter } from "next/navigation";
+import { transliterateToName } from "@/lib/transliterate";
+
+interface ShareInputProps {
+  value: number | undefined | null;
+  onChange: (val: number) => void;
+  disabled?: boolean;
+}
+
+function ShareInput({ value, onChange, disabled }: ShareInputProps) {
+  const [text, setText] = useState<string>(
+    value !== undefined && value !== null ? String(value) : ""
+  );
+
+  useEffect(() => {
+    const currentNum = parseFloat(text);
+    if (
+      value !== undefined &&
+      value !== null &&
+      (isNaN(currentNum) || Math.abs(currentNum - value) > 0.001)
+    ) {
+      setText(String(value));
+    }
+  }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    if (/^[0-9]*\.?[0-9]*$/.test(raw) || raw === "") {
+      setText(raw);
+      const parsed = parseFloat(raw);
+      if (!isNaN(parsed) && parsed >= 0 && parsed <= 100) {
+        onChange(parsed);
+      } else if (raw === "") {
+        onChange(0);
+      }
+    }
+  };
+
+  const handleBlur = () => {
+    const parsed = parseFloat(text);
+    if (isNaN(parsed) || parsed < 0) {
+      setText("0");
+      onChange(0);
+    } else if (parsed > 100) {
+      setText("100");
+      onChange(100);
+    } else {
+      setText(String(parsed));
+      onChange(parsed);
+    }
+  };
+
+  return (
+    <div className="relative">
+      <input
+        type="text"
+        inputMode="decimal"
+        value={text}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        disabled={disabled}
+        placeholder="100"
+        className="w-full px-3 py-2 pr-7 rounded-lg border border-[#E5E0D8] bg-white text-xs font-bold text-[#0B1528] focus:outline-none focus:border-[#A37E44]"
+      />
+      <span className="absolute right-2.5 top-2 text-xs font-bold text-gray-400">
+        %
+      </span>
+    </div>
+  );
+}
 
 export function SectionE_Beneficiaries() {
   const router = useRouter();
@@ -34,6 +104,34 @@ export function SectionE_Beneficiaries() {
   const activeWill = application?.wills.find((w) => w.willIndex === activeWillIndex);
   const existingPersons = application?.persons || [];
   const testatorId = activeWill?.testatorPersonId;
+
+  // Potential spouse
+  const potentialSpouse = existingPersons.find(
+    (p) =>
+      p.id !== testatorId &&
+      (p.relationship?.toLowerCase() === "spouse" ||
+        p.relationship?.toLowerCase() === "wife" ||
+        p.relationship?.toLowerCase() === "husband")
+  );
+
+  // Active children IDs to filter out orphan children from dropdown
+  const activeChildrenIds = new Set(
+    (activeWill?.roleAssignments || [])
+      .filter((ra) => ra.role === "CHILD")
+      .map((ra) => ra.personId)
+  );
+
+  // Clean list of existing persons: exclude testator and orphan child records
+  const validExistingPersons = existingPersons.filter((p) => {
+    if (p.id === testatorId) return false;
+    const isChild =
+      p.relationship?.toLowerCase() === "child" ||
+      p.fullName?.toLowerCase().startsWith("child");
+    if (isChild && !activeChildrenIds.has(p.id)) {
+      return false;
+    }
+    return true;
+  });
 
   // Extract Primaries and Substitutes
   const primaryAssignments = (activeWill?.roleAssignments || [])
@@ -78,7 +176,6 @@ export function SectionE_Beneficiaries() {
   const handleAddPrimary = async () => {
     if (primaryAssignments.length >= 3) return;
 
-    // Default share for 1st is 100; for subsequent entries, do not auto-rebalance existing
     const defaultShare = primaryAssignments.length === 0 ? 100 : Math.max(0, primaryRemaining);
     const newPerson = await addOrUpdatePerson({
       fullName: `Primary Beneficiary ${primaryAssignments.length + 1}`,
@@ -93,6 +190,49 @@ export function SectionE_Beneficiaries() {
         primaryAssignments.length + 1,
         defaultShare
       );
+    }
+  };
+
+  const handleAppointSpouseAsPrimary = async () => {
+    let spousePersonId = potentialSpouse?.id;
+    if (!spousePersonId) {
+      const newSpouse = await addOrUpdatePerson({
+        fullName: "",
+        relationship: "Spouse",
+        nationality: "",
+        isUaeResident: true,
+      });
+      if (newSpouse) {
+        spousePersonId = newSpouse.id;
+      }
+    }
+
+    if (spousePersonId) {
+      if (primaryAssignments.length > 0) {
+        assignPersonToRole(spousePersonId, "BENEFICIARY_PRIMARY", 1, 100);
+        for (let i = 1; i < primaryAssignments.length; i++) {
+          removeRoleAssignment(primaryAssignments[i].id);
+        }
+      } else {
+        assignPersonToRole(spousePersonId, "BENEFICIARY_PRIMARY", 1, 100);
+      }
+    }
+  };
+
+  const handleBeneficiaryNameBlur = async (
+    personId: string,
+    fullNameValue: string,
+    currentArabic?: string | null
+  ) => {
+    await handleUpdatePersonDetails(personId, { fullName: fullNameValue });
+    if (fullNameValue.trim() && !currentArabic?.trim()) {
+      const transliterated = await transliterateToName(fullNameValue);
+      if (transliterated) {
+        await handleUpdatePersonDetails(personId, {
+          fullName: fullNameValue,
+          arabicName: transliterated,
+        });
+      }
     }
   };
 
@@ -329,6 +469,33 @@ export function SectionE_Beneficiaries() {
               </div>
             </div>
 
+            {/* Quick Appoint Spouse Banner */}
+            <div className="bg-[#FAF7F2] p-4 rounded-xl border border-[#A37E44]/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-[#0B1528] text-[#A37E44] flex items-center justify-center shrink-0">
+                  <HeartHandshake className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-[#0B1528]">Surviving Spouse Estate Allocation (Clause 7)</h4>
+                  <p className="text-[11px] text-gray-600">
+                    {potentialSpouse ? (
+                      <>Assign 100% of your UAE estate residue to <strong>{potentialSpouse.fullName}</strong>.</>
+                    ) : (
+                      <>Leave 100% of your UAE estate residue to your surviving spouse (standard ADJD clause).</>
+                    )}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleAppointSpouseAsPrimary}
+                className="px-3.5 py-1.5 bg-[#A37E44] hover:bg-[#B38D48] text-white text-xs font-semibold rounded-lg shadow-sm whitespace-nowrap transition-all flex items-center gap-1.5"
+              >
+                <HeartHandshake className="w-3.5 h-3.5" />
+                Appoint Spouse as 100% Primary
+              </button>
+            </div>
+
             {/* Explanatory Legal Notice */}
             <div className="p-3.5 rounded-xl bg-[#FAF7F2] border-l-4 border-[#A37E44] text-xs text-gray-700 leading-relaxed flex items-start gap-2.5">
               <Info className="w-4 h-4 text-[#A37E44] shrink-0 mt-0.5" />
@@ -351,6 +518,10 @@ export function SectionE_Beneficiaries() {
                   assignment.person;
                 const personId = assignment.personId;
                 const isTestatorSelected = testatorId && personId === testatorId;
+                const isSpouse =
+                  person?.relationship?.toLowerCase() === "spouse" ||
+                  person?.relationship?.toLowerCase() === "wife" ||
+                  person?.relationship?.toLowerCase() === "husband";
 
                 return (
                   <div
@@ -365,6 +536,12 @@ export function SectionE_Beneficiaries() {
                         <h4 className="text-sm font-bold text-[#0B1528]">
                           Primary Beneficiary {index + 1}
                         </h4>
+                        {isSpouse && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-900 border border-amber-300">
+                            <HeartHandshake className="w-3 h-3 text-[#A37E44]" />
+                            Spouse
+                          </span>
+                        )}
                       </div>
 
                       {primaryAssignments.length > 1 && (
@@ -388,7 +565,7 @@ export function SectionE_Beneficiaries() {
                     )}
 
                     {/* Existing Person Selector */}
-                    {existingPersons.length > 0 && (
+                    {validExistingPersons.length > 0 && (
                       <div className="flex items-center justify-between p-2.5 rounded-lg bg-white border border-[#E5E0D8] text-xs">
                         <div className="flex items-center gap-1.5 text-gray-600 font-medium">
                           <UserCheck className="w-3.5 h-3.5 text-[#A37E44]" />
@@ -400,13 +577,11 @@ export function SectionE_Beneficiaries() {
                           className="px-2 py-1 rounded border border-[#E5E0D8] bg-white text-xs text-[#0B1528] font-medium max-w-[240px]"
                         >
                           <option value="">Choose a person</option>
-                          {existingPersons
-                            .filter((p) => p.id !== testatorId)
-                            .map((p) => (
-                              <option key={p.id} value={p.id}>
-                                {p.fullName} ({p.relationship || p.nationality || "Person"})
-                              </option>
-                            ))}
+                          {validExistingPersons.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.fullName} ({p.relationship || p.nationality || "Person"})
+                            </option>
+                          ))}
                         </select>
                       </div>
                     )}
@@ -420,8 +595,13 @@ export function SectionE_Beneficiaries() {
                         <input
                           type="text"
                           defaultValue={person?.fullName || ""}
+                          key={`pri-name-${person?.fullName}`}
                           onBlur={(e) =>
-                            handleUpdatePersonDetails(personId, { fullName: e.target.value })
+                            handleBeneficiaryNameBlur(
+                              personId,
+                              e.target.value,
+                              person?.arabicName
+                            )
                           }
                           placeholder="e.g. Emma Claire Carter"
                           className="w-full px-3 py-2 rounded-lg border border-[#E5E0D8] bg-white text-xs text-[#0B1528] font-medium focus:outline-none focus:border-[#A37E44]"
@@ -432,23 +612,10 @@ export function SectionE_Beneficiaries() {
                         <label className="block text-[11px] font-semibold text-gray-700 uppercase tracking-wider mb-1">
                           Share Percentage (%) *
                         </label>
-                        <div className="relative">
-                          <input
-                            type="number"
-                            min="0.01"
-                            max="100"
-                            step="0.01"
-                            value={assignment.sharePercentage || ""}
-                            onChange={(e) =>
-                              handleUpdatePrimaryShare(assignment.id, parseFloat(e.target.value) || 0)
-                            }
-                            placeholder="100"
-                            className="w-full px-3 py-2 pr-7 rounded-lg border border-[#E5E0D8] bg-white text-xs font-bold text-[#0B1528] focus:outline-none focus:border-[#A37E44]"
-                          />
-                          <span className="absolute right-2.5 top-2 text-xs font-bold text-gray-400">
-                            %
-                          </span>
-                        </div>
+                        <ShareInput
+                          value={assignment.sharePercentage}
+                          onChange={(val) => handleUpdatePrimaryShare(assignment.id, val)}
+                        />
                       </div>
 
                       <div>
@@ -459,6 +626,7 @@ export function SectionE_Beneficiaries() {
                           type="text"
                           dir="rtl"
                           defaultValue={person?.arabicName || ""}
+                          key={`pri-arabic-${person?.arabicName}`}
                           onBlur={(e) =>
                             handleUpdatePersonDetails(personId, { arabicName: e.target.value })
                           }
@@ -626,7 +794,7 @@ export function SectionE_Beneficiaries() {
                     )}
 
                     {/* Existing Person Selector */}
-                    {existingPersons.length > 0 && (
+                    {validExistingPersons.length > 0 && (
                       <div className="flex items-center justify-between p-2.5 rounded-lg bg-white border border-[#E5E0D8] text-xs">
                         <div className="flex items-center gap-1.5 text-gray-600 font-medium">
                           <UserCheck className="w-3.5 h-3.5 text-[#A37E44]" />
@@ -638,7 +806,7 @@ export function SectionE_Beneficiaries() {
                           className="px-2 py-1 rounded border border-[#E5E0D8] bg-white text-xs text-[#0B1528] font-medium max-w-[240px]"
                         >
                           <option value="">Choose a person</option>
-                          {existingPersons
+                          {validExistingPersons
                             .filter(
                               (p) =>
                                 p.id !== testatorId &&
@@ -662,8 +830,13 @@ export function SectionE_Beneficiaries() {
                         <input
                           type="text"
                           defaultValue={person?.fullName || ""}
+                          key={`sub-name-${person?.fullName}`}
                           onBlur={(e) =>
-                            handleUpdatePersonDetails(personId, { fullName: e.target.value })
+                            handleBeneficiaryNameBlur(
+                              personId,
+                              e.target.value,
+                              person?.arabicName
+                            )
                           }
                           placeholder={`e.g. David Alan Whitfield`}
                           className="w-full px-3 py-2 rounded-lg border border-[#E5E0D8] bg-white text-xs text-[#0B1528] font-medium focus:outline-none focus:border-[#A37E44]"
@@ -674,23 +847,10 @@ export function SectionE_Beneficiaries() {
                         <label className="block text-[11px] font-semibold text-gray-700 uppercase tracking-wider mb-1">
                           Share Percentage (%) *
                         </label>
-                        <div className="relative">
-                          <input
-                            type="number"
-                            min="0.01"
-                            max="100"
-                            step="0.01"
-                            value={assignment.sharePercentage || ""}
-                            onChange={(e) =>
-                              handleUpdateSubstituteShare(assignment.id, parseFloat(e.target.value) || 0)
-                            }
-                            placeholder="100"
-                            className="w-full px-3 py-2 pr-7 rounded-lg border border-[#E5E0D8] bg-white text-xs font-bold text-[#0B1528] focus:outline-none focus:border-[#A37E44]"
-                          />
-                          <span className="absolute right-2.5 top-2 text-xs font-bold text-gray-400">
-                            %
-                          </span>
-                        </div>
+                        <ShareInput
+                          value={assignment.sharePercentage}
+                          onChange={(val) => handleUpdateSubstituteShare(assignment.id, val)}
+                        />
                       </div>
 
                       <div>
@@ -701,6 +861,7 @@ export function SectionE_Beneficiaries() {
                           type="text"
                           dir="rtl"
                           defaultValue={person?.arabicName || ""}
+                          key={`sub-arabic-${person?.arabicName}`}
                           onBlur={(e) =>
                             handleUpdatePersonDetails(personId, { arabicName: e.target.value })
                           }
