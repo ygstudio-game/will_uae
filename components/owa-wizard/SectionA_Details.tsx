@@ -56,6 +56,7 @@ export function SectionA_Details() {
   // Track autofilled tags for user feedback
   const [autofilledFields, setAutofilledFields] = useState<Record<string, string>>({});
   const [justExtractedBanner, setJustExtractedBanner] = useState<string | null>(null);
+  const [analyzingType, setAnalyzingType] = useState<string | null>(null);
 
   // Sync state if active testator changes
   useEffect(() => {
@@ -104,85 +105,241 @@ export function SectionA_Details() {
     syncToStore();
   };
 
-  // --- Document Handlers & Autofill Simulation ---
-  const handlePassportUpload = (file?: File) => {
-    const filename = file ? file.name : "Daniel_Carter_Passport_Bio.pdf";
-    setPassportUploaded(true);
-    setPassportFileName(filename);
+  // --- Document Handlers & Gemini Vision OCR Integration ---
+  const handlePassportUpload = async (file?: File) => {
+    if (!file) {
+      // Simulation test fixture
+      const filename = "Daniel_Carter_Passport_Bio.pdf";
+      setPassportUploaded(true);
+      setPassportFileName(filename);
 
-    // Autofill from Passport
-    const extractedData = {
-      fullName: fullName || "Daniel Michael Carter",
-      arabicName: arabicName || "دانيال مايكل كارتر",
-      dob: dob || "1982-05-14",
-      nationality: nationality || "British",
-      passportNumber: passportNumber || "GBR12345678",
-      domicileCountry: domicileCountry || "United Kingdom",
-    };
+      const extractedData = {
+        fullName: fullName || "Daniel Michael Carter",
+        arabicName: arabicName || "دانيال مايكل كارتر",
+        dob: dob || "1982-05-14",
+        nationality: nationality || "British",
+        passportNumber: passportNumber || "GBR12345678",
+        domicileCountry: domicileCountry || "United Kingdom",
+      };
 
-    setFullName(extractedData.fullName);
-    setArabicName(extractedData.arabicName);
-    setDob(extractedData.dob);
-    setNationality(extractedData.nationality);
-    setPassportNumber(extractedData.passportNumber);
-    setDomicileCountry(extractedData.domicileCountry);
+      setFullName(extractedData.fullName);
+      setArabicName(extractedData.arabicName);
+      setDob(extractedData.dob);
+      setNationality(extractedData.nationality);
+      setPassportNumber(extractedData.passportNumber);
+      setDomicileCountry(extractedData.domicileCountry);
 
-    setAutofilledFields((prev) => ({
-      ...prev,
-      fullName: "Passport",
-      arabicName: "Passport (Transliterated)",
-      dob: "Passport",
-      nationality: "Passport",
-      passportNumber: "Passport",
-      domicileCountry: "Passport",
-    }));
+      setAutofilledFields((prev) => ({
+        ...prev,
+        fullName: "Passport (Fixture)",
+        arabicName: "Passport (Transliterated)",
+        dob: "Passport",
+        nationality: "Passport",
+        passportNumber: "Passport",
+        domicileCountry: "Passport",
+      }));
 
-    setJustExtractedBanner("Passport parsed successfully! Personal details autofilled below for your review.");
-    syncToStore(extractedData as any);
+      setJustExtractedBanner("Sample passport parsed! Personal details autofilled below for your review.");
+      syncToStore(extractedData as any);
+      return;
+    }
+
+    setAnalyzingType("Passport");
+    setPassportFileName(file.name);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("documentType", "PASSPORT");
+
+      const res = await fetch("/api/ocr", {
+        method: "POST",
+        body: formData,
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || `Failed to process passport (${res.status})`);
+      }
+
+      const ocr = json.data;
+      setPassportUploaded(true);
+      const extractedData: any = {};
+      if (ocr.fullName) {
+        setFullName(ocr.fullName);
+        extractedData.fullName = ocr.fullName;
+      }
+      if (ocr.arabicName) {
+        setArabicName(ocr.arabicName);
+        extractedData.arabicName = ocr.arabicName;
+      }
+      if (ocr.dob) {
+        setDob(ocr.dob);
+        extractedData.dob = ocr.dob;
+      }
+      if (ocr.nationality) {
+        setNationality(ocr.nationality);
+        extractedData.nationality = ocr.nationality;
+        if (!domicileCountry) {
+          setDomicileCountry(ocr.nationality);
+          extractedData.domicileCountry = ocr.nationality;
+        }
+      }
+      if (ocr.passportNumber) {
+        setPassportNumber(ocr.passportNumber);
+        extractedData.passportNumber = ocr.passportNumber;
+      }
+
+      setAutofilledFields((prev) => ({
+        ...prev,
+        fullName: `Passport · ${ocr.confidence}%`,
+        arabicName: "Gemini Phonetic Transliteration",
+        dob: "Passport",
+        nationality: "Passport",
+        passportNumber: "Passport",
+      }));
+
+      const flagsMsg = ocr.flags?.length ? ` (Flags: ${ocr.flags.join(", ")})` : "";
+      setJustExtractedBanner(`Passport analyzed by Gemini Vision (${ocr.confidence}% confidence)! Details autofilled below${flagsMsg}.`);
+      syncToStore(extractedData);
+    } catch (err: any) {
+      console.error("Passport OCR error:", err);
+      setJustExtractedBanner(`OCR Note: ${err.message || "Could not auto-read file"}. You may fill details manually.`);
+      setPassportUploaded(true);
+    } finally {
+      setAnalyzingType(null);
+    }
   };
 
-  const handleEmiratesIdUpload = (file?: File) => {
-    const filename = file ? file.name : "Daniel_Carter_Emirates_ID.jpg";
-    setEmiratesIdUploaded(true);
-    setEmiratesIdFileName(filename);
-    setIsUaeResident(true);
+  const handleEmiratesIdUpload = async (file?: File) => {
+    if (!file) {
+      const filename = "Daniel_Carter_Emirates_ID.jpg";
+      setEmiratesIdUploaded(true);
+      setEmiratesIdFileName(filename);
+      setIsUaeResident(true);
 
-    // Emirates ID officially provides the Arabic name and Emirates ID number
-    const extractedData = {
-      arabicName: "دانيال مايكل كارتر",
-      emiratesId: "784-1982-1234567-1",
-      fullName: fullName || "Daniel Michael Carter",
-      isUaeResident: true,
-    };
+      const extractedData = {
+        arabicName: "دانيال مايكل كارتر",
+        emiratesId: "784-1982-1234567-1",
+        fullName: fullName || "Daniel Michael Carter",
+        isUaeResident: true,
+      };
 
-    setArabicName(extractedData.arabicName);
-    setEmiratesId(extractedData.emiratesId);
-    setIsUaeResident(true);
+      setArabicName(extractedData.arabicName);
+      setEmiratesId(extractedData.emiratesId);
+      setIsUaeResident(true);
 
-    setAutofilledFields((prev) => ({
-      ...prev,
-      arabicName: "Emirates ID (Official)",
-      emiratesId: "Emirates ID",
-    }));
+      setAutofilledFields((prev) => ({
+        ...prev,
+        arabicName: "Emirates ID (Official)",
+        emiratesId: "Emirates ID",
+      }));
 
-    setJustExtractedBanner("Emirates ID parsed! Official Arabic name & Emirates ID populated below.");
-    syncToStore(extractedData as any);
+      setJustExtractedBanner("Emirates ID parsed! Official Arabic name & Emirates ID populated below.");
+      syncToStore(extractedData as any);
+      return;
+    }
+
+    setAnalyzingType("Emirates ID");
+    setEmiratesIdFileName(file.name);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("documentType", "EMIRATES_ID");
+
+      const res = await fetch("/api/ocr", {
+        method: "POST",
+        body: formData,
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || `Failed to process Emirates ID (${res.status})`);
+      }
+
+      const ocr = json.data;
+      setEmiratesIdUploaded(true);
+      setIsUaeResident(true);
+
+      const extractedData: any = { isUaeResident: true };
+      if (ocr.arabicName) {
+        setArabicName(ocr.arabicName);
+        extractedData.arabicName = ocr.arabicName;
+      }
+      if (ocr.emiratesId) {
+        setEmiratesId(ocr.emiratesId);
+        extractedData.emiratesId = ocr.emiratesId;
+      }
+      if (ocr.fullName && !fullName) {
+        setFullName(ocr.fullName);
+        extractedData.fullName = ocr.fullName;
+      }
+
+      setAutofilledFields((prev) => ({
+        ...prev,
+        arabicName: `Emirates ID Official · ${ocr.confidence}%`,
+        emiratesId: "Emirates ID",
+      }));
+
+      setJustExtractedBanner(`Emirates ID analyzed by Gemini Vision (${ocr.confidence}% confidence)! Official Arabic name & ID populated.`);
+      syncToStore(extractedData);
+    } catch (err: any) {
+      console.error("Emirates ID OCR error:", err);
+      setJustExtractedBanner(`OCR Note: ${err.message || "Could not auto-read file"}. You may fill details manually.`);
+      setEmiratesIdUploaded(true);
+    } finally {
+      setAnalyzingType(null);
+    }
   };
 
-  const handleAddressProofUpload = (file?: File) => {
-    const filename = file ? file.name : "DEWA_Abu_Dhabi_Tenancy_Contract.pdf";
-    setAddressProofUploaded(true);
-    setAddressProofFileName(filename);
+  const handleAddressProofUpload = async (file?: File) => {
+    if (!file) {
+      const filename = "DEWA_Abu_Dhabi_Tenancy_Contract.pdf";
+      setAddressProofUploaded(true);
+      setAddressProofFileName(filename);
 
-    const extractedAddress = address || "Villa 14, Saadiyat Beach Residences, Abu Dhabi, UAE";
-    setAddress(extractedAddress);
+      const extractedAddress = address || "Villa 14, Saadiyat Beach Residences, Abu Dhabi, UAE";
+      setAddress(extractedAddress);
 
-    setAutofilledFields((prev) => ({
-      ...prev,
-      address: "Proof of Address",
-    }));
+      setAutofilledFields((prev) => ({
+        ...prev,
+        address: "Proof of Address",
+      }));
 
-    syncToStore({ address: extractedAddress } as any);
+      syncToStore({ address: extractedAddress } as any);
+      return;
+    }
+
+    setAnalyzingType("Proof of Address");
+    setAddressProofFileName(file.name);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("documentType", "UTILITY_BILL");
+
+      const res = await fetch("/api/ocr", {
+        method: "POST",
+        body: formData,
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || `Failed to process Proof of Address (${res.status})`);
+      }
+
+      const ocr = json.data;
+      setAddressProofUploaded(true);
+      if (ocr.residentialAddress) {
+        setAddress(ocr.residentialAddress);
+        setAutofilledFields((prev) => ({
+          ...prev,
+          address: `Proof of Address · ${ocr.confidence}%`,
+        }));
+        syncToStore({ address: ocr.residentialAddress } as any);
+      }
+      setJustExtractedBanner(`Proof of address verified by Gemini Vision! Address populated.`);
+    } catch (err: any) {
+      console.error("Proof of Address OCR error:", err);
+      setAddressProofUploaded(true);
+    } finally {
+      setAnalyzingType(null);
+    }
   };
 
   return (
@@ -273,21 +430,34 @@ export function SectionA_Details() {
             </div>
 
             <div className="pt-2 flex flex-col gap-1.5">
-              <label className="cursor-pointer inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-[#0B1528] hover:bg-[#1a2844] text-white text-xs font-semibold shadow-sm transition-all text-center">
-                <Upload className="w-3.5 h-3.5" />
-                <span>{passportUploaded ? "Replace Passport" : "Upload Passport"}</span>
+              <label className={`cursor-pointer inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-white text-xs font-semibold shadow-sm transition-all text-center ${
+                analyzingType === "Passport" ? "bg-[#A37E44] animate-pulse" : "bg-[#0B1528] hover:bg-[#1a2844]"
+              }`}>
+                {analyzingType === "Passport" ? (
+                  <>
+                    <RotateCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Analyzing with Gemini Vision...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>{passportUploaded ? "Replace Passport" : "Upload Passport"}</span>
+                  </>
+                )}
                 <input
                   type="file"
                   accept="image/*,.pdf"
                   className="hidden"
+                  disabled={Boolean(analyzingType)}
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) handlePassportUpload(file);
+                    e.target.value = "";
                   }}
                 />
               </label>
 
-              {!passportUploaded && (
+              {!passportUploaded && !analyzingType && (
                 <button
                   type="button"
                   onClick={() => handlePassportUpload()}
@@ -330,21 +500,34 @@ export function SectionA_Details() {
             </div>
 
             <div className="pt-2 flex flex-col gap-1.5">
-              <label className="cursor-pointer inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-[#0B1528] hover:bg-[#1a2844] text-white text-xs font-semibold shadow-sm transition-all text-center">
-                <Upload className="w-3.5 h-3.5" />
-                <span>{emiratesIdUploaded ? "Replace Emirates ID" : "Upload Emirates ID"}</span>
+              <label className={`cursor-pointer inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-white text-xs font-semibold shadow-sm transition-all text-center ${
+                analyzingType === "Emirates ID" ? "bg-[#A37E44] animate-pulse" : "bg-[#0B1528] hover:bg-[#1a2844]"
+              }`}>
+                {analyzingType === "Emirates ID" ? (
+                  <>
+                    <RotateCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Analyzing with Gemini Vision...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>{emiratesIdUploaded ? "Replace Emirates ID" : "Upload Emirates ID"}</span>
+                  </>
+                )}
                 <input
                   type="file"
                   accept="image/*,.pdf"
                   className="hidden"
+                  disabled={Boolean(analyzingType)}
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) handleEmiratesIdUpload(file);
+                    e.target.value = "";
                   }}
                 />
               </label>
 
-              {!emiratesIdUploaded && (
+              {!emiratesIdUploaded && !analyzingType && (
                 <button
                   type="button"
                   onClick={() => handleEmiratesIdUpload()}
@@ -387,21 +570,34 @@ export function SectionA_Details() {
             </div>
 
             <div className="pt-2 flex flex-col gap-1.5">
-              <label className="cursor-pointer inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-[#0B1528] hover:bg-[#1a2844] text-white text-xs font-semibold shadow-sm transition-all text-center">
-                <Upload className="w-3.5 h-3.5" />
-                <span>{addressProofUploaded ? "Replace Document" : "Upload Document"}</span>
+              <label className={`cursor-pointer inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-white text-xs font-semibold shadow-sm transition-all text-center ${
+                analyzingType === "Proof of Address" ? "bg-[#A37E44] animate-pulse" : "bg-[#0B1528] hover:bg-[#1a2844]"
+              }`}>
+                {analyzingType === "Proof of Address" ? (
+                  <>
+                    <RotateCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Analyzing with Gemini Vision...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>{addressProofUploaded ? "Replace Document" : "Upload Document"}</span>
+                  </>
+                )}
                 <input
                   type="file"
                   accept="image/*,.pdf"
                   className="hidden"
+                  disabled={Boolean(analyzingType)}
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) handleAddressProofUpload(file);
+                    e.target.value = "";
                   }}
                 />
               </label>
 
-              {!addressProofUploaded && (
+              {!addressProofUploaded && !analyzingType && (
                 <button
                   type="button"
                   onClick={() => handleAddressProofUpload()}

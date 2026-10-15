@@ -1,16 +1,22 @@
 "use client";
 
-import React, { useState } from "react";
-import { X, CheckCircle2, ShieldCheck, FileText, User, Calendar, Flag, Hash, AlertTriangle } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { X, CheckCircle2, ShieldCheck, FileText, User, Calendar, Flag, Hash, AlertTriangle, AlertCircle } from "lucide-react";
 
-interface DocumentData {
+export interface DocumentData {
   fullName: string;
   arabicName: string;
   dob: string;
   nationality: string;
   passportNumber: string;
+  emiratesId?: string;
+  residentialAddress?: string;
   expiryDate: string;
   confidence: number;
+  documentType?: "PASSPORT" | "EMIRATES_ID" | "UTILITY_BILL" | "UNKNOWN";
+  source?: string;
+  flags?: string[];
+  previewUrl?: string;
 }
 
 interface DocumentReviewModalProps {
@@ -33,10 +39,21 @@ export function DocumentReviewModal({
       dob: "1988-03-20",
       nationality: "British",
       passportNumber: "GB55443322",
+      emiratesId: "",
+      residentialAddress: "",
       expiryDate: "2031-05-15",
       confidence: 99,
+      documentType: "PASSPORT",
+      source: "Passport Bio Page",
+      flags: [],
     }
   );
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData(initialData);
+    }
+  }, [initialData]);
 
   if (!isOpen) return null;
 
@@ -48,6 +65,8 @@ export function DocumentReviewModal({
     if (onConfirm) onConfirm(formData);
     onClose();
   };
+
+  const isEmiratesId = formData.documentType === "EMIRATES_ID";
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
@@ -63,7 +82,7 @@ export function DocumentReviewModal({
                 Review Extracted Document
               </h3>
               <p className="text-xs text-white/60">
-                Passport Extraction · Source: Passport · Overall Confidence {formData.confidence}%
+                {formData.source || "Gemini Multimodal OCR"} · Confidence {formData.confidence}%
               </p>
             </div>
           </div>
@@ -78,66 +97,115 @@ export function DocumentReviewModal({
 
         {/* Modal Body: Side-by-side Layout */}
         <div className="p-6 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-8 flex-1">
-          {/* Left Column: Document Image Simulation */}
+          {/* Left Column: Document Image or Preview */}
           <div className="space-y-3">
             <div className="text-xs font-semibold uppercase tracking-wider text-gray-700 flex items-center justify-between">
-              <span>Scanned Passport Bio Page</span>
+              <span>{isEmiratesId ? "Scanned Emirates ID" : "Scanned Passport Bio Page"}</span>
               <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
-                Verified Readable
+                Verified Readable · {formData.confidence}%
               </span>
             </div>
 
-            {/* Passport card mockup */}
-            <div className="bg-[#1C2C4E] rounded-xl p-5 text-white shadow-inner border border-slate-700 flex flex-col justify-between aspect-[1.42/1] relative overflow-hidden">
-              <div className="flex justify-between items-start border-b border-white/10 pb-2">
-                <div>
-                  <div className="text-[9px] uppercase tracking-widest text-court-tan">United Kingdom of Great Britain</div>
-                  <div className="text-xs font-serif font-bold tracking-wider">PASSPORT</div>
-                </div>
-                <div className="text-right">
-                  <div className="text-[8px] text-white/60">Type / Code</div>
-                  <div className="text-[10px] font-mono font-bold">P / GBR</div>
+            {formData.previewUrl ? (
+              <div className="rounded-xl overflow-hidden border border-slate-300 shadow-inner max-h-[320px] bg-slate-900 flex items-center justify-center relative group">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={formData.previewUrl}
+                  alt="Uploaded document preview"
+                  className="max-h-[320px] w-full object-contain"
+                />
+                <div className="absolute bottom-2 left-2 right-2 bg-black/70 text-white text-[10px] py-1 px-2 rounded backdrop-blur-sm truncate">
+                  {formData.source || "Original Uploaded Scan"}
                 </div>
               </div>
-
-              <div className="flex gap-4 my-2 items-center">
-                {/* Photo mockup */}
-                <div className="w-20 h-24 rounded bg-slate-600/80 border border-white/20 flex flex-col items-center justify-center text-white/40 flex-shrink-0">
-                  <User className="w-8 h-8" />
-                  <span className="text-[8px] mt-1 uppercase font-mono">PHOTO</span>
-                </div>
-
-                <div className="space-y-1 text-[11px] font-mono flex-1 overflow-hidden">
+            ) : (
+              /* Passport / ID Card mockup */
+              <div className="bg-[#1C2C4E] rounded-xl p-5 text-white shadow-inner border border-slate-700 flex flex-col justify-between aspect-[1.42/1] relative overflow-hidden">
+                <div className="flex justify-between items-start border-b border-white/10 pb-2">
                   <div>
-                    <span className="text-[8px] text-white/50 block">Surname & Given Names</span>
-                    <span className="font-bold text-white text-xs truncate block">{formData.fullName}</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-1 text-[10px]">
-                    <div>
-                      <span className="text-[8px] text-white/50 block">Nationality</span>
-                      <span>{formData.nationality}</span>
+                    <div className="text-[9px] uppercase tracking-widest text-court-tan">
+                      {isEmiratesId ? "United Arab Emirates" : (formData.nationality || "United Kingdom")}
                     </div>
-                    <div>
-                      <span className="text-[8px] text-white/50 block">Date of Birth</span>
-                      <span>{formData.dob}</span>
+                    <div className="text-xs font-serif font-bold tracking-wider">
+                      {isEmiratesId ? "RESIDENT IDENTITY CARD" : "PASSPORT"}
                     </div>
                   </div>
-                  <div>
-                    <span className="text-[8px] text-white/50 block">Passport No.</span>
-                    <span className="font-bold text-court-tan">{formData.passportNumber}</span>
+                  <div className="text-right">
+                    <div className="text-[8px] text-white/60">Type / Code</div>
+                    <div className="text-[10px] font-mono font-bold">
+                      {isEmiratesId ? "ID / ARE" : "P / GBR"}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* MRZ Band at bottom */}
-              <div className="bg-black/40 rounded p-1.5 font-mono text-[9px] text-emerald-400 tracking-wider truncate">
-                P&lt;GBRCARTER&lt;&lt;SARAH&lt;ELIZABETH&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;<br />
-                {formData.passportNumber}4GBR8803206F3105152&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;02
+                <div className="flex gap-4 my-2 items-center">
+                  <div className="w-20 h-24 rounded bg-slate-600/80 border border-white/20 flex flex-col items-center justify-center text-white/40 flex-shrink-0">
+                    <User className="w-8 h-8" />
+                    <span className="text-[8px] mt-1 uppercase font-mono">PHOTO</span>
+                  </div>
+
+                  <div className="space-y-1 text-[11px] font-mono flex-1 overflow-hidden">
+                    <div>
+                      <span className="text-[8px] text-white/50 block">Legal Name</span>
+                      <span className="font-bold text-white text-xs truncate block">
+                        {formData.fullName || "—"}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-1 text-[10px]">
+                      <div>
+                        <span className="text-[8px] text-white/50 block">Nationality</span>
+                        <span>{formData.nationality || "—"}</span>
+                      </div>
+                      <div>
+                        <span className="text-[8px] text-white/50 block">Date of Birth</span>
+                        <span>{formData.dob || "—"}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-[8px] text-white/50 block">
+                        {isEmiratesId ? "ID Number" : "Passport No."}
+                      </span>
+                      <span className="font-bold text-court-tan">
+                        {isEmiratesId ? formData.emiratesId : formData.passportNumber}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* MRZ Band at bottom */}
+                <div className="bg-black/40 rounded p-1.5 font-mono text-[9px] text-emerald-400 tracking-wider truncate">
+                  {isEmiratesId ? (
+                    <>
+                      I&lt;ARE{formData.emiratesId || "784-1984-1234567-1"}&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;<br />
+                      {formData.dob?.replace(/-/g, "") || "840615"}4M{formData.expiryDate?.replace(/-/g, "") || "310810"}2ARE&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;01
+                    </>
+                  ) : (
+                    <>
+                      P&lt;GBR{formData.fullName?.split(" ")[0]?.toUpperCase() || "CARTER"}&lt;&lt;{formData.fullName?.split(" ")[1]?.toUpperCase() || "DANIEL"}&lt;&lt;&lt;&lt;&lt;&lt;&lt;<br />
+                      {formData.passportNumber || "GB12345678"}4GBR{formData.dob?.replace(/-/g, "") || "840615"}6M{formData.expiryDate?.replace(/-/g, "") || "310810"}2&lt;&lt;&lt;&lt;&lt;&lt;&lt;02
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Flags & Warnings */}
+            {formData.flags && formData.flags.length > 0 && (
+              <div className="space-y-1.5">
+                {formData.flags.map((flag, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-start gap-2 text-[11px] text-amber-800 bg-amber-50 p-2.5 rounded-lg border border-amber-200"
+                  >
+                    <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <span>{flag}</span>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div className="text-[11px] text-gray-500 leading-relaxed bg-alabaster p-3 rounded-lg border border-court-border">
-              Privacy Notice: This document file is encrypted and scheduled for automatic deletion after 1 year per project storage policy.
+              Privacy Notice: This document file is encrypted and processed via Google Gemini Multimodal Vision API per UAE court requirements.
             </div>
           </div>
 
@@ -155,7 +223,7 @@ export function DocumentReviewModal({
               <div className="flex items-center justify-between mb-1">
                 <label className="text-xs font-medium text-gray-700">Full Legal Name</label>
                 <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
-                  Source: Passport · 99%
+                  Source: {formData.source || "Passport"} · {formData.confidence}%
                 </span>
               </div>
               <input
@@ -170,10 +238,10 @@ export function DocumentReviewModal({
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-xs font-medium text-gray-700">
-                  Arabic Transliterated Name (الاسم باللغة العربية)
+                  Arabic Name (الاسم باللغة العربية)
                 </label>
                 <span className="text-[10px] font-semibold text-court-bronze-dark bg-court-tan/20 px-2 py-0.5 rounded">
-                  Phonetic AI · 98%
+                  {isEmiratesId ? "Official ID · 99%" : "Phonetic ADJD · 98%"}
                 </span>
               </div>
               <input
@@ -184,7 +252,9 @@ export function DocumentReviewModal({
                 className="w-full text-base px-3 py-2 rounded-lg border border-court-border bg-white focus:outline-none focus:ring-2 focus:ring-court-bronze/30 focus:border-court-bronze font-arabic font-bold text-gray-900 text-right"
               />
               <span className="text-[10px] text-gray-500 mt-1 block">
-                Phonetic transliteration according to ADJD court registry rules.
+                {isEmiratesId
+                  ? "Official Arabic name extracted from Emirates ID."
+                  : "Phonetic transliteration according to ADJD court registry rules."}
               </span>
             </div>
 
@@ -211,7 +281,7 @@ export function DocumentReviewModal({
               </div>
             </div>
 
-            {/* Grid: Passport Number and Expiry */}
+            {/* Identification Numbers */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-medium text-gray-700 block mb-1">Passport Number</label>
@@ -233,6 +303,20 @@ export function DocumentReviewModal({
                 />
               </div>
             </div>
+
+            {/* Emirates ID Field */}
+            <div>
+              <label className="text-xs font-medium text-gray-700 block mb-1">
+                Emirates ID (if applicable)
+              </label>
+              <input
+                type="text"
+                placeholder="784-XXXX-XXXXXXX-X"
+                value={formData.emiratesId || ""}
+                onChange={(e) => handleFieldChange("emiratesId", e.target.value)}
+                className="w-full text-sm px-3 py-2 rounded-lg border border-court-border bg-white focus:outline-none focus:ring-2 focus:ring-court-bronze/30 focus:border-court-bronze font-mono text-gray-900"
+              />
+            </div>
           </div>
         </div>
 
@@ -247,7 +331,7 @@ export function DocumentReviewModal({
 
           <button
             onClick={handleSave}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-court-bronze hover:bg-court-bronze-dark text-white text-xs font-semibold uppercase tracking-wider shadow-sm transition-all"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-court-bronze hover:bg-court-bronze-dark text-white text-xs font-semibold uppercase tracking-wider shadow-sm transition-all cursor-pointer"
           >
             <CheckCircle2 className="w-4 h-4" />
             <span>Confirm & Apply to Will</span>
