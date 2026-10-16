@@ -15,6 +15,7 @@ export function SectionF_ReviewDraft() {
     setActiveWillIndex,
     copyWillToPartnerWill,
     saveCurrentSectionToDb,
+    addOrUpdatePerson,
   } = useOwaStore();
 
   const [confirmed, setConfirmed] = useState(false);
