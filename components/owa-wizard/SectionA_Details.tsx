@@ -367,17 +367,8 @@ export function SectionA_Details() {
       const filename = "DEWA_Abu_Dhabi_Tenancy_Contract.pdf";
       setAddressProofUploaded(true);
       setAddressProofFileName(filename);
-
-      const extractedAddress = address || "";
-      setAddress(extractedAddress);
-
-      setAutofilledFields((prev) => ({
-        ...prev,
-        address: "Proof of Address",
-      }));
-
-      await saveDocument("PROOF_OF_ADDRESS", filename, 95, { address: extractedAddress });
-      syncToStore({ address: extractedAddress } as any);
+      await saveDocument("PROOF_OF_ADDRESS", filename, 95);
+      setJustExtractedBanner("Sample proof of address attached! Please enter your residential address manually below.");
       return;
     }
 
@@ -400,15 +391,7 @@ export function SectionA_Details() {
       const ocr = json.data;
       setAddressProofUploaded(true);
       await saveDocument("PROOF_OF_ADDRESS", file.name, ocr.confidence, ocr);
-      if (ocr.residentialAddress) {
-        setAddress(ocr.residentialAddress);
-        setAutofilledFields((prev) => ({
-          ...prev,
-          address: `Proof of Address · ${ocr.confidence}%`,
-        }));
-        syncToStore({ address: ocr.residentialAddress } as any);
-      }
-      setJustExtractedBanner(`Proof of address verified by Gemini Vision! Address populated.`);
+      setJustExtractedBanner(`Proof of address document attached! Please enter your residential address manually below.`);
     } catch (err: any) {
       console.error("Proof of Address OCR error:", err);
       setAddressProofUploaded(true);
@@ -446,11 +429,11 @@ export function SectionA_Details() {
                   Step 1 · Upload Documents to Autofill Details
                 </h3>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#A37E44]/15 text-[#A37E44] uppercase tracking-wider">
-                  Autofill Active
+                  Court Compliance
                 </span>
               </div>
               <p className="text-xs text-gray-500 mt-0.5">
-                Upload your Passport and Emirates ID to populate fields automatically.
+                Upload your Passport and Emirates ID to populate fields automatically and satisfy ADJD Civil Family Court statutory requirements.
               </p>
             </div>
           </div>
@@ -857,11 +840,6 @@ export function SectionA_Details() {
               <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider">
                 Actual Current Residential Address *
               </label>
-              {autofilledFields.address && (
-                <span className="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded">
-                  Autofilled from Document
-                </span>
-              )}
             </div>
             <p className="text-[11px] text-gray-500 mb-1.5">
               Enter your current residential address in the UAE. (A UAE asset address cannot be substituted).
@@ -872,7 +850,7 @@ export function SectionA_Details() {
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               onBlur={handleBlur}
-              placeholder="Villa 14, Saadiyat Beach Residences, Abu Dhabi, United Arab Emirates"
+              placeholder="Enter your current residential address in the UAE (e.g. Villa 14, Saadiyat Beach Residences, Abu Dhabi)"
               className="w-full px-3.5 py-2.5 rounded-lg border border-[#E5E0D8] text-sm focus:outline-none focus:border-[#A37E44]"
             />
           </div>
