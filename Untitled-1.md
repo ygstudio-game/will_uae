@@ -1,0 +1,1 @@
+ screenshots of all the pages and hosted link with admin and client demo user account and tickinting system should work properly 

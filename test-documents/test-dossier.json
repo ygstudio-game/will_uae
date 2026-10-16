@@ -1,0 +1,195 @@
+{
+  "testScenario": "ADJD Non-Muslim Will - Married Expatriate Family with 2 Minor Children in UAE",
+  "testator": {
+    "role": "TESTATOR",
+    "fullName": "Daniel Michael Carter",
+    "arabicName": "دانيال مايكل كارتر",
+    "nationality": "British",
+    "passportNumber": "GBR98412034",
+    "emiratesId": "784-1982-3920194-1",
+    "isUaeResident": true,
+    "dob": "1982-05-14",
+    "domicileCountry": "United Kingdom",
+    "address": "Villa 14, Saadiyat Beach Residences, Saadiyat Island, Abu Dhabi, UAE",
+    "email": "daniel.carter@example.com",
+    "phone": "+971 50 984 1203",
+    "sampleFiles": {
+      "passport": "01_testator_passport_daniel_carter.png",
+      "emiratesId": "02_testator_emirates_id_daniel_carter.png",
+      "proofOfAddress": "03_testator_proof_of_address_saadiyat.pdf"
+    }
+  },
+  "spouse": {
+    "role": "SPOUSE_AND_PRIMARY_BENEFICIARY",
+    "relationship": "Spouse",
+    "fullName": "Sarah Claire Carter",
+    "arabicName": "سارة كلير كارتر",
+    "nationality": "British",
+    "passportNumber": "GBR87321045",
+    "emiratesId": "784-1988-1029384-2",
+    "isUaeResident": true,
+    "dob": "1988-08-22",
+    "address": "Villa 14, Saadiyat Beach Residences, Saadiyat Island, Abu Dhabi, UAE",
+    "email": "sarah.carter@example.com",
+    "phone": "+971 50 873 2104",
+    "sampleFiles": {
+      "passport": "04_spouse_passport_sarah_carter.png",
+      "emiratesId": "05_spouse_emirates_id_sarah_carter.png"
+    }
+  },
+  "children": [
+    {
+      "childIndex": 1,
+      "fullName": "Liam Alexander Carter",
+      "arabicName": "ليام ألكسندر كارتر",
+      "relationship": "Son",
+      "nationality": "British",
+      "passportNumber": "GBR65192837",
+      "emiratesId": "784-2018-9182736-5",
+      "isUaeResident": true,
+      "dob": "2018-10-05",
+      "age": 8,
+      "sampleFiles": {
+        "passport": "06_child1_passport_liam_carter.png",
+        "emiratesId": "07_child1_emirates_id_liam_carter.png"
+      }
+    },
+    {
+      "childIndex": 2,
+      "fullName": "Emily Rose Carter",
+      "arabicName": "إيميلي روز كارتر",
+      "relationship": "Daughter",
+      "nationality": "British",
+      "passportNumber": "GBR49281726",
+      "emiratesId": "784-2021-8273645-8",
+      "isUaeResident": true,
+      "dob": "2021-03-18",
+      "age": 5,
+      "sampleFiles": {
+        "passport": "08_child2_passport_emily_carter.png",
+        "emiratesId": "09_child2_emirates_id_emily_carter.png"
+      }
+    }
+  ],
+  "executors": {
+    "primary": {
+      "slot": "EXECUTOR_PRIMARY",
+      "order": 1,
+      "fullName": "David Alan Whitfield",
+      "arabicName": "ديفيد ألان ويتفيلد",
+      "relationship": "Colleague / Trusted Friend",
+      "nationality": "Canadian",
+      "passportNumber": "CAN82910482",
+      "emiratesId": "784-1980-4920182-3",
+      "isUaeResident": true,
+      "dob": "1980-11-11",
+      "address": "Apartment 1204, Oceanscape Tower, Al Reem Island, Abu Dhabi, UAE",
+      "email": "david.whitfield@example.com",
+      "phone": "+971 52 492 0182",
+      "sampleFiles": {
+        "passport": "10_primary_executor_passport_david_whitfield.png",
+        "emiratesId": "11_primary_executor_emirates_id_david_whitfield.png"
+      }
+    },
+    "substitute": {
+      "slot": "EXECUTOR_SUBSTITUTE",
+      "order": 2,
+      "fullName": "Marcus James Vance",
+      "arabicName": "ماركوس جيمس فانس",
+      "relationship": "Senior Financial Associate",
+      "nationality": "Australian",
+      "passportNumber": "AUS51029384",
+      "emiratesId": "784-1983-5019283-7",
+      "isUaeResident": true,
+      "dob": "1983-02-03",
+      "address": "Unit 402, Marina Gate 1, Dubai Marina, Dubai, UAE",
+      "email": "marcus.vance@example.com",
+      "phone": "+971 55 501 9283",
+      "sampleFiles": {
+        "passport": "12_substitute_executor_passport_marcus_vance.png",
+        "emiratesId": "13_substitute_executor_emirates_id_marcus_vance.png"
+      }
+    }
+  },
+  "guardians": {
+    "permanent": {
+      "slot": "GUARDIAN_PERMANENT",
+      "order": 1,
+      "clause": "Clause 5",
+      "fullName": "Sarah Claire Carter",
+      "arabicName": "سارة كلير كارتر",
+      "relationship": "Spouse",
+      "nationality": "British",
+      "passportNumber": "GBR87321045",
+      "isUaeResident": true,
+      "note": "Selected via 'Appoint Surviving Spouse' button in Section D"
+    },
+    "substitutePermanent": {
+      "slot": "GUARDIAN_SUBSTITUTE_PERM",
+      "order": 2,
+      "clause": "Clause 5",
+      "fullName": "James Robert Carter",
+      "arabicName": "جيمس روبرت كارتر",
+      "relationship": "Brother",
+      "nationality": "British",
+      "passportNumber": "GBR31920485",
+      "isUaeResident": false,
+      "address": "42 Kensington High Street, London W8 5SA, United Kingdom",
+      "email": "james.carter@example.co.uk",
+      "phone": "+44 20 7946 0912",
+      "sampleFiles": {
+        "passport": "14_substitute_guardian_overseas_brother_james_carter_passport.png"
+      }
+    },
+    "temporary": {
+      "slot": "GUARDIAN_TEMPORARY",
+      "order": 3,
+      "clause": "Clause 6",
+      "fullName": "Oliver Henry Brooks",
+      "arabicName": "أوليفر هنري بروكس",
+      "relationship": "UAE Resident Close Friend",
+      "nationality": "New Zealand",
+      "passportNumber": "NZL71928340",
+      "emiratesId": "784-1986-7192834-9",
+      "isUaeResident": true,
+      "address": "Apartment 803, Building 4, Al Muneera, Al Raha Beach, Abu Dhabi, UAE",
+      "email": "oliver.brooks@example.ae",
+      "phone": "+971 50 719 2834",
+      "sampleFiles": {
+        "passport": "15_temporary_guardian_uae_oliver_brooks_passport.png",
+        "emiratesId": "16_temporary_guardian_uae_oliver_brooks_emirates_id.png"
+      }
+    }
+  },
+  "beneficiaries": {
+    "primary": [
+      {
+        "order": 1,
+        "fullName": "Sarah Claire Carter",
+        "arabicName": "سارة كلير كارتر",
+        "relationship": "Spouse",
+        "passportNumber": "GBR87321045",
+        "sharePercentage": 100,
+        "note": "Selected via 'Appoint Spouse as 100% Primary' preset"
+      }
+    ],
+    "substitutes": [
+      {
+        "slot": "A",
+        "fullName": "Liam Alexander Carter",
+        "arabicName": "ليام ألكسندر كارتر",
+        "relationship": "Son",
+        "passportNumber": "GBR65192837",
+        "sharePercentage": 50
+      },
+      {
+        "slot": "B",
+        "fullName": "Emily Rose Carter",
+        "arabicName": "إيميلي روز كارتر",
+        "relationship": "Daughter",
+        "passportNumber": "GBR49281726",
+        "sharePercentage": 50
+      }
+    ]
+  }
+}
