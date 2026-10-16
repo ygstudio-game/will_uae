@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { CheckCircle2, AlertCircle, Eye, ArrowRight, ShieldCheck, Lock, Sparkles, Copy, FileText } from "lucide-react";
 import { useOwaStore } from "@/store/useOwaStore";
 import { ADJDBilingualWillDocument } from "@/components/court/ADJDBilingualWillDocument";
+import { TestatorSignatureCard } from "@/components/signature/TestatorSignatureCard";
 import { useRouter } from "next/navigation";
 
 export function SectionF_ReviewDraft() {
@@ -279,6 +280,21 @@ export function SectionF_ReviewDraft() {
           )}
         </div>
       </div>
+
+      {/* Testator Signature Capture */}
+      {testator && (
+        <TestatorSignatureCard
+          signatureDataUrl={testator?.signatureDataUrl}
+          onSaveSignature={async (dataUrl) => {
+            if (testator?.id) {
+              await addOrUpdatePerson({
+                id: testator.id,
+                signatureDataUrl: dataUrl,
+              });
+            }
+          }}
+        />
+      )}
 
       {/* Confirmation and Final CTA */}
       <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E0D8] shadow-sm space-y-6">

@@ -731,9 +731,22 @@ export function ADJDBilingualWillDocument({
               </div>
               <div>
                 <p className="text-xs font-semibold text-gray-500 uppercase">Signature / التوقيع</p>
-                <div className="mt-4 border-b border-gray-400 w-48 text-xs text-gray-400">
-                  (Signed at ADJD Court)
-                </div>
+                {testator.signatureDataUrl ? (
+                  <div className="mt-2 flex flex-col items-start">
+                    <img
+                      src={testator.signatureDataUrl}
+                      alt="Testator Signature"
+                      className="max-h-14 max-w-48 object-contain mb-1 filter drop-shadow-xs"
+                    />
+                    <div className="border-b border-gray-400 w-48 text-[10px] text-gray-500 font-mono">
+                      Digitally Verified Signature · ADJD Court Form
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-4 border-b border-gray-400 w-48 text-xs text-gray-400">
+                    (Signed at ADJD Court)
+                  </div>
+                )}
               </div>
             </div>
 
