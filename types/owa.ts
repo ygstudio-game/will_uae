@@ -60,6 +60,7 @@ export interface PersonData {
   email?: string | null;
   phone?: string | null;
   documents?: UploadedDocumentData[];
+  signatureDataUrl?: string | null;
 }
 
 export interface UploadedDocumentData {

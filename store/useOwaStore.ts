@@ -65,6 +65,7 @@ export const createDefaultDraftApplication = (): ApplicationData => {
     email: "",
     phone: "",
     documents: [],
+    signatureDataUrl: null,
   };
 
   const defaultWill: WillData = {
@@ -250,6 +251,10 @@ export const useOwaStore = create<OwaState>()(
                 ? personData.phone
                 : existingPerson?.phone || null,
             documents: personData.documents || existingPerson?.documents || [],
+            signatureDataUrl:
+              personData.signatureDataUrl !== undefined
+                ? personData.signatureDataUrl
+                : existingPerson?.signatureDataUrl || null,
           };
 
           const existingIdx = currentApp.persons.findIndex((p) => p.id === personId);
