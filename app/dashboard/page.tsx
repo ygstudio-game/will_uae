@@ -105,6 +105,17 @@ function DashboardContent() {
   const payments = activeApp?.payments || [];
   const initialPayment = payments.find((p: any) => p.milestone === "INITIAL_SERVICE_FEE");
   const courtPayment = payments.find((p: any) => p.milestone === "COURT_FEE");
+  const isPaymentFullyComplete = Boolean(
+    courtPayment?.status === "COMPLETED" ||
+    primaryWill?.courtPaymentVerified ||
+    [
+      "AWAITING_ADMIN_VERIFICATION",
+      "UNDER_ADMIN_REVIEW",
+      "READY_FOR_SUBMISSION",
+      "SUBMITTED_TO_ADJD",
+      "REGISTRATION_COMPLETED",
+    ].includes(stage)
+  );
 
   const isEditingLocked = [
     "AWAITING_ADMIN_VERIFICATION",
@@ -269,72 +280,91 @@ function DashboardContent() {
 
             {/* Right Column: Two-Stage Milestone Billing & Direct Support */}
             <div className="space-y-6">
-              {/* Milestone Billing Card */}
-              <div className="bg-white p-6 rounded-2xl border border-[#E5E0D8] shadow-sm space-y-4">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 font-mono flex items-center gap-1.5">
-                  <CreditCard className="w-3.5 h-3.5 text-[#A37E44]" />
-                  Two-Stage Milestone Billing
-                </h4>
-
-                <div className="space-y-3 pt-1">
-                  {/* Milestone 1 */}
-                  <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs flex items-center justify-between">
-                    <div>
-                      <div className="font-bold text-emerald-950 flex items-center gap-1.5">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                        Stage 1: Preparation Fee
-                      </div>
-                      <p className="text-[11px] text-emerald-800/80 mt-0.5">
-                        Platform draft generation
-                      </p>
-                    </div>
-                    <span className="font-bold text-emerald-900 font-mono">
-                      AED {isCouples ? "1,799" : "999"} (Paid)
-                    </span>
+              {isPaymentFullyComplete ? (
+                /* Active Court Registration Filing Status Badge */
+                <div className="bg-white p-6 rounded-2xl border border-emerald-200 bg-emerald-50/30 shadow-sm space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-950 font-mono">
+                      ADJD Civil Court Filing In Progress
+                    </h4>
                   </div>
-
-                  {/* Milestone 2 */}
-                  <div
-                    className={`p-3.5 rounded-xl border text-xs flex items-center justify-between ${
-                      courtPayment
-                        ? "bg-emerald-50/70 border-emerald-200 text-emerald-950"
-                        : "bg-amber-50/70 border-amber-200 text-amber-950"
-                    }`}
-                  >
-                    <div>
-                      <div className="font-bold flex items-center gap-1.5">
-                        {courtPayment ? (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                        ) : (
-                          <Clock className="w-3.5 h-3.5 text-amber-600" />
-                        )}
-                        Stage 2: ADJD Court Registry Fee
-                      </div>
-                      <p className="text-[11px] text-gray-500 mt-0.5">
-                        Filing & Attestation
-                      </p>
-                    </div>
-                    <span className="font-bold font-mono">
-                      AED {isCouples ? "1,900" : "950"}{" "}
-                      {courtPayment ? "(Paid)" : "(Pending)"}
-                    </span>
-                  </div>
-
-                  <div className="pt-2 border-t border-[#E5E0D8] flex items-center justify-between text-xs font-bold text-[#0B1528]">
-                    <span>Total Fixed Cost:</span>
-                    <span>AED {isCouples ? "3,699" : "1,949"}</span>
+                  <p className="text-xs text-emerald-900/80 leading-relaxed">
+                    Court Application Submitted & Active. Both preparation fee and official ADJD court registration registry fee have been settled and verified.
+                  </p>
+                  <div className="pt-2 border-t border-emerald-200/60 flex items-center justify-between text-[11px] font-mono text-emerald-800">
+                    <span>Payment Verification:</span>
+                    <span className="font-bold text-emerald-900">Completed (Stages 1 & 2 Paid)</span>
                   </div>
                 </div>
-              </div>
+              ) : (
+                /* Milestone Billing Card */
+                <div className="bg-white p-6 rounded-2xl border border-[#E5E0D8] shadow-sm space-y-4">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 font-mono flex items-center gap-1.5">
+                    <CreditCard className="w-3.5 h-3.5 text-[#A37E44]" />
+                    Two-Stage Milestone Billing
+                  </h4>
+
+                  <div className="space-y-3 pt-1">
+                    {/* Milestone 1 */}
+                    <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs flex items-center justify-between">
+                      <div>
+                        <div className="font-bold text-emerald-950 flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          Stage 1: Preparation Fee
+                        </div>
+                        <p className="text-[11px] text-emerald-800/80 mt-0.5">
+                          Platform draft generation
+                        </p>
+                      </div>
+                      <span className="font-bold text-emerald-900 font-mono">
+                        AED {isCouples ? "1,799" : "999"} (Paid)
+                      </span>
+                    </div>
+
+                    {/* Milestone 2 */}
+                    <div
+                      className={`p-3.5 rounded-xl border text-xs flex items-center justify-between ${
+                        courtPayment
+                          ? "bg-emerald-50/70 border-emerald-200 text-emerald-950"
+                          : "bg-amber-50/70 border-amber-200 text-amber-950"
+                      }`}
+                    >
+                      <div>
+                        <div className="font-bold flex items-center gap-1.5">
+                          {courtPayment ? (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          ) : (
+                            <Clock className="w-3.5 h-3.5 text-amber-600" />
+                          )}
+                          Stage 2: ADJD Court Registry Fee
+                        </div>
+                        <p className="text-[11px] text-gray-500 mt-0.5">
+                          Filing & Attestation
+                        </p>
+                      </div>
+                      <span className="font-bold font-mono">
+                        AED {isCouples ? "1,900" : "950"}{" "}
+                        {courtPayment ? "(Paid)" : "(Pending)"}
+                      </span>
+                    </div>
+
+                    <div className="pt-2 border-t border-[#E5E0D8] flex items-center justify-between text-xs font-bold text-[#0B1528]">
+                      <span>Total Fixed Cost:</span>
+                      <span>AED {isCouples ? "3,699" : "1,949"}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Direct Support Callout */}
               <div className="bg-[#0B1528] text-white p-6 rounded-2xl shadow-sm space-y-3">
                 <div className="flex items-center gap-2">
                   <MessageSquare className="w-5 h-5 text-[#A37E44]" />
-                  <h4 className="text-sm font-semibold">Need Legal Help?</h4>
+                  <h4 className="text-sm font-semibold">Need assistance or have any doubts?</h4>
                 </div>
                 <p className="text-xs text-gray-300 leading-relaxed">
-                  Have questions about consular passport documentation or court video attestations?
+                  Have questions about consular passport documentation, court video attestations, or need guidance on your will? Reach our team directly.
                 </p>
                 <Link
                   href="/dashboard/support"
