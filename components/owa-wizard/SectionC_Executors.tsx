@@ -103,6 +103,36 @@ export function SectionC_Executors() {
     }
   };
 
+  const [replacingDocPersonId, setReplacingDocPersonId] = useState<string | null>(null);
+
+  const handleReplaceExecutorDoc = async (personId: string, file: File) => {
+    setReplacingDocPersonId(personId);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("documentType", "PASSPORT");
+
+      const res = await fetch("/api/ocr", {
+        method: "POST",
+        body: formData,
+      });
+      const json = await res.json();
+      if (res.ok && json.success && json.data) {
+        const ocr = json.data;
+        const updates: Record<string, any> = {};
+        if (ocr.fullName) updates.fullName = ocr.fullName;
+        if (ocr.arabicName) updates.arabicName = ocr.arabicName;
+        if (ocr.passportNumber) updates.passportNumber = ocr.passportNumber;
+        if (ocr.nationality) updates.nationality = ocr.nationality;
+        await handleUpdateExecutor(personId, updates);
+      }
+    } catch (err) {
+      console.error("Error replacing document:", err);
+    } finally {
+      setReplacingDocPersonId(null);
+    }
+  };
+
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
       <div>
@@ -211,6 +241,47 @@ export function SectionC_Executors() {
                     </div>
                   )}
 
+                  {/* 1. UAE Residency Question Upfront */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#FBF9F5] p-3.5 rounded-xl border border-[#E5E0D8]">
+                    <div>
+                      <span className="text-xs font-bold text-[#0B1528] block">
+                        Does this executor reside in the United Arab Emirates?
+                      </span>
+                      <span className="text-[11px] text-gray-500">
+                        Determines whether UAE Emirates ID is mandatory alongside passport.
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleUpdateExecutor(executorPerson.id, { isUaeResident: true })
+                        }
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                          executorPerson.isUaeResident
+                            ? "bg-[#0B1528] text-white"
+                            : "bg-white text-gray-700 border border-gray-300"
+                        }`}
+                      >
+                        Yes, In UAE
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleUpdateExecutor(executorPerson.id, { isUaeResident: false })
+                        }
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                          !executorPerson.isUaeResident
+                            ? "bg-[#0B1528] text-white"
+                            : "bg-white text-gray-700 border border-gray-300"
+                        }`}
+                      >
+                        No, Outside UAE
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
@@ -253,15 +324,45 @@ export function SectionC_Executors() {
                       <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
                         Relationship to Testator *
                       </label>
-                      <input
-                        type="text"
-                        defaultValue={executorPerson.relationship || ""}
-                        onBlur={(e) =>
-                          handleUpdateExecutor(executorPerson.id, { relationship: e.target.value })
+                      <select
+                        value={
+                          ["Spouse", "Brother", "Sister", "Parent", "Adult Child", "Trusted Friend", "Professional Trustee"].includes(
+                            executorPerson.relationship || ""
+                          )
+                            ? executorPerson.relationship || "Spouse"
+                            : "Other"
                         }
-                        placeholder="e.g. Spouse, Brother, Trusted Friend"
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          handleUpdateExecutor(executorPerson.id, {
+                            relationship: val === "Other" ? "" : val,
+                          });
+                        }}
                         className="w-full px-3.5 py-2.5 rounded-lg border border-[#E5E0D8] text-sm focus:outline-none focus:border-[#A37E44]"
-                      />
+                      >
+                        <option value="Spouse">Spouse</option>
+                        <option value="Brother">Brother</option>
+                        <option value="Sister">Sister</option>
+                        <option value="Parent">Parent</option>
+                        <option value="Adult Child">Adult Child</option>
+                        <option value="Trusted Friend">Trusted Friend</option>
+                        <option value="Professional Trustee">Professional Trustee</option>
+                        <option value="Other">Other (Type manually...)</option>
+                      </select>
+                      {!["Spouse", "Brother", "Sister", "Parent", "Adult Child", "Trusted Friend", "Professional Trustee"].includes(
+                        executorPerson.relationship || ""
+                      ) && (
+                        <input
+                          type="text"
+                          defaultValue={executorPerson.relationship || ""}
+                          key={`exec-rel-custom-${executorPerson.id}-${executorPerson.relationship}`}
+                          onBlur={(e) =>
+                            handleUpdateExecutor(executorPerson.id, { relationship: e.target.value })
+                          }
+                          placeholder="Specify custom relationship..."
+                          className="mt-2 w-full px-3.5 py-2 rounded-lg border border-[#E5E0D8] text-sm focus:outline-none focus:border-[#A37E44]"
+                        />
+                      )}
                     </div>
 
                     <div>
@@ -271,9 +372,11 @@ export function SectionC_Executors() {
                       <input
                         type="text"
                         defaultValue={executorPerson.nationality || ""}
+                        key={`exec-nat-${executorPerson.nationality}`}
                         onBlur={(e) =>
                           handleUpdateExecutor(executorPerson.id, { nationality: e.target.value })
                         }
+                        placeholder="e.g. British"
                         className="w-full px-3.5 py-2.5 rounded-lg border border-[#E5E0D8] text-sm focus:outline-none focus:border-[#A37E44]"
                       />
                     </div>
@@ -285,6 +388,7 @@ export function SectionC_Executors() {
                       <input
                         type="text"
                         defaultValue={executorPerson.passportNumber || ""}
+                        key={`exec-pass-${executorPerson.passportNumber}`}
                         onBlur={(e) =>
                           handleUpdateExecutor(executorPerson.id, {
                             passportNumber: e.target.value,
@@ -302,6 +406,7 @@ export function SectionC_Executors() {
                       <input
                         type="text"
                         defaultValue={executorPerson.emiratesId || ""}
+                        key={`exec-eid-${executorPerson.emiratesId}`}
                         onBlur={(e) =>
                           handleUpdateExecutor(executorPerson.id, { emiratesId: e.target.value })
                         }
@@ -317,6 +422,7 @@ export function SectionC_Executors() {
                       <input
                         type="text"
                         defaultValue={executorPerson.address || ""}
+                        key={`exec-addr-${executorPerson.address}`}
                         onBlur={(e) =>
                           handleUpdateExecutor(executorPerson.id, { address: e.target.value })
                         }
@@ -326,25 +432,33 @@ export function SectionC_Executors() {
                     </div>
                   </div>
 
-                  {/* Document preview */}
+                  {/* Document preview with working replace button */}
                   <div className="pt-2">
-                    <div className="border border-dashed border-[#A37E44]/40 bg-[#FBF9F5] rounded-xl p-3 flex items-center justify-between">
+                    <div className="border border-dashed border-[#A37E44]/40 bg-[#FBF9F5] rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div className="flex items-center gap-2.5">
-                        <FileText className="w-4 h-4 text-[#A37E44]" />
-                        <span className="text-xs font-medium text-gray-700">
-                          Passport_Document_{executorPerson.fullName.replace(/\s+/g, "_")}.pdf
+                        <FileText className="w-4 h-4 text-[#A37E44] shrink-0" />
+                        <span className="text-xs font-medium text-gray-700 truncate max-w-xs">
+                          Passport_Document_{executorPerson.fullName ? executorPerson.fullName.replace(/\s+/g, "_") : "Executor"}.pdf
                         </span>
-                        <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded font-mono">
+                        <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded font-mono shrink-0">
                           Attached
                         </span>
                       </div>
-                      <button
-                        type="button"
-                        className="text-xs text-[#A37E44] hover:underline flex items-center gap-1"
-                      >
-                        <Upload className="w-3 h-3" />
-                        Replace
-                      </button>
+                      <label className="text-xs text-[#A37E44] hover:text-[#8C6B37] font-semibold flex items-center gap-1 cursor-pointer self-start sm:self-auto">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>{replacingDocPersonId === executorPerson.id ? "Analyzing..." : "Replace Document"}</span>
+                        <input
+                          type="file"
+                          accept="image/*,.pdf"
+                          className="hidden"
+                          disabled={Boolean(replacingDocPersonId)}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleReplaceExecutorDoc(executorPerson.id, file);
+                            e.target.value = "";
+                          }}
+                        />
+                      </label>
                     </div>
                   </div>
                 </div>
