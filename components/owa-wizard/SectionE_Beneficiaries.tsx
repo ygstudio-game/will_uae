@@ -30,32 +30,23 @@ function ShareInput({ value, onChange, disabled }: ShareInputProps) {
   const [text, setText] = useState<string>(
     value !== undefined && value !== null ? String(value) : ""
   );
+  const [isFocused, setIsFocused] = useState<boolean>(false);
 
+  // Sync from props only when not focused
   useEffect(() => {
-    const currentNum = parseFloat(text);
-    if (
-      value !== undefined &&
-      value !== null &&
-      (isNaN(currentNum) || Math.abs(currentNum - value) > 0.001)
-    ) {
-      setText(String(value));
+    if (!isFocused) {
+      setText(value !== undefined && value !== null ? String(value) : "");
     }
-  }, [value]);
+  }, [value, isFocused]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
-    if (/^[0-9]*\.?[0-9]*$/.test(raw) || raw === "") {
+    if (/^[0-9]*\.?[0-9]*$/.test(raw)) {
       setText(raw);
-      const parsed = parseFloat(raw);
-      if (!isNaN(parsed) && parsed >= 0 && parsed <= 100) {
-        onChange(parsed);
-      } else if (raw === "") {
-        onChange(0);
-      }
     }
   };
 
-  const handleBlur = () => {
+  const handleCommit = () => {
     const parsed = parseFloat(text);
     if (isNaN(parsed) || parsed < 0) {
       setText("0");
@@ -75,8 +66,17 @@ function ShareInput({ value, onChange, disabled }: ShareInputProps) {
         type="text"
         inputMode="decimal"
         value={text}
+        onFocus={() => setIsFocused(true)}
         onChange={handleChange}
-        onBlur={handleBlur}
+        onBlur={() => {
+          setIsFocused(false);
+          handleCommit();
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.currentTarget.blur();
+          }
+        }}
         disabled={disabled}
         placeholder="100"
         className="w-full px-3 py-2 pr-7 rounded-lg border border-[#E5E0D8] bg-white text-xs font-bold text-[#0B1528] focus:outline-none focus:border-[#A37E44]"
