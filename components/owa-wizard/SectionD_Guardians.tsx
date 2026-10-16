@@ -129,6 +129,42 @@ export function SectionD_Guardians() {
     }
   };
 
+  const [analyzingGuardianId, setAnalyzingGuardianId] = useState<string | null>(null);
+
+  const handleGuardianFileUpload = async (
+    personId: string,
+    file: File,
+    docType: "PASSPORT" | "EMIRATES_ID"
+  ) => {
+    setAnalyzingGuardianId(personId);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("documentType", docType);
+
+      const res = await fetch("/api/ocr", {
+        method: "POST",
+        body: formData,
+      });
+      const json = await res.json();
+      if (res.ok && json.success && json.data) {
+        const ocr = json.data;
+        const updates: Record<string, any> = {};
+        if (ocr.fullName) updates.fullName = ocr.fullName;
+        if (ocr.arabicName) updates.arabicName = ocr.arabicName;
+        if (ocr.passportNumber) updates.passportNumber = ocr.passportNumber;
+        if (ocr.emiratesId) updates.emiratesId = ocr.emiratesId;
+        if (ocr.nationality) updates.nationality = ocr.nationality;
+        if (ocr.dob) updates.dob = ocr.dob;
+        await handleUpdateGuardian(personId, updates);
+      }
+    } catch (err) {
+      console.error("Error reading guardian document:", err);
+    } finally {
+      setAnalyzingGuardianId(null);
+    }
+  };
+
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
       <div>
@@ -189,6 +225,7 @@ export function SectionD_Guardians() {
           const guardianPerson = assignment?.person;
           const isAssigned = !!assignment && !!guardianPerson;
           const isSpouse = guardianPerson?.relationship?.toLowerCase() === "spouse" || guardianPerson?.relationship?.toLowerCase() === "wife" || guardianPerson?.relationship?.toLowerCase() === "husband";
+          const isAnalyzingThisGuardian = analyzingGuardianId === guardianPerson?.id;
 
           return (
             <div
@@ -298,6 +335,126 @@ export function SectionD_Guardians() {
                     </div>
                   )}
 
+                  {/* 1. Residency Question Upfront */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#FBF9F5] p-3.5 rounded-xl border border-[#E5E0D8]">
+                    <div>
+                      <span className="text-xs font-bold text-[#0B1528] block">
+                        Does this guardian reside in the United Arab Emirates?
+                      </span>
+                      <span className="text-[11px] text-gray-500">
+                        {slot.order === 3
+                          ? "Statutory Requirement: Under Section 6 of ADJD rules, temporary guardians must reside in the UAE."
+                          : "Determines whether UAE Emirates ID is mandatory alongside passport."}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleUpdateGuardian(guardianPerson.id, { isUaeResident: true })
+                        }
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                          guardianPerson.isUaeResident
+                            ? "bg-[#0B1528] text-white"
+                            : "bg-white text-gray-700 border border-gray-300"
+                        }`}
+                      >
+                        Yes, In UAE
+                      </button>
+                      {slot.order !== 3 && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleUpdateGuardian(guardianPerson.id, { isUaeResident: false })
+                          }
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                            !guardianPerson.isUaeResident
+                              ? "bg-[#0B1528] text-white"
+                              : "bg-white text-gray-700 border border-gray-300"
+                          }`}
+                        >
+                          No, Outside UAE
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 2. Document Uploads for Guardian */}
+                  <div className="space-y-4">
+                    <div className="p-4 rounded-xl border border-dashed border-[#A37E44]/50 bg-[#FAF7F2]/60 hover:bg-[#FAF7F2] transition-all">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-[#A37E44]" />
+                          <span className="text-xs font-bold text-[#0B1528] uppercase">
+                            Guardian Passport Copy * (Required for ADJD Court)
+                          </span>
+                        </div>
+                        {guardianPerson.passportNumber ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 font-semibold bg-emerald-100/70 px-2 py-0.5 rounded-full">
+                            <CheckCircle2 className="w-3 h-3" /> Passport Verified
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-amber-700 font-semibold uppercase bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                            Upload to Autofill
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 mb-3">
+                        Upload passport bio-page to derive legal name, DOB, nationality, and transliterate to Arabic.
+                      </p>
+
+                      <label className="cursor-pointer inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-white text-xs font-semibold bg-[#0B1528] hover:bg-[#1a2844] shadow-sm transition-all text-center">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>{isAnalyzingThisGuardian ? "Scanning..." : guardianPerson.passportNumber ? "Replace Guardian Passport" : "Upload Guardian Passport"}</span>
+                        <input
+                          type="file"
+                          accept="image/*,.pdf"
+                          className="hidden"
+                          disabled={Boolean(analyzingGuardianId)}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleGuardianFileUpload(guardianPerson.id, file, "PASSPORT");
+                            e.target.value = "";
+                          }}
+                        />
+                      </label>
+                    </div>
+
+                    {guardianPerson.isUaeResident && (
+                      <div className="p-4 rounded-xl border border-dashed border-emerald-400/60 bg-emerald-50/20 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <CreditCard className="w-4 h-4 text-emerald-700" />
+                            <span className="text-xs font-bold text-[#0B1528] uppercase">
+                              Guardian Emirates ID Scan
+                            </span>
+                          </div>
+                          {guardianPerson.emiratesId && (
+                            <span className="text-[10px] text-emerald-700 font-semibold bg-emerald-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3" /> EID Attached
+                            </span>
+                          )}
+                        </div>
+                        <label className="cursor-pointer inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg text-white text-xs font-semibold bg-[#0B1528] hover:bg-[#1a2844] shadow-sm transition-all text-center">
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>{guardianPerson.emiratesId ? "Replace Emirates ID Scan" : "Upload Guardian Emirates ID"}</span>
+                          <input
+                            type="file"
+                            accept="image/*,.pdf"
+                            className="hidden"
+                            disabled={Boolean(analyzingGuardianId)}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleGuardianFileUpload(guardianPerson.id, file, "EMIRATES_ID");
+                              e.target.value = "";
+                            }}
+                          />
+                        </label>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
@@ -320,9 +477,20 @@ export function SectionD_Guardians() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
-                        Phonetic Arabic Name (الاسم باللغة العربية)
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                          Phonetic Arabic Name (الاسم باللغة العربية)
+                        </label>
+                        {guardianPerson.arabicName ? (
+                          <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-mono font-semibold flex items-center gap-1">
+                            <span>✓</span> Auto-Transliterated
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded font-mono">
+                            Phonetic Arabic
+                          </span>
+                        )}
+                      </div>
                       <input
                         type="text"
                         dir="rtl"
@@ -345,6 +513,7 @@ export function SectionD_Guardians() {
                       <input
                         type="text"
                         defaultValue={guardianPerson.relationship || ""}
+                        key={`guardian-rel-${guardianPerson.relationship}`}
                         onBlur={(e) =>
                           handleUpdateGuardian(guardianPerson.id, {
                             relationship: e.target.value,
@@ -362,11 +531,13 @@ export function SectionD_Guardians() {
                       <input
                         type="text"
                         defaultValue={guardianPerson.nationality || ""}
+                        key={`guardian-nat-${guardianPerson.nationality}`}
                         onBlur={(e) =>
                           handleUpdateGuardian(guardianPerson.id, {
                             nationality: e.target.value,
                           })
                         }
+                        placeholder="e.g. British"
                         className="w-full px-3.5 py-2.5 rounded-lg border border-[#E5E0D8] text-sm focus:outline-none focus:border-[#A37E44]"
                       />
                     </div>
@@ -378,6 +549,7 @@ export function SectionD_Guardians() {
                       <input
                         type="text"
                         defaultValue={guardianPerson.passportNumber || ""}
+                        key={`guardian-pass-${guardianPerson.passportNumber}`}
                         onBlur={(e) =>
                           handleUpdateGuardian(guardianPerson.id, {
                             passportNumber: e.target.value,
@@ -390,34 +562,20 @@ export function SectionD_Guardians() {
 
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
-                        UAE Resident Status
+                        Emirates ID (if UAE resident)
                       </label>
-                      <div className="flex items-center gap-4 mt-2">
-                        <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
-                          <input
-                            type="radio"
-                            name={`uae_resident_${guardianPerson.id}`}
-                            checked={guardianPerson.isUaeResident}
-                            onChange={() =>
-                              handleUpdateGuardian(guardianPerson.id, { isUaeResident: true })
-                            }
-                            className="text-[#A37E44] focus:ring-[#A37E44]"
-                          />
-                            UAE Resident
-                        </label>
-                        <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
-                          <input
-                            type="radio"
-                            name={`uae_resident_${guardianPerson.id}`}
-                            checked={!guardianPerson.isUaeResident}
-                            onChange={() =>
-                              handleUpdateGuardian(guardianPerson.id, { isUaeResident: false })
-                            }
-                            className="text-[#A37E44] focus:ring-[#A37E44]"
-                          />
-                          Non-Resident (Overseas)
-                        </label>
-                      </div>
+                      <input
+                        type="text"
+                        defaultValue={guardianPerson.emiratesId || ""}
+                        key={`guardian-eid-${guardianPerson.emiratesId}`}
+                        onBlur={(e) =>
+                          handleUpdateGuardian(guardianPerson.id, {
+                            emiratesId: e.target.value,
+                          })
+                        }
+                        placeholder="784-XXXX-XXXXXXX-X"
+                        className="w-full px-3.5 py-2.5 rounded-lg border border-[#E5E0D8] text-sm focus:outline-none focus:border-[#A37E44]"
+                      />
                     </div>
 
                     <div className="sm:col-span-2">
@@ -427,6 +585,7 @@ export function SectionD_Guardians() {
                       <input
                         type="text"
                         defaultValue={guardianPerson.address || ""}
+                        key={`guardian-addr-${guardianPerson.address}`}
                         onBlur={(e) =>
                           handleUpdateGuardian(guardianPerson.id, { address: e.target.value })
                         }
