@@ -169,16 +169,7 @@ export function SectionD_Guardians() {
   // If no minor children exist
   if (childAssignments.length === 0 || minorChildren.length === 0) {
     return (
-      <div className="space-y-6 max-w-4xl mx-auto pb-12">
-        <div className="space-y-1">
-          <span className="text-xs font-semibold text-[#8a6233] uppercase tracking-wider">
-            Section D · Fills Section Nine of your Will
-          </span>
-          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#231a30]">
-            Guardians for Your Children
-          </h1>
-        </div>
-
+      <div className="space-y-6">
         <div className="bg-[#efeaf7] p-6 sm:p-7 rounded-2xl border border-transparent space-y-2">
           <h2 className="text-lg font-serif font-bold text-[#231a30]">
             No guardians needed
@@ -198,19 +189,7 @@ export function SectionD_Guardians() {
   }
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-12">
-      {/* Page Header */}
-      <div className="space-y-1">
-        <span className="text-xs font-semibold text-[#8a6233] uppercase tracking-wider">
-          Section D · Fills Section Nine of your Will
-        </span>
-        <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#231a30]">
-          Guardians for Your Children
-        </h1>
-        <p className="text-sm text-[#6c6478] max-w-2xl leading-relaxed">
-          Name who would care for your children under 18. A guardian named in a Will is a nomination, which the court confirms.
-        </p>
-      </div>
+    <div className="space-y-6">
 
       {/* Minor children chip banner */}
       <div className="flex flex-wrap items-center gap-2">

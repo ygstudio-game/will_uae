@@ -1,6 +1,7 @@
 import { HeroSection } from "@/components/landing/HeroSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { LegalFeaturesSection } from "@/components/landing/LegalFeaturesSection";
+import { OwaFooter } from "@/components/common/OwaFooter";
 
 export default function Home() {
   return (
@@ -8,6 +9,7 @@ export default function Home() {
       <HeroSection />
       <HowItWorksSection />
       <LegalFeaturesSection />
+      <OwaFooter />
     </div>
   );
 }

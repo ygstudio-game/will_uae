@@ -402,19 +402,8 @@ export function SectionA_Details() {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-12">
-      {/* Page Header */}
-      <div className="space-y-1">
-        <span className="text-xs font-semibold text-[#8a6233] uppercase tracking-wider">
-          Section A · Fills Section One of your Will
-        </span>
-        <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#231a30]">
-          {activeWillIndex === 1 && testator?.fullName ? `${testator.fullName}'s Details` : "Your Details"}
-        </h1>
-        <p className="text-sm text-[#6c6478] max-w-2xl leading-relaxed">
-          Upload documents first. The platform reads them and fills the fields below. Check every value and correct anything that differs from the passport.
-        </p>
-      </div>
+    <div className="owa-cols">
+      <div className="space-y-6">
 
       {/* Just Extracted Banner */}
       {justExtractedBanner && (
@@ -938,6 +927,36 @@ export function SectionA_Details() {
             />
             <p className="text-[11px] text-[#6c6478] mt-1">
               We send updates on your Will here.
+            </p>
+          </div>
+        </div>
+      </div>
+      </div>
+
+      {/* Right Column: Aside Notes */}
+      <div className="aside-notes space-y-4">
+        <div className="owa-callout">
+          <Shield className="w-5 h-5 text-[#6243ad] flex-shrink-0" />
+          <div>
+            <strong className="block text-xs font-bold text-[#29213f] mb-1">
+              Checked by a person
+            </strong>
+            <p className="text-xs text-[#797287] leading-relaxed">
+              AI can suggest details and flag issues. OWA manually verifies every application before filing with ADJD.
+            </p>
+          </div>
+        </div>
+
+        <div className="owa-card">
+          <div className="owa-cardbody space-y-3">
+            <h3 className="text-[13px] font-bold text-[#29213f]">Have these ready</h3>
+            <p className="text-xs text-[#797287] leading-relaxed">
+              Your passport, Emirates ID if applicable, and an address document such as a utility bill or tenancy contract.
+            </p>
+            <hr className="border-t border-[#e4dfee] my-3" />
+            <h3 className="text-[13px] font-bold text-[#29213f]">Living outside the UAE?</h3>
+            <p className="text-xs text-[#797287] leading-relaxed">
+              Enter your actual current residential address. OWA will review your documents and court template details.
             </p>
           </div>
         </div>

@@ -1,18 +1,20 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
+import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useWillStore } from "@/store/useWillStore";
 import { useOwaStore } from "@/store/useOwaStore";
 import { OwaSectionId } from "@/types/owa";
-import { OwaNavigation } from "@/components/owa-wizard/OwaNavigation";
+import { OwaSidebar } from "@/components/owa-wizard/OwaSidebar";
+import { OwaFooter } from "@/components/common/OwaFooter";
 import { SectionA_Details } from "@/components/owa-wizard/SectionA_Details";
 import { SectionB_Children } from "@/components/owa-wizard/SectionB_Children";
 import { SectionC_Executors } from "@/components/owa-wizard/SectionC_Executors";
 import { SectionD_Guardians } from "@/components/owa-wizard/SectionD_Guardians";
 import { SectionE_Beneficiaries } from "@/components/owa-wizard/SectionE_Beneficiaries";
 import { SectionF_ReviewDraft } from "@/components/owa-wizard/SectionF_ReviewDraft";
-import { ArrowLeft, ArrowRight, Save, CheckCircle2, AlertCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 
 // Legacy 1-16 steps
 import { WizardStepper } from "@/components/wizard/WizardStepper";
@@ -43,13 +45,37 @@ const OWA_SECTIONS: OwaSectionId[] = [
   "review",
 ];
 
-const SECTION_NAMES: Record<OwaSectionId, string> = {
-  details: "Section A: Details",
-  children: "Section B: Children",
-  executors: "Section C: Executors",
-  guardians: "Section D: Guardians",
-  beneficiaries: "Section E: Beneficiaries",
-  review: "Section F: Review and approve",
+const STEP_INFO: Record<OwaSectionId, { num: number; title: string; sub: string }> = {
+  details: {
+    num: 1,
+    title: "Your details",
+    sub: "Upload your documents, then check your personal details.",
+  },
+  children: {
+    num: 2,
+    title: "Children",
+    sub: "Tell us about the children who need guardian appointments.",
+  },
+  executors: {
+    num: 3,
+    title: "Executors",
+    sub: "Choose who will carry out the instructions in your Will.",
+  },
+  guardians: {
+    num: 4,
+    title: "Guardians",
+    sub: "Choose one set of guardians for all your children under 18.",
+  },
+  beneficiaries: {
+    num: 5,
+    title: "Beneficiaries",
+    sub: "Choose who receives your estate and how it is shared.",
+  },
+  review: {
+    num: 6,
+    title: "Review & draft",
+    sub: "Check each section before your application goes to OWA.",
+  },
 };
 
 function WizardStepContent() {
@@ -65,11 +91,9 @@ function WizardStepContent() {
     application,
     applicationId,
     activeWillIndex,
-    isSaving,
     loadApplicationFromDb,
     saveCurrentSectionToDb,
     setCurrentSection,
-    isSectionComplete,
   } = useOwaStore();
 
   const appIdQuery = searchParams.get("applicationId");
@@ -107,11 +131,14 @@ function WizardStepContent() {
   }, [isLegacy, legacyStepNumber, willIdParam, activeWillId, loadWillFromDatabase, setLegacyStep]);
 
   if (isOwa) {
-    const currentIdx = OWA_SECTIONS.indexOf(rawStep as OwaSectionId);
+    const currentSectionId = rawStep as OwaSectionId;
+    const currentStepInfo = STEP_INFO[currentSectionId] || STEP_INFO.details;
+    const currentIdx = OWA_SECTIONS.indexOf(currentSectionId);
     const prevSection = currentIdx > 0 ? OWA_SECTIONS[currentIdx - 1] : null;
     const nextSection = currentIdx < OWA_SECTIONS.length - 1 ? OWA_SECTIONS[currentIdx + 1] : null;
 
-    const canProceed = isSectionComplete(rawStep as OwaSectionId);
+    const currentWill = application?.wills?.[activeWillIndex];
+    const testatorName = currentWill?.testatorPerson?.fullName || "Daniel Reyes";
 
     const handleNavigate = async (targetSection: OwaSectionId) => {
       await saveCurrentSectionToDb();
@@ -139,63 +166,92 @@ function WizardStepContent() {
     };
 
     return (
-      <div className="min-h-screen bg-[#FBF9F5] flex flex-col justify-between">
+      <div className="min-h-screen bg-[#faf9f6] flex flex-col justify-between">
         <div>
-          {/* Top Wizard Navigation */}
-          <OwaNavigation />
+          {/* OWA Questionnaire Shell Layout */}
+          <div className="owa-shell">
+            {/* Left Sidebar */}
+            <OwaSidebar currentSection={currentSectionId} />
 
-          {/* Section Body */}
-          <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
-            {renderOwaSection()}
-          </main>
+            {/* Right Questionnaire Main Content */}
+            <main className="owa-content" id="main">
+              {/* Breadcrumb */}
+              <div className="owa-breadcrumb">
+                <Link href="/dashboard" className="text-[#797287] hover:underline">
+                  My application
+                </Link>
+                <span className="px-2">/</span>
+                <span>STEP {currentStepInfo.num} OF 6</span>
+                <span className="px-2">/</span>
+                <span className="text-[#29213f] font-medium">{currentStepInfo.title}</span>
+              </div>
+
+              {/* Page Head */}
+              <div className="owa-pagehead">
+                <div className="text-[10px] tracking-[1.5px] uppercase font-semibold text-[#6243ad] mb-2">
+                  STEP {currentStepInfo.num} OF 6 · {testatorName.toUpperCase()}
+                </div>
+                <h1 className="font-serif text-[34px] sm:text-[38px] text-[#29213f] font-normal tracking-[-0.7px] leading-tight">
+                  {currentStepInfo.title}
+                </h1>
+                <p className="sub text-[14px] text-[#797287] max-w-[620px] mt-2 leading-relaxed">
+                  {currentStepInfo.sub}
+                </p>
+              </div>
+
+              {/* Questionnaire Form Section */}
+              <div className="mt-6">
+                {renderOwaSection()}
+              </div>
+
+              {/* Action Navigation Controls (A through E) */}
+              {rawStep !== "review" && (
+                <div className="owa-actions flex items-center justify-between gap-4 mt-8 pt-6 border-t border-[#e4dfee]">
+                  {prevSection ? (
+                    <button
+                      type="button"
+                      onClick={() => handleNavigate(prevSection)}
+                      className="owa-btn"
+                    >
+                      <ArrowLeft className="w-4 h-4 text-[#797287]" />
+                      <span>← Back</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => router.push("/dashboard")}
+                      className="owa-btn"
+                    >
+                      <ArrowLeft className="w-4 h-4 text-[#797287]" />
+                      <span>← Back to overview</span>
+                    </button>
+                  )}
+
+                  <div className="flex items-center gap-4">
+                    <span className="owa-savehint text-[11.5px] text-[#797287] flex items-center gap-1.5">
+                      <span className="text-[#366d58] font-bold">✓</span>
+                      Saved as you type
+                    </span>
+
+                    {nextSection && (
+                      <button
+                        type="button"
+                        onClick={() => handleNavigate(nextSection)}
+                        className="owa-btn primary"
+                      >
+                        <span>Save & continue</span>
+                        <ArrowRight className="w-4 h-4 text-white" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </main>
+          </div>
         </div>
 
-        {/* Wizard Bottom Controls (Only on sections A through E) */}
-        {rawStep !== "review" && (
-          <footer className="sticky bottom-0 bg-white/95 backdrop-blur-md border-t border-[#e4dfe9] py-3.5 px-4 sm:px-8 shadow-sm z-20">
-            <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
-              <div>
-                {prevSection ? (
-                  <button
-                    type="button"
-                    onClick={() => handleNavigate(prevSection)}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 text-[14px] font-semibold text-[#231a30] bg-white border border-[#cfc6da] hover:border-[#382852] rounded-full transition-colors"
-                  >
-                    <ArrowLeft className="w-4 h-4 text-[#6c6478]" />
-                    <span>Back to {SECTION_NAMES[prevSection]}</span>
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => router.push("/dashboard")}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 text-[14px] font-semibold text-[#231a30] bg-white border border-[#cfc6da] hover:border-[#382852] rounded-full transition-colors"
-                  >
-                    <ArrowLeft className="w-4 h-4 text-[#6c6478]" />
-                    <span>Back to Dashboard</span>
-                  </button>
-                )}
-              </div>
-
-              <div className="flex items-center gap-4">
-                <span className="text-[12px] font-medium text-[#2f7a55] hidden sm:inline-flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  Saved as you type
-                </span>
-
-                {nextSection && (
-                  <button
-                    type="button"
-                    onClick={() => handleNavigate(nextSection)}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#c73a30] hover:bg-[#ad3128] text-white text-[14px] font-semibold rounded-full shadow-sm transition-colors"
-                  >
-                    <span>Save and continue to {SECTION_NAMES[nextSection]}</span>
-                    <ArrowRight className="w-4 h-4 text-white" />
-                  </button>
-                )}
-              </div>
-            </div>
-          </footer>
-        )}
+        {/* Footer matching owa-platform-prototype.html */}
+        <OwaFooter />
       </div>
     );
   }
@@ -260,7 +316,7 @@ function WizardStepContent() {
 
 export default function WizardStepPage() {
   return (
-    <React.Suspense fallback={<div className="min-h-screen bg-[#FBF9F5] flex items-center justify-center p-8 text-gray-400">Loading Wizard...</div>}>
+    <React.Suspense fallback={<div className="min-h-screen bg-[#faf9f6] flex items-center justify-center p-8 text-gray-400">Loading Questionnaire...</div>}>
       <WizardStepContent />
     </React.Suspense>
   );

@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { TicketThreadView } from "@/components/tickets/TicketThreadView";
 import { useOwaStore } from "@/store/useOwaStore";
+import { OwaFooter } from "@/components/common/OwaFooter";
 
 const TOPIC_PRESETS: Record<string, { subject: string; message: string }> = {
   child_passport: {
@@ -139,27 +140,6 @@ function CustomerSupportContent() {
 
   return (
     <div className="min-h-screen bg-[#FAF9F6] text-[#29213F]">
-      {/* Top Application Header */}
-      <header className="bg-[#FFFEFA] border-b border-[#E4DFEE] px-4 sm:px-8 py-3.5">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <Link href="/dashboard" className="flex items-baseline gap-2 text-inherit no-underline">
-            <span className="font-serif text-2xl font-bold tracking-tight text-[#29213F]">
-              owa
-            </span>
-            <span className="text-[10px] tracking-widest uppercase font-semibold text-gray-400 border-l border-[#E4DFEE] pl-2.5">
-              Online Wills Advisor
-            </span>
-          </Link>
-
-          <Link
-            href="/dashboard"
-            className="text-xs font-semibold text-gray-600 hover:text-[#6243AD] flex items-center gap-1"
-          >
-            ← Back to your Wills
-          </Link>
-        </div>
-      </header>
-
       <main className="max-w-6xl mx-auto px-4 sm:px-8 py-8 space-y-6">
         {/* Header Breadcrumbs */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
@@ -356,6 +336,9 @@ function CustomerSupportContent() {
           </div>
         )}
       </main>
+
+      {/* Footer matching owa-platform-prototype.html */}
+      <OwaFooter />
     </div>
   );
 }

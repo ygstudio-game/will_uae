@@ -173,19 +173,7 @@ export function SectionB_Children() {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-12">
-      {/* Page Header */}
-      <div className="space-y-1">
-        <span className="text-xs font-semibold text-[#8a6233] uppercase tracking-wider">
-          Section B · Used in Section Nine: Guardianship
-        </span>
-        <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#231a30]">
-          Your Children
-        </h1>
-        <p className="text-sm text-[#6c6478] max-w-2xl leading-relaxed">
-          List each child, up to five. Children under 18 open the guardianship section, where you name who would care for them.
-        </p>
-      </div>
+    <div className="space-y-6">
 
       {/* Children Existence Segment Question */}
       <div className="bg-[#FFFEFA] p-6 rounded-2xl border border-[#e4dfe9] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">

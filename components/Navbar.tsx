@@ -154,25 +154,25 @@ export function Navbar() {
             Dashboard
           </Link>
           <Link
-            href="/wizard/1"
+            href="/wizard/details"
             onClick={() => setMobileMenuOpen(false)}
             className="block text-sm font-medium text-white/90 hover:text-court-tan py-1"
           >
-            Prepare Will (16 Steps)
+            Questionnaire
           </Link>
           <Link
-            href="/#how-it-works"
+            href="/checkout/court-fee"
             onClick={() => setMobileMenuOpen(false)}
             className="block text-sm font-medium text-white/90 hover:text-court-tan py-1"
           >
-            How It Works
+            Court Fee
           </Link>
           <Link
-            href="/#legal-framework"
+            href="/dashboard/support"
             onClick={() => setMobileMenuOpen(false)}
             className="block text-sm font-medium text-white/90 hover:text-court-tan py-1"
           >
-            Court Framework
+            Support Desk
           </Link>
 
           <div className="pt-3 border-t border-white/10 flex flex-col gap-2">

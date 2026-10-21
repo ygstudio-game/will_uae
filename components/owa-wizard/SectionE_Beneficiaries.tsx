@@ -218,20 +218,7 @@ export function SectionE_Beneficiaries() {
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-12">
-      {/* Page Header */}
-      <div className="space-y-1">
-        <span className="text-xs font-semibold text-[#8a6233] uppercase tracking-wider">
-          Section E · Fills Section Seven of your Will
-        </span>
-        <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#231a30]">
-          Who Inherits Your Estate
-        </h1>
-        <p className="text-sm text-[#6c6478] max-w-2xl leading-relaxed">
-          Name up to four primary beneficiaries and the share each receives. Then name who inherits if none of them survives you.
-        </p>
-      </div>
-
+    <div className="space-y-6">
       {/* 2-Column Split Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {/* Left Column: Beneficiary Setup */}

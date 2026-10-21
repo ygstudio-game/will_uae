@@ -25,6 +25,7 @@ import {
 import { useOwaStore } from "@/store/useOwaStore";
 import { ApplicationStatus } from "@prisma/client";
 import { OwaSectionId } from "@/types/owa";
+import { OwaFooter } from "@/components/common/OwaFooter";
 
 const CHECKLIST_SECTIONS: { id: OwaSectionId; title: string; subtitle: string }[] = [
   {
@@ -203,123 +204,52 @@ function DashboardContent() {
 
   return (
     <div className="min-h-screen bg-[#FAF9F6] text-[#29213F]">
-      {/* Test / Dev Status Bar */}
-      <div className="bg-[#29213F] text-[#F0EAF9] py-1.5 px-4 sm:px-8 text-[11px] flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-400" />
-          <span className="font-medium tracking-wide">
-            ONLINE WILLS ADVISOR · Abu Dhabi Civil Family Court Registration Portal
-          </span>
-        </div>
-        <div className="flex items-center gap-4 text-gray-300">
-          <span>Ref: {activeApp?.applicationNumber || "OWA-DEMO-001"}</span>
-          <Link href="/admin" className="hover:text-white underline text-xs">
-            Admin desk ↗
-          </Link>
-        </div>
-      </div>
-
-      {/* Top Application Header */}
-      <header className="bg-[#FFFEFA] border-b border-[#E4DFEE] px-4 sm:px-8 py-3.5">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-4">
-            <Link href="/dashboard" className="flex items-baseline gap-2 text-inherit no-underline">
-              <span className="font-serif text-2xl font-bold tracking-tight text-[#29213F]">
-                owa
-              </span>
-              <span className="text-[10px] tracking-widest uppercase font-semibold text-gray-400 border-l border-[#E4DFEE] pl-2.5">
-                Online Wills Advisor
-              </span>
-            </Link>
-          </div>
-
-          {/* Navigation Links */}
-          <nav className="flex items-center gap-1 sm:gap-6 text-xs font-semibold overflow-x-auto scrollbar-none">
-            <Link
-              href="/dashboard"
-              className="py-1.5 px-3 rounded-lg text-[#6243AD] bg-[#F0EBF9] font-bold"
-            >
-              Overview
-            </Link>
-            <Link
-              href={`/wizard/${nextSection}${queryParamStr}`}
-              className="py-1.5 px-3 rounded-lg text-gray-600 hover:text-[#6243AD] hover:bg-[#F7F4FC] transition-colors"
-            >
-              My questionnaire
-            </Link>
-            <Link
-              href={`/checkout/court-fee${queryParamStr}`}
-              className="py-1.5 px-3 rounded-lg text-gray-600 hover:text-[#6243AD] hover:bg-[#F7F4FC] transition-colors"
-            >
-              Court fee
-            </Link>
-            <Link
-              href="/dashboard/support"
-              className="py-1.5 px-3 rounded-lg text-gray-600 hover:text-[#6243AD] hover:bg-[#F7F4FC] transition-colors flex items-center gap-1"
-            >
-              <MessageSquare className="w-3.5 h-3.5" />
-              Support
-            </Link>
-          </nav>
-
-          {/* User Profile Info & Couples Switcher */}
-          <div className="flex items-center gap-3">
-            {isCouples && (
-              <div className="flex items-center gap-1.5 bg-[#F7F4FC] border border-[#E4DFEE] p-1 rounded-xl text-xs font-medium">
-                <button
-                  type="button"
-                  onClick={() => setActiveWillIndex(0)}
-                  className={`px-2.5 py-1 rounded-lg transition-all ${
-                    activeWillIndex === 0
-                      ? "bg-[#6243AD] text-white font-bold shadow-2xs"
-                      : "text-gray-600 hover:text-[#29213F]"
-                  }`}
-                >
-                  Will 1: {primaryWill?.testatorPerson?.fullName?.split(" ")[0] || "Partner 1"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveWillIndex(1)}
-                  className={`px-2.5 py-1 rounded-lg transition-all ${
-                    activeWillIndex === 1
-                      ? "bg-[#6243AD] text-white font-bold shadow-2xs"
-                      : "text-gray-600 hover:text-[#29213F]"
-                  }`}
-                >
-                  Will 2: {partnerWill?.testatorPerson?.fullName?.split(" ")[0] || "Partner 2"}
-                </button>
-              </div>
-            )}
-
-            <div className="flex items-center gap-2 pl-2 border-l border-[#E4DFEE]">
-              <div className="w-8 h-8 rounded-full bg-[#F0EBF9] text-[#6243AD] font-bold text-xs flex items-center justify-center">
-                {testatorName ? testatorName.charAt(0).toUpperCase() : "U"}
-              </div>
-              <span className="text-xs font-semibold text-gray-700 hidden md:inline">
-                {testatorName.split(" ")[0]}
-              </span>
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* Main Container */}
       <main className="max-w-6xl mx-auto px-4 sm:px-8 py-8 space-y-6">
-        {/* Breadcrumb & Welcome Title */}
-        <div>
-          <div className="text-[11px] text-gray-400 font-medium mb-1">
-            My application <span className="px-1.5 text-gray-300">/</span> Overview
+        {/* Breadcrumb, Welcome Title & Couples Switcher */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="text-[11px] text-gray-400 font-medium mb-1">
+              My application <span className="px-1.5 text-gray-300">/</span> Overview
+            </div>
+            <div className="text-[10px] tracking-widest uppercase font-bold text-[#6243AD] mb-1 font-mono">
+              YOUR OWA WORKSPACE
+            </div>
+            <h1 className="font-serif text-3xl sm:text-4xl font-normal text-[#29213F]">
+              Your Will, one step at a time.
+            </h1>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1 max-w-xl">
+              Welcome back, {testatorName.split(" ")[0]}. Everything you need to prepare your{" "}
+              {isCouples ? "two Wills" : "Will"} is here.
+            </p>
           </div>
-          <div className="text-[10px] tracking-widest uppercase font-bold text-[#6243AD] mb-1 font-mono">
-            YOUR OWA WORKSPACE
-          </div>
-          <h1 className="font-serif text-3xl sm:text-4xl font-normal text-[#29213F]">
-            Your Will, one step at a time.
-          </h1>
-          <p className="text-xs sm:text-sm text-gray-500 mt-1 max-w-xl">
-            Welcome back, {testatorName.split(" ")[0]}. Everything you need to prepare your{" "}
-            {isCouples ? "two Wills" : "Will"} is here.
-          </p>
+
+          {isCouples && (
+            <div className="flex items-center gap-1.5 bg-[#F7F4FC] border border-[#E4DFEE] p-1.5 rounded-xl text-xs font-medium self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setActiveWillIndex(0)}
+                className={`px-3 py-1.5 rounded-lg transition-all ${
+                  activeWillIndex === 0
+                    ? "bg-[#6243AD] text-white font-bold shadow-2xs"
+                    : "text-gray-600 hover:text-[#29213F]"
+                }`}
+              >
+                Will 1: {primaryWill?.testatorPerson?.fullName?.split(" ")[0] || "Partner 1"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveWillIndex(1)}
+                className={`px-3 py-1.5 rounded-lg transition-all ${
+                  activeWillIndex === 1
+                    ? "bg-[#6243AD] text-white font-bold shadow-2xs"
+                    : "text-gray-600 hover:text-[#29213F]"
+                }`}
+              >
+                Will 2: {partnerWill?.testatorPerson?.fullName?.split(" ")[0] || "Partner 2"}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Payment Celebration Toast */}
@@ -618,6 +548,9 @@ function DashboardContent() {
           </div>
         </div>
       </main>
+
+      {/* Footer matching owa-platform-prototype.html */}
+      <OwaFooter />
     </div>
   );
 }

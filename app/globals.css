@@ -159,3 +159,232 @@ p {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ==========================================================================
+   OWA Post-Payment Design System (Exact Match from OWA_PostPayment_User_Test.html)
+   ========================================================================== */
+:root {
+  --owa-bg: #faf9f6;
+  --owa-paper: #fffefa;
+  --owa-ink: #29213f;
+  --owa-muted: #797287;
+  --owa-line: #e4dfee;
+  --owa-purple: #6243ad;
+  --owa-purple-dark: #443074;
+  --owa-lav: #f0ebf9;
+  --owa-lav2: #f7f4fc;
+  --owa-red: #be4743;
+  --owa-green: #366d58;
+  --owa-amber: #95652b;
+  --owa-shadow: 0 8px 25px rgba(51, 35, 76, 0.04);
+}
+
+.owa-shell {
+  display: flex;
+  min-height: calc(100vh - 111px);
+  background: #faf9f6;
+}
+
+.owa-content {
+  width: min(1160px, 100%);
+  padding: 35px 42px 65px;
+  margin: 0 auto;
+  min-width: 0;
+}
+
+@media (max-width: 950px) {
+  .owa-content {
+    padding: 25px 20px 45px;
+  }
+}
+
+.owa-breadcrumb {
+  font-size: 11.5px;
+  color: #797287;
+  margin-bottom: 24px;
+}
+
+.owa-pagehead {
+  margin-bottom: 27px;
+}
+
+.owa-pagehead h1 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 38px;
+  font-weight: 400;
+  letter-spacing: -0.7px;
+  line-height: 1.2;
+  color: #29213f;
+  margin: 0;
+}
+
+.owa-pagehead .sub {
+  color: #797287;
+  max-width: 620px;
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.owa-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 285px;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 950px) {
+  .owa-cols {
+    grid-template-columns: 1fr;
+  }
+  .aside-notes {
+    display: none;
+  }
+}
+
+.owa-card {
+  background: #ffffff;
+  border: 1px solid #e4dfee;
+  border-radius: 9px;
+  box-shadow: 0 8px 25px rgba(51, 35, 76, 0.04);
+  overflow: hidden;
+}
+
+.owa-cardhead {
+  padding: 20px 25px;
+  border-bottom: 1px solid #e4dfee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.owa-cardbody {
+  padding: 25px;
+}
+
+.owa-cardfoot {
+  padding: 17px 25px;
+  border-top: 1px solid #e4dfee;
+  background: #f7f4fc;
+}
+
+.owa-btn {
+  border: 1px solid #e4dfee;
+  border-radius: 7px;
+  background: #ffffff;
+  padding: 10px 17px;
+  min-height: 42px;
+  font-weight: 550;
+  font-size: 13.5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  text-decoration: none;
+  color: #29213f;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.owa-btn:hover {
+  background: #f7f4fc;
+  border-color: #c9b9e2;
+}
+
+.owa-btn.primary {
+  background: #6243ad;
+  border-color: #6243ad;
+  color: #ffffff;
+}
+
+.owa-btn.primary:hover {
+  background: #443074;
+}
+
+.owa-btn.soft {
+  background: #f0ebf9;
+  color: #6243ad;
+  border-color: transparent;
+}
+
+.owa-btn.soft:hover {
+  background: #e5daf3;
+}
+
+.owa-callout {
+  display: flex;
+  gap: 12px;
+  background: #f7f4fc;
+  border: 1px solid #e4dfee;
+  border-radius: 7px;
+  padding: 15px 17px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #29213f;
+}
+
+.owa-callout.amber {
+  background: #fffaf0;
+  border-color: #eedfbd;
+  color: #77572e;
+}
+
+.owa-callout.green {
+  background: #f1f7f3;
+  border-color: #d4e6db;
+  color: #366d58;
+}
+
+.owa-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-top: 25px;
+}
+
+.owa-savehint {
+  font-size: 11px;
+  color: #797287;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.owa-savehint::before {
+  content: '✓';
+  color: #366d58;
+  font-weight: 700;
+}
+
+.owa-segmented {
+  display: flex;
+  background: #f7f4fc;
+  border: 1px solid #e4dfee;
+  padding: 4px;
+  gap: 3px;
+  border-radius: 7px;
+}
+
+.owa-segmented button {
+  flex: 1;
+  border: none;
+  padding: 9px 12px;
+  border-radius: 5px;
+  background: transparent;
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+  color: #797287;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.owa-segmented button.active {
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(64, 49, 91, 0.08);
+  color: #6243ad;
+  font-weight: 600;
+}
+

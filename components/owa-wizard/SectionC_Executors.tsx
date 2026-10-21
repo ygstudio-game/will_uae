@@ -158,20 +158,7 @@ export function SectionC_Executors() {
   });
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-12">
-      {/* Page Header */}
-      <div className="space-y-1">
-        <span className="text-xs font-semibold text-[#8a6233] uppercase tracking-wider">
-          Section C · Fills Section Two of your Will
-        </span>
-        <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#231a30]">
-          Your Executors
-        </h1>
-        <p className="text-sm text-[#6c6478] max-w-2xl leading-relaxed">
-          Your executor collects your UAE assets, pays what you owe and distributes the rest. Name a main executor and up to two backups.
-        </p>
-      </div>
-
+    <div className="space-y-6">
       {/* 2-Column Split Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {/* Left Column: 3 Executor Slots */}

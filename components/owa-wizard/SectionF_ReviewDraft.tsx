@@ -154,19 +154,7 @@ export function SectionF_ReviewDraft() {
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-12">
-      {/* Page Header */}
-      <div className="space-y-1">
-        <span className="text-xs font-semibold text-[#8a6233] uppercase tracking-wider">
-          Section F · Completes Section Ten of your Will
-        </span>
-        <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#231a30]">
-          Review and Approve Your Will
-        </h1>
-        <p className="text-sm text-[#6c6478] max-w-2xl leading-relaxed">
-          Check each section, approve the Arabic spelling of every name, then send your Will for legal review. You can still make changes until we file it.
-        </p>
-      </div>
+    <div className="space-y-6">
 
       {/* Mirror Will Banner */}
       {isCouples && (
