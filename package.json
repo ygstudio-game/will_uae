@@ -7,7 +7,8 @@
     "build": "prisma generate && next build",
     "postinstall": "prisma generate",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "screenshots": "npx tsx scripts/capture-screenshots.ts"
   },
   "dependencies": {
     "@neon/config": "^1.8.3",

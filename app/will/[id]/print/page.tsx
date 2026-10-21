@@ -49,6 +49,7 @@ export default function WillPrintPage() {
               emailAddress: w.emailAddress || "",
               contactNumber: w.contactNumber || "",
               domicileCountry: w.domicileCountry || "United Arab Emirates",
+              signatureDataUrl: w.signatureDataUrl || null,
             },
             parties: (w.parties || []).map((p: any) => ({
               id: p.id,
@@ -148,6 +149,7 @@ export default function WillPrintPage() {
             address: willData.testator.residentialAddress,
             email: willData.testator.emailAddress,
             phone: willData.testator.contactNumber,
+            signatureDataUrl: willData.testator.signatureDataUrl || null,
           }}
           assignments={willData.parties.map((p, idx) => ({
             id: p.id,

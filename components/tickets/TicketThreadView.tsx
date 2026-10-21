@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Send, CheckCircle2, AlertCircle, Clock, Shield, User } from "lucide-react";
+import { Send, CheckCircle2, AlertCircle, Clock, Paperclip, Check } from "lucide-react";
 import { TicketStatus } from "@prisma/client";
 
 interface TicketThreadViewProps {
@@ -18,6 +18,7 @@ export function TicketThreadView({
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [statusUpdate, setStatusUpdate] = useState<TicketStatus | null>(null);
+  const [attachedFileName, setAttachedFileName] = useState<string | null>(null);
 
   const handleSendReply = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,11 +26,15 @@ export function TicketThreadView({
 
     setLoading(true);
     try {
+      const fullMessage = attachedFileName
+        ? `${message.trim()}\n\n[Attachment: ${attachedFileName}]`
+        : message.trim();
+
       const res = await fetch(`/api/tickets/${ticket.id}/replies`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: message.trim(),
+          message: fullMessage,
           senderRole: userRole,
           updateStatus: statusUpdate || undefined,
         }),
@@ -38,6 +43,7 @@ export function TicketThreadView({
       const data = await res.json();
       if (data.success) {
         setMessage("");
+        setAttachedFileName(null);
         setStatusUpdate(null);
         onReplyAdded();
       }
@@ -48,140 +54,149 @@ export function TicketThreadView({
     }
   };
 
-  const renderStatusBadge = (status: TicketStatus) => {
+  const getChip = (status: TicketStatus) => {
     switch (status) {
       case "RESOLVED":
         return (
-          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 flex items-center gap-1 font-mono">
-            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-            RESOLVED
+          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#E7F0EB] text-[#366D58] border border-[#BCD4C7]">
+            Resolved
           </span>
         );
       case "AWAITING_CUSTOMER":
         return (
-          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 flex items-center gap-1 font-mono">
-            <Clock className="w-3 h-3 text-amber-600" />
-            ACTION REQUIRED FROM CLIENT
+          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#FFF4E5] text-[#95652B] border border-[#F2D7B2]">
+            Waiting for you
           </span>
         );
       case "OPEN":
       default:
         return (
-          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 flex items-center gap-1 font-mono">
-            <AlertCircle className="w-3 h-3 text-blue-600" />
-            OPEN INQUIRY
+          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#F0EBF9] text-[#6243AD] border border-[#DFD2EF]">
+            With our team
           </span>
         );
     }
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-[#E5E0D8] shadow-sm overflow-hidden flex flex-col h-[600px]">
+    <section className="bg-[#FFFEFA] rounded-2xl border border-[#E4DFEE] shadow-card-soft overflow-hidden flex flex-col h-[640px]">
       {/* Header */}
-      <div className="p-4 sm:p-5 border-b border-[#E5E0D8] bg-[#FBF9F5] flex items-center justify-between gap-3">
+      <header className="px-6 py-4 border-b border-[#E4DFEE] bg-[#FAF9F6] flex items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-mono font-bold text-[#A37E44]">
-              Ticket #{ticket.ticketNumber}
-            </span>
-            {renderStatusBadge(ticket.status)}
+            <h2 className="text-base font-serif font-bold text-[#29213F]">
+              {ticket.subject}
+            </h2>
+            {getChip(ticket.status)}
           </div>
-          <h3 className="text-sm sm:text-base font-serif font-bold text-[#0B1528] mt-0.5">
-            {ticket.subject}
-          </h3>
+          <span className="text-[11px] text-gray-500 font-mono">
+            Conversation #{ticket.ticketNumber || ticket.id.slice(-4)} · Opened{" "}
+            {new Date(ticket.createdAt).toLocaleDateString("en-GB", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })}
+          </span>
         </div>
+      </header>
 
-        <div className="text-[11px] text-gray-400 font-mono hidden sm:block">
-          Opened: {new Date(ticket.createdAt).toLocaleDateString()}
-        </div>
-      </div>
+      {/* Message History Thread */}
+      <div className="flex-1 p-6 overflow-y-auto space-y-4 bg-white">
+        {ticket.messages && ticket.messages.length > 0 ? (
+          ticket.messages.map((msg: any) => {
+            const isMe =
+              (userRole === "CUSTOMER" && msg.senderRole === "CUSTOMER") ||
+              (userRole === "ADMIN" && msg.senderRole === "ADMIN");
 
-      {/* Message History */}
-      <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4 bg-white">
-        {ticket.replies.map((reply: any) => {
-          const isAdmin = reply.senderRole === "ADMIN";
-
-          return (
-            <div
-              key={reply.id}
-              className={`flex flex-col ${isAdmin ? "items-start" : "items-end"}`}
-            >
+            return (
               <div
-                className={`max-w-[85%] sm:max-w-[75%] rounded-2xl p-4 space-y-1.5 shadow-2xs ${
-                  isAdmin
-                    ? "bg-[#0B1528] text-white rounded-tl-sm"
-                    : "bg-[#FBF9F5] border border-[#E5E0D8] text-gray-800 rounded-tr-sm"
+                key={msg.id}
+                className={`flex flex-col max-w-[82%] ${
+                  isMe ? "ml-auto items-end" : "mr-auto items-start"
                 }`}
               >
-                <div className="flex items-center justify-between gap-3 text-[11px] pb-1 border-b border-white/10">
-                  <span className={`font-bold flex items-center gap-1 ${isAdmin ? "text-[#A37E44]" : "text-[#0B1528]"}`}>
-                    {isAdmin ? <Shield className="w-3 h-3" /> : <User className="w-3 h-3 text-gray-400" />}
-                    {reply.senderName} ({isAdmin ? "Court Legal Desk" : "Client"})
-                  </span>
-                  <span className={`font-mono text-[10px] ${isAdmin ? "text-gray-400" : "text-gray-400"}`}>
-                    {new Date(reply.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                  </span>
+                <span className="text-[11px] text-gray-400 mb-1 px-1">
+                  {isMe ? "You" : `${msg.senderName || "OWA Legal Team"} (Court Specialist)`} ·{" "}
+                  {new Date(msg.createdAt).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+
+                <div
+                  className={`p-3.5 rounded-2xl text-xs sm:text-sm leading-relaxed whitespace-pre-wrap ${
+                    isMe
+                      ? "bg-[#F0EBF9] text-[#29213F] rounded-br-xs border border-[#DFD2EF]"
+                      : "bg-[#29213F] text-white rounded-bl-xs shadow-2xs"
+                  }`}
+                >
+                  {msg.message}
                 </div>
-                <p className="text-xs leading-relaxed whitespace-pre-wrap">{reply.message}</p>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        ) : (
+          <div className="text-center py-12 text-gray-400 text-xs">
+            No messages in this conversation yet. Send a reply below.
+          </div>
+        )}
       </div>
 
-      {/* Reply Input */}
-      <form onSubmit={handleSendReply} className="p-4 border-t border-[#E5E0D8] bg-[#FBF9F5] space-y-3">
-        {userRole === "ADMIN" && (
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-gray-500 font-semibold">Status after reply:</span>
+      {/* Reply Form */}
+      <form
+        onSubmit={handleSendReply}
+        className="p-4 border-t border-[#E4DFEE] bg-[#FAF9F6] space-y-3"
+      >
+        {attachedFileName && (
+          <div className="text-xs text-[#6243AD] bg-[#F0EBF9] px-3 py-1.5 rounded-lg flex items-center justify-between">
+            <span className="flex items-center gap-1.5 truncate">
+              <Paperclip className="w-3.5 h-3.5" />
+              Attached: {attachedFileName}
+            </span>
             <button
               type="button"
-              onClick={() => setStatusUpdate("AWAITING_CUSTOMER")}
-              className={`px-2.5 py-1 rounded-md text-[11px] font-semibold border transition-all ${
-                statusUpdate === "AWAITING_CUSTOMER"
-                  ? "bg-amber-100 border-amber-300 text-amber-900"
-                  : "bg-white border-[#E5E0D8] text-gray-700"
-              }`}
+              onClick={() => setAttachedFileName(null)}
+              className="text-gray-400 hover:text-red-600 font-bold ml-2"
             >
-              Awaiting Client Response
-            </button>
-            <button
-              type="button"
-              onClick={() => setStatusUpdate("RESOLVED")}
-              className={`px-2.5 py-1 rounded-md text-[11px] font-semibold border transition-all ${
-                statusUpdate === "RESOLVED"
-                  ? "bg-emerald-100 border-emerald-300 text-emerald-900"
-                  : "bg-white border-[#E5E0D8] text-gray-700"
-              }`}
-            >
-              Mark Resolved
+              ×
             </button>
           </div>
         )}
 
-        <div className="flex items-center gap-2">
-          <input
-            type="text"
-            required
-            placeholder={
-              userRole === "ADMIN"
-                ? "Type response from Abu Dhabi Civil Family Court legal desk..."
-                : "Type your question or response here..."
-            }
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            className="flex-1 px-4 py-2.5 rounded-xl border border-[#E5E0D8] bg-white text-xs text-gray-800 focus:outline-none focus:border-[#A37E44]"
-          />
+        <textarea
+          rows={3}
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="Write your reply or question to our legal team..."
+          className="w-full text-xs sm:text-sm p-3 rounded-xl border border-[#DCD4E7] bg-white focus:outline-none focus:ring-2 focus:ring-[#6243AD] focus:border-transparent text-[#29213F] placeholder-gray-400 resize-none"
+        />
+
+        <div className="flex items-center justify-between">
+          <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#DCD4E7] bg-white hover:bg-[#F7F4FC] text-gray-700 text-xs font-semibold transition-all">
+            <Paperclip className="w-3.5 h-3.5 text-gray-500" />
+            <span>Attach file</span>
+            <input
+              type="file"
+              className="hidden"
+              accept=".pdf,.png,.jpg,.jpeg"
+              onChange={(e) => {
+                if (e.target.files && e.target.files[0]) {
+                  setAttachedFileName(e.target.files[0].name);
+                }
+              }}
+            />
+          </label>
+
           <button
             type="submit"
-            disabled={loading}
-            className="px-4 py-2.5 bg-[#0B1528] hover:bg-[#1a2844] text-white rounded-xl text-xs font-semibold shadow-sm flex items-center gap-1.5 transition-all"
+            disabled={loading || !message.trim()}
+            className="px-5 py-2 bg-[#6243AD] hover:bg-[#443074] disabled:opacity-50 text-white text-xs font-bold rounded-lg shadow-sm transition-all flex items-center gap-1.5"
           >
-            <Send className="w-3.5 h-3.5 text-[#A37E44]" />
-            <span>Send</span>
+            <span>{loading ? "Sending..." : "Send reply"}</span>
+            <Send className="w-3.5 h-3.5" />
           </button>
         </div>
       </form>
-    </div>
+    </section>
   );
 }

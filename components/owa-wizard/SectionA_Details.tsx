@@ -402,105 +402,105 @@ export function SectionA_Details() {
   };
 
   return (
-    <div className="space-y-8 max-w-4xl mx-auto">
+    <div className="space-y-6 max-w-4xl mx-auto pb-12">
       {/* Page Header */}
-      <div>
-        <span className="text-xs font-bold text-[#A37E44] uppercase tracking-wider font-mono">
-          Section A · Testator Identification & Document Verification
+      <div className="space-y-1">
+        <span className="text-xs font-semibold text-[#8a6233] uppercase tracking-wider">
+          Section A · Fills Section One of your Will
         </span>
-        <h2 className="text-xl sm:text-2xl font-serif font-bold text-[#0B1528] mt-1">
-          Upload Documents & Personal Details
-        </h2>
-        <p className="text-xs sm:text-sm text-gray-500 mt-1 leading-relaxed">
-          Upload your identification documents first to automatically extract and populate your personal details. You can review and edit every field before proceeding.
+        <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#231a30]">
+          {activeWillIndex === 1 && testator?.fullName ? `${testator.fullName}'s Details` : "Your Details"}
+        </h1>
+        <p className="text-sm text-[#6c6478] max-w-2xl leading-relaxed">
+          Upload documents first. The platform reads them and fills the fields below. Check every value and correct anything that differs from the passport.
         </p>
       </div>
 
-      {/* TOP SECTION: Document Uploads for Autofill */}
-      <div className="bg-white p-6 sm:p-8 rounded-2xl border-2 border-[#A37E44]/30 shadow-md space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E5E0D8] pb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#FAF7F2] border border-[#A37E44]/30 text-[#A37E44] flex items-center justify-center font-bold">
-              <Upload className="w-5 h-5 text-[#A37E44]" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-[#0B1528] uppercase tracking-wider">
-                  Step 1 · Upload Documents to Autofill Details
-                </h3>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#A37E44]/15 text-[#A37E44] uppercase tracking-wider">
-                  Court Compliance
-                </span>
-              </div>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Upload your Passport and Emirates ID to populate fields automatically and satisfy ADJD Civil Family Court statutory requirements.
-              </p>
-            </div>
+      {/* Just Extracted Banner */}
+      {justExtractedBanner && (
+        <div className="p-4 rounded-xl bg-[#e8f4ee] border border-[#2f7a55]/20 text-xs sm:text-sm text-[#1f5a3d] flex items-center justify-between shadow-sm animate-in fade-in">
+          <div className="flex items-center gap-2.5">
+            <Sparkles className="w-4 h-4 text-[#2f7a55] flex-shrink-0" />
+            <span className="font-medium">{justExtractedBanner}</span>
           </div>
+          <button
+            type="button"
+            onClick={() => setJustExtractedBanner(null)}
+            className="text-[#1f5a3d] hover:opacity-75 transition-opacity"
+            aria-label="Dismiss banner"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* SECTION 1: Document Upload Tiles */}
+      <div className="bg-[#FFFEFA] p-6 sm:p-7 rounded-2xl border border-[#e4dfe9] shadow-sm space-y-4">
+        <div className="border-b border-[#f0ebf5] pb-3">
+          <h2 className="text-base font-serif font-bold text-[#231a30]">
+            1. Upload documents
+          </h2>
+          <p className="text-xs text-[#6c6478] mt-0.5">
+            PDF, JPG or PNG, up to 10 MB each.
+          </p>
         </div>
 
-        {/* Just Extracted Banner */}
-        {justExtractedBanner && (
-          <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center justify-between animate-in fade-in">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-              <span className="font-medium">{justExtractedBanner}</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setJustExtractedBanner(null)}
-              className="text-emerald-600 hover:text-emerald-800"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )}
-
-        {/* 3 Upload Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* 1. Passport Upload */}
-          <div className={`p-4 rounded-xl border transition-all flex flex-col justify-between ${
-            passportUploaded
-              ? "border-emerald-300 bg-emerald-50/30"
-              : "border-dashed border-[#A37E44]/50 bg-[#FAF7F2]/60 hover:bg-[#FAF7F2]"
-          }`}>
+          {/* Tile 1: Passport */}
+          <div
+            className={`p-4 rounded-xl border flex flex-col justify-between transition-all ${
+              passportUploaded
+                ? "border-[#b9dcc9] bg-[#f3faf6]"
+                : "border-2 border-dashed border-[#cfc6da] bg-white hover:border-[#5b3fb0]/40"
+            }`}
+          >
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-[#0B1528] uppercase flex items-center gap-1.5">
-                  <FileText className="w-3.5 h-3.5 text-[#A37E44]" />
-                  <span>Passport *</span>
+              <div className="flex items-center justify-between gap-2 mb-1.5">
+                <span className="text-sm font-semibold text-[#231a30] flex items-center gap-1.5">
+                  <FileText className="w-4 h-4 text-[#8a6233]" />
+                  <span>Passport</span>
                 </span>
                 {passportUploaded ? (
-                  <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 font-semibold bg-emerald-100/70 px-2 py-0.5 rounded-full">
-                    <CheckCircle2 className="w-3 h-3" /> Attached
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#1f5a3d] bg-[#e8f4ee] px-2 py-0.5 rounded-full">
+                    <CheckCircle2 className="w-3 h-3" /> Read
                   </span>
                 ) : (
-                  <span className="text-[10px] text-amber-600 font-semibold uppercase">Required</span>
+                  <span className="text-[11px] font-semibold text-[#6c6478] bg-[#f1eef5] px-2 py-0.5 rounded-full">
+                    Required
+                  </span>
                 )}
               </div>
-              <p className="text-xs text-gray-500 mb-3">
-                Color scan or photo of passport identity page. Extracts name, DOB, nationality & number.
+              <p className="text-xs text-[#6c6478] leading-relaxed mb-3">
+                {passportUploaded
+                  ? "Read: name, date of birth, nationality, passport number."
+                  : "The photo page. Fills the name, date of birth, nationality and passport number."}
               </p>
               {passportUploaded && (
-                <div className="text-[11px] font-mono text-gray-600 truncate mb-3 bg-white p-1.5 rounded border border-gray-200">
-                  📄 {passportFileName || "Passport_Document.pdf"}
+                <div className="text-[11px] font-mono text-[#6c6478] truncate mb-3 bg-white px-2.5 py-1.5 rounded border border-[#e4dfe9]">
+                  📄 {passportFileName || "Passport_Identity.pdf"}
                 </div>
               )}
             </div>
 
             <div className="pt-2 flex flex-col gap-1.5">
-              <label className={`cursor-pointer inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-white text-xs font-semibold shadow-sm transition-all text-center ${
-                analyzingType === "Passport" ? "bg-[#A37E44] animate-pulse" : "bg-[#0B1528] hover:bg-[#1a2844]"
-              }`}>
+              <label
+                className={`cursor-pointer inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold shadow-sm transition-all text-center ${
+                  analyzingType === "Passport"
+                    ? "bg-[#5b3fb0] text-white animate-pulse"
+                    : passportUploaded
+                    ? "bg-white border border-[#cfc6da] text-[#231a30] hover:border-[#382852]"
+                    : "bg-[#382852] text-white hover:bg-[#281b40]"
+                }`}
+              >
                 {analyzingType === "Passport" ? (
                   <>
                     <RotateCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Analyzing with Gemini Vision...</span>
+                    <span>Reading passport...</span>
                   </>
                 ) : (
                   <>
                     <Upload className="w-3.5 h-3.5" />
-                    <span>{passportUploaded ? "Replace Passport" : "Upload Passport"}</span>
+                    <span>{passportUploaded ? "Replace document" : "Upload document"}</span>
                   </>
                 )}
                 <input
@@ -520,57 +520,69 @@ export function SectionA_Details() {
                 <button
                   type="button"
                   onClick={() => handlePassportUpload()}
-                  className="text-[11px] text-[#A37E44] hover:text-[#8C6B37] font-semibold underline text-center pt-1"
+                  className="text-[11px] text-[#5b3fb0] hover:underline font-medium text-center pt-1"
                 >
-                  ⚡ Simulate OCR with sample passport
+                  ⚡ Simulate OCR read
                 </button>
               )}
             </div>
           </div>
 
-          {/* 2. Emirates ID Upload */}
-          <div className={`p-4 rounded-xl border transition-all flex flex-col justify-between ${
-            emiratesIdUploaded
-              ? "border-emerald-300 bg-emerald-50/30"
-              : "border-dashed border-[#A37E44]/50 bg-[#FAF7F2]/60 hover:bg-[#FAF7F2]"
-          }`}>
+          {/* Tile 2: Emirates ID */}
+          <div
+            className={`p-4 rounded-xl border flex flex-col justify-between transition-all ${
+              emiratesIdUploaded
+                ? "border-[#b9dcc9] bg-[#f3faf6]"
+                : "border-2 border-dashed border-[#cfc6da] bg-white hover:border-[#5b3fb0]/40"
+            }`}
+          >
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-[#0B1528] uppercase flex items-center gap-1.5">
-                  <CreditCard className="w-3.5 h-3.5 text-[#A37E44]" />
+              <div className="flex items-center justify-between gap-2 mb-1.5">
+                <span className="text-sm font-semibold text-[#231a30] flex items-center gap-1.5">
+                  <CreditCard className="w-4 h-4 text-[#8a6233]" />
                   <span>Emirates ID</span>
                 </span>
                 {emiratesIdUploaded ? (
-                  <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 font-semibold bg-emerald-100/70 px-2 py-0.5 rounded-full">
-                    <CheckCircle2 className="w-3 h-3" /> Attached
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#1f5a3d] bg-[#e8f4ee] px-2 py-0.5 rounded-full">
+                    <CheckCircle2 className="w-3 h-3" /> Read
                   </span>
                 ) : (
-                  <span className="text-[10px] text-gray-500 font-medium">UAE Residents</span>
+                  <span className="text-[11px] font-medium text-[#6c6478]">
+                    Optional
+                  </span>
                 )}
               </div>
-              <p className="text-xs text-gray-500 mb-3">
-                Front and back scan. Extracts official Arabic spelling and 15-digit Emirates ID number.
+              <p className="text-xs text-[#6c6478] leading-relaxed mb-3">
+                {emiratesIdUploaded
+                  ? "Read: Emirates ID number and official Arabic name."
+                  : "Front and back, if you live in the UAE."}
               </p>
               {emiratesIdUploaded && (
-                <div className="text-[11px] font-mono text-gray-600 truncate mb-3 bg-white p-1.5 rounded border border-gray-200">
+                <div className="text-[11px] font-mono text-[#6c6478] truncate mb-3 bg-white px-2.5 py-1.5 rounded border border-[#e4dfe9]">
                   🪪 {emiratesIdFileName || "Emirates_ID_Front_Back.jpg"}
                 </div>
               )}
             </div>
 
             <div className="pt-2 flex flex-col gap-1.5">
-              <label className={`cursor-pointer inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-white text-xs font-semibold shadow-sm transition-all text-center ${
-                analyzingType === "Emirates ID" ? "bg-[#A37E44] animate-pulse" : "bg-[#0B1528] hover:bg-[#1a2844]"
-              }`}>
+              <label
+                className={`cursor-pointer inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold shadow-sm transition-all text-center ${
+                  analyzingType === "Emirates ID"
+                    ? "bg-[#5b3fb0] text-white animate-pulse"
+                    : emiratesIdUploaded
+                    ? "bg-white border border-[#cfc6da] text-[#231a30] hover:border-[#382852]"
+                    : "bg-[#382852] text-white hover:bg-[#281b40]"
+                }`}
+              >
                 {analyzingType === "Emirates ID" ? (
                   <>
                     <RotateCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Analyzing with Gemini Vision...</span>
+                    <span>Reading ID...</span>
                   </>
                 ) : (
                   <>
                     <Upload className="w-3.5 h-3.5" />
-                    <span>{emiratesIdUploaded ? "Replace Emirates ID" : "Upload Emirates ID"}</span>
+                    <span>{emiratesIdUploaded ? "Replace document" : "Upload document"}</span>
                   </>
                 )}
                 <input
@@ -590,57 +602,69 @@ export function SectionA_Details() {
                 <button
                   type="button"
                   onClick={() => handleEmiratesIdUpload()}
-                  className="text-[11px] text-[#A37E44] hover:text-[#8C6B37] font-semibold underline text-center pt-1"
+                  className="text-[11px] text-[#5b3fb0] hover:underline font-medium text-center pt-1"
                 >
-                  ⚡ Simulate OCR with sample ID
+                  ⚡ Simulate OCR read
                 </button>
               )}
             </div>
           </div>
 
-          {/* 3. Proof of Address Upload */}
-          <div className={`p-4 rounded-xl border transition-all flex flex-col justify-between ${
-            addressProofUploaded
-              ? "border-emerald-300 bg-emerald-50/30"
-              : "border-dashed border-[#A37E44]/50 bg-[#FAF7F2]/60 hover:bg-[#FAF7F2]"
-          }`}>
+          {/* Tile 3: Proof of Address */}
+          <div
+            className={`p-4 rounded-xl border flex flex-col justify-between transition-all ${
+              addressProofUploaded
+                ? "border-[#b9dcc9] bg-[#f3faf6]"
+                : "border-2 border-dashed border-[#cfc6da] bg-white hover:border-[#5b3fb0]/40"
+            }`}
+          >
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-[#0B1528] uppercase flex items-center gap-1.5">
-                  <FileCheck className="w-3.5 h-3.5 text-[#A37E44]" />
-                  <span>Proof of Address *</span>
+              <div className="flex items-center justify-between gap-2 mb-1.5">
+                <span className="text-sm font-semibold text-[#231a30] flex items-center gap-1.5">
+                  <FileCheck className="w-4 h-4 text-[#8a6233]" />
+                  <span>Proof of address</span>
                 </span>
                 {addressProofUploaded ? (
-                  <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 font-semibold bg-emerald-100/70 px-2 py-0.5 rounded-full">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#1f5a3d] bg-[#e8f4ee] px-2 py-0.5 rounded-full">
                     <CheckCircle2 className="w-3 h-3" /> Attached
                   </span>
                 ) : (
-                  <span className="text-[10px] text-amber-600 font-semibold uppercase">Required</span>
+                  <span className="text-[11px] font-semibold text-[#6c6478] bg-[#f1eef5] px-2 py-0.5 rounded-full">
+                    Required
+                  </span>
                 )}
               </div>
-              <p className="text-xs text-gray-500 mb-3">
-                Recent utility bill (DEWA / ADDC), bank statement, or Tawtheeq/Ejari tenancy contract.
+              <p className="text-xs text-[#6c6478] leading-relaxed mb-3">
+                {addressProofUploaded
+                  ? "Matched to the residential address below."
+                  : "A recent utility bill, bank statement or tenancy contract (Ejari or Tawtheeq)."}
               </p>
               {addressProofUploaded && (
-                <div className="text-[11px] font-mono text-gray-600 truncate mb-3 bg-white p-1.5 rounded border border-gray-200">
+                <div className="text-[11px] font-mono text-[#6c6478] truncate mb-3 bg-white px-2.5 py-1.5 rounded border border-[#e4dfe9]">
                   🏠 {addressProofFileName || "Proof_Of_Address.pdf"}
                 </div>
               )}
             </div>
 
             <div className="pt-2 flex flex-col gap-1.5">
-              <label className={`cursor-pointer inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-white text-xs font-semibold shadow-sm transition-all text-center ${
-                analyzingType === "Proof of Address" ? "bg-[#A37E44] animate-pulse" : "bg-[#0B1528] hover:bg-[#1a2844]"
-              }`}>
+              <label
+                className={`cursor-pointer inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold shadow-sm transition-all text-center ${
+                  analyzingType === "Proof of Address"
+                    ? "bg-[#5b3fb0] text-white animate-pulse"
+                    : addressProofUploaded
+                    ? "bg-white border border-[#cfc6da] text-[#231a30] hover:border-[#382852]"
+                    : "bg-[#382852] text-white hover:bg-[#281b40]"
+                }`}
+              >
                 {analyzingType === "Proof of Address" ? (
                   <>
                     <RotateCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Analyzing with Gemini Vision...</span>
+                    <span>Attaching...</span>
                   </>
                 ) : (
                   <>
                     <Upload className="w-3.5 h-3.5" />
-                    <span>{addressProofUploaded ? "Replace Document" : "Upload Document"}</span>
+                    <span>{addressProofUploaded ? "Replace document" : "Upload document"}</span>
                   </>
                 )}
                 <input
@@ -660,9 +684,9 @@ export function SectionA_Details() {
                 <button
                   type="button"
                   onClick={() => handleAddressProofUpload()}
-                  className="text-[11px] text-[#A37E44] hover:text-[#8C6B37] font-semibold underline text-center pt-1"
+                  className="text-[11px] text-[#5b3fb0] hover:underline font-medium text-center pt-1"
                 >
-                  ⚡ Simulate sample proof of address
+                  ⚡ Simulate proof upload
                 </button>
               )}
             </div>
@@ -670,32 +694,27 @@ export function SectionA_Details() {
         </div>
       </div>
 
-      {/* STEP 2: Editable Identity & Legal Fields */}
-      <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E0D8] shadow-sm space-y-6">
-        <div className="border-b border-[#E5E0D8] pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
-            <h3 className="text-sm font-bold text-[#0B1528] uppercase tracking-wider">
-              Step 2 · Verify & Edit Personal Details
-            </h3>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Review and edit the details populated from your uploaded documents.
-            </p>
-          </div>
-          <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md self-start sm:self-auto flex items-center gap-1">
-            <Sparkles className="w-3.5 h-3.5" /> All fields are fully editable
+      {/* SECTION 2: Personal Details */}
+      <div className="bg-[#FFFEFA] p-6 sm:p-7 rounded-2xl border border-[#e4dfe9] shadow-sm space-y-5">
+        <div className="border-b border-[#f0ebf5] pb-3 flex items-center justify-between gap-2">
+          <h2 className="text-base font-serif font-bold text-[#231a30]">
+            2. Personal details
+          </h2>
+          <span className="text-xs text-[#6c6478]">
+            Every field can be edited.
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          {/* Full Name */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Full Name in English */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                Full Legal Name (English) *
+              <label className="block text-xs font-semibold text-[#231a30]">
+                Full name in English *
               </label>
               {autofilledFields.fullName && (
-                <span className="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded">
-                  Autofilled
+                <span className="text-[10px] text-[#1f5a3d] font-semibold bg-[#e8f4ee] px-1.5 py-0.5 rounded">
+                  {autofilledFields.fullName}
                 </span>
               )}
             </div>
@@ -706,18 +725,18 @@ export function SectionA_Details() {
               onChange={(e) => setFullName(e.target.value)}
               onBlur={handleFullNameBlur}
               placeholder="e.g. Daniel Michael Carter"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-[#E5E0D8] text-sm focus:outline-none focus:border-[#A37E44]"
+              className="w-full px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-sm focus:outline-none focus:border-[#5b3fb0] focus:ring-1 focus:ring-[#5b3fb0] bg-white"
             />
           </div>
 
-          {/* Arabic Name */}
+          {/* Full Name in Arabic */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                Phonetic Arabic Name (الاسم باللغة العربية) *
+              <label className="block text-xs font-semibold text-[#231a30]">
+                Full name in Arabic <span className="font-normal text-[#6c6478]">(optional)</span>
               </label>
               {autofilledFields.arabicName && (
-                <span className="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded">
+                <span className="text-[10px] text-[#1f5a3d] font-semibold bg-[#e8f4ee] px-1.5 py-0.5 rounded">
                   {autofilledFields.arabicName}
                 </span>
               )}
@@ -729,18 +748,21 @@ export function SectionA_Details() {
               onChange={(e) => setArabicName(e.target.value)}
               onBlur={handleBlur}
               placeholder="دانيال مايكل كارتر"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-[#E5E0D8] text-sm font-arabic focus:outline-none focus:border-[#A37E44]"
+              className="w-full px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-sm font-arabic focus:outline-none focus:border-[#5b3fb0] focus:ring-1 focus:ring-[#5b3fb0] bg-white"
             />
+            <p className="text-[11px] text-[#6c6478] mt-1">
+              Spelled by sound, not translated. You approve it in Section F.
+            </p>
           </div>
 
-          {/* DOB */}
+          {/* Date of Birth */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                Date of Birth * (Must be 21+ years)
+              <label className="block text-xs font-semibold text-[#231a30]">
+                Date of birth *
               </label>
               {autofilledFields.dob && (
-                <span className="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded">
+                <span className="text-[10px] text-[#1f5a3d] font-semibold bg-[#e8f4ee] px-1.5 py-0.5 rounded">
                   Autofilled
                 </span>
               )}
@@ -751,18 +773,21 @@ export function SectionA_Details() {
               value={dob}
               onChange={(e) => setDob(e.target.value)}
               onBlur={handleBlur}
-              className="w-full px-3.5 py-2.5 rounded-lg border border-[#E5E0D8] text-sm focus:outline-none focus:border-[#A37E44]"
+              className="w-full px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-sm focus:outline-none focus:border-[#5b3fb0] focus:ring-1 focus:ring-[#5b3fb0] bg-white"
             />
+            <p className="text-[11px] text-[#6c6478] mt-1">
+              You must be over 21 to make an ADJD civil Will.
+            </p>
           </div>
 
           {/* Nationality */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              <label className="block text-xs font-semibold text-[#231a30]">
                 Nationality *
               </label>
               {autofilledFields.nationality && (
-                <span className="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded">
+                <span className="text-[10px] text-[#1f5a3d] font-semibold bg-[#e8f4ee] px-1.5 py-0.5 rounded">
                   Autofilled
                 </span>
               )}
@@ -773,19 +798,19 @@ export function SectionA_Details() {
               value={nationality}
               onChange={(e) => setNationality(e.target.value)}
               onBlur={handleBlur}
-              placeholder="e.g. British, French, Indian"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-[#E5E0D8] text-sm focus:outline-none focus:border-[#A37E44]"
+              placeholder="e.g. British"
+              className="w-full px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-sm focus:outline-none focus:border-[#5b3fb0] focus:ring-1 focus:ring-[#5b3fb0] bg-white"
             />
           </div>
 
           {/* Passport Number */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                Passport Number *
+              <label className="block text-xs font-semibold text-[#231a30]">
+                Passport number *
               </label>
               {autofilledFields.passportNumber && (
-                <span className="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded">
+                <span className="text-[10px] text-[#1f5a3d] font-semibold bg-[#e8f4ee] px-1.5 py-0.5 rounded">
                   Autofilled
                 </span>
               )}
@@ -796,19 +821,19 @@ export function SectionA_Details() {
               value={passportNumber}
               onChange={(e) => setPassportNumber(e.target.value)}
               onBlur={handleBlur}
-              placeholder="e.g. GBR12345678"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-[#E5E0D8] text-sm font-mono focus:outline-none focus:border-[#A37E44]"
+              placeholder="GBR12345678"
+              className="w-full px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-sm font-mono focus:outline-none focus:border-[#5b3fb0] focus:ring-1 focus:ring-[#5b3fb0] bg-white"
             />
           </div>
 
           {/* Emirates ID Number */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                Emirates ID Number (For UAE Residents)
+              <label className="block text-xs font-semibold text-[#231a30]">
+                Emirates ID number <span className="font-normal text-[#6c6478]">(optional)</span>
               </label>
               {autofilledFields.emiratesId && (
-                <span className="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded">
+                <span className="text-[10px] text-[#1f5a3d] font-semibold bg-[#e8f4ee] px-1.5 py-0.5 rounded">
                   Autofilled
                 </span>
               )}
@@ -821,47 +846,49 @@ export function SectionA_Details() {
                 if (e.target.value.trim().length > 0) setIsUaeResident(true);
               }}
               onBlur={handleBlur}
-              placeholder="784-1985-1234567-1"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-[#E5E0D8] text-sm font-mono focus:outline-none focus:border-[#A37E44]"
+              placeholder="784-1982-1234567-1"
+              className="w-full px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-sm font-mono focus:outline-none focus:border-[#5b3fb0] focus:ring-1 focus:ring-[#5b3fb0] bg-white"
             />
+            <p className="text-[11px] text-[#6c6478] mt-1">
+              If you live in the UAE.
+            </p>
           </div>
         </div>
       </div>
 
-      {/* STEP 3: Address & Domicile */}
-      <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E0D8] shadow-sm space-y-6">
-        <h3 className="text-sm font-bold text-[#0B1528] uppercase tracking-wider border-b border-[#E5E0D8] pb-3">
-          Step 3 · Residential Address & Domicile
-        </h3>
+      {/* SECTION 3: Address, Domicile and Contact */}
+      <div className="bg-[#FFFEFA] p-6 sm:p-7 rounded-2xl border border-[#e4dfe9] shadow-sm space-y-5">
+        <div className="border-b border-[#f0ebf5] pb-3">
+          <h2 className="text-base font-serif font-bold text-[#231a30]">
+            3. Address, domicile and contact
+          </h2>
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Home Address in UAE */}
           <div className="sm:col-span-2">
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                Actual Current Residential Address *
-              </label>
-            </div>
-            <p className="text-[11px] text-gray-500 mb-1.5">
-              Enter your current residential address in the UAE. (A UAE asset address cannot be substituted).
-            </p>
+            <label className="block text-xs font-semibold text-[#231a30] mb-1">
+              Current home address in the UAE *
+            </label>
             <input
               type="text"
               required
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               onBlur={handleBlur}
-              placeholder="Enter your current residential address in the UAE (e.g. Villa 14, Saadiyat Beach Residences, Abu Dhabi)"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-[#E5E0D8] text-sm focus:outline-none focus:border-[#A37E44]"
+              placeholder="e.g. Villa 14, Saadiyat Beach Residences, Abu Dhabi"
+              className="w-full px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-sm focus:outline-none focus:border-[#5b3fb0] focus:ring-1 focus:ring-[#5b3fb0] bg-white"
             />
+            <p className="text-[11px] text-[#6c6478] mt-1">
+              Where you live now. The address of a property you own does not count.
+            </p>
           </div>
 
+          {/* Country of Domicile */}
           <div>
-            <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
-              Country of Domicile * (Country of Origin)
+            <label className="block text-xs font-semibold text-[#231a30] mb-1">
+              Country of domicile *
             </label>
-            <p className="text-[11px] text-gray-500 mb-1.5">
-              Statutory declaration field for Abu Dhabi Civil Court records.
-            </p>
             <input
               type="text"
               required
@@ -869,35 +896,37 @@ export function SectionA_Details() {
               onChange={(e) => setDomicileCountry(e.target.value)}
               onBlur={handleBlur}
               placeholder="e.g. United Kingdom"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-[#E5E0D8] text-sm focus:outline-none focus:border-[#A37E44]"
+              className="w-full px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-sm focus:outline-none focus:border-[#5b3fb0] focus:ring-1 focus:ring-[#5b3fb0] bg-white"
             />
+            <p className="text-[11px] text-[#6c6478] mt-1">
+              Section Ten of your Will records it.
+            </p>
           </div>
 
+          {/* Mobile Number */}
           <div>
-            <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
-              Mobile Contact Number *
+            <label className="block text-xs font-semibold text-[#231a30] mb-1">
+              Mobile number *
             </label>
-            <p className="text-[11px] text-gray-500 mb-1.5">
-              Including international country code.
-            </p>
             <input
-              type="text"
+              type="tel"
               required
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               onBlur={handleBlur}
-              placeholder="+971 50 123 4567"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-[#E5E0D8] text-sm focus:outline-none focus:border-[#A37E44]"
+              placeholder="+971 50 000 0000"
+              className="w-full px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-sm focus:outline-none focus:border-[#5b3fb0] focus:ring-1 focus:ring-[#5b3fb0] bg-white"
             />
+            <p className="text-[11px] text-[#6c6478] mt-1">
+              Include country code, for example +971 50 000 0000.
+            </p>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
-              Email Address *
+          {/* Email Address */}
+          <div className="sm:col-span-2">
+            <label className="block text-xs font-semibold text-[#231a30] mb-1">
+              Email address *
             </label>
-            <p className="text-[11px] text-gray-500 mb-1.5">
-              For court draft notifications and updates.
-            </p>
             <input
               type="email"
               required
@@ -905,8 +934,11 @@ export function SectionA_Details() {
               onChange={(e) => setEmail(e.target.value)}
               onBlur={handleBlur}
               placeholder="name@example.com"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-[#E5E0D8] text-sm focus:outline-none focus:border-[#A37E44]"
+              className="w-full px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-sm focus:outline-none focus:border-[#5b3fb0] focus:ring-1 focus:ring-[#5b3fb0] bg-white"
             />
+            <p className="text-[11px] text-[#6c6478] mt-1">
+              We send updates on your Will here.
+            </p>
           </div>
         </div>
       </div>

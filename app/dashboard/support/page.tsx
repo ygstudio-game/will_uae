@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
   MessageSquare,
@@ -11,10 +12,12 @@ import {
   CheckCircle2,
   AlertCircle,
   FileText,
+  X,
+  Send,
+  Paperclip,
 } from "lucide-react";
 import { TicketThreadView } from "@/components/tickets/TicketThreadView";
 import { useOwaStore } from "@/store/useOwaStore";
-import Link from "next/link";
 
 const TOPIC_PRESETS: Record<string, { subject: string; message: string }> = {
   child_passport: {
@@ -42,15 +45,16 @@ function CustomerSupportContent() {
 
   const [tickets, setTickets] = useState<any[]>([]);
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
-  const [showNewTicketModal, setShowNewTicketModal] = useState(!!topicParam);
+  const [showNewTicketModal, setShowNewTicketModal] = useState(Boolean(topicParam));
   const [newSubject, setNewSubject] = useState(
     topicParam && TOPIC_PRESETS[topicParam]
       ? TOPIC_PRESETS[topicParam].subject
-      : "Child Passport Assistance (Consular / Emergency Guidance)"
+      : ""
   );
   const [newMessage, setNewMessage] = useState(
     topicParam && TOPIC_PRESETS[topicParam] ? TOPIC_PRESETS[topicParam].message : ""
   );
+  const [targetWill, setTargetWill] = useState("Will 1");
   const [loading, setLoading] = useState(false);
 
   const fetchTickets = async () => {
@@ -85,7 +89,9 @@ function CustomerSupportContent() {
         body: JSON.stringify({
           applicationId: application?.id || "demo-app",
           subject: newSubject.trim(),
-          initialMessage: newMessage.trim(),
+          initialMessage: `${newMessage.trim()}${
+            application?.packageType === "COUPLES" ? `\n\n[Regarding: ${targetWill}]` : ""
+          }`,
           senderName: application?.account?.fullName || "Testator",
         }),
       });
@@ -94,6 +100,7 @@ function CustomerSupportContent() {
       if (data.success) {
         setShowNewTicketModal(false);
         setNewMessage("");
+        setNewSubject("");
         await fetchTickets();
         setSelectedTicketId(data.ticket.id);
       }
@@ -104,190 +111,264 @@ function CustomerSupportContent() {
     }
   };
 
-  const selectedTicket = tickets.find((t) => t.id === selectedTicketId);
+  const selectedTicket = tickets.find((t) => t.id === selectedTicketId) || tickets[0];
+
+  const getChip = (status: string) => {
+    switch (status) {
+      case "RESOLVED":
+        return (
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E7F0EB] text-[#366D58] border border-[#BCD4C7]">
+            Resolved
+          </span>
+        );
+      case "AWAITING_CUSTOMER":
+        return (
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FFF4E5] text-[#95652B] border border-[#F2D7B2]">
+            Waiting for you
+          </span>
+        );
+      case "OPEN":
+      default:
+        return (
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#F0EBF9] text-[#6243AD] border border-[#DFD2EF]">
+            With our team
+          </span>
+        );
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-[#FBF9F5] py-8 px-4 sm:px-8">
-      <div className="max-w-6xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#A37E44]/10 text-[#A37E44] text-xs font-semibold uppercase tracking-wider font-mono">
-              <Shield className="w-3.5 h-3.5" />
-              Direct Judicial & Legal Support Desk
+    <div className="min-h-screen bg-[#FAF9F6] text-[#29213F]">
+      {/* Top Application Header */}
+      <header className="bg-[#FFFEFA] border-b border-[#E4DFEE] px-4 sm:px-8 py-3.5">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <Link href="/dashboard" className="flex items-baseline gap-2 text-inherit no-underline">
+            <span className="font-serif text-2xl font-bold tracking-tight text-[#29213F]">
+              owa
+            </span>
+            <span className="text-[10px] tracking-widest uppercase font-semibold text-gray-400 border-l border-[#E4DFEE] pl-2.5">
+              Online Wills Advisor
+            </span>
+          </Link>
+
+          <Link
+            href="/dashboard"
+            className="text-xs font-semibold text-gray-600 hover:text-[#6243AD] flex items-center gap-1"
+          >
+            ← Back to your Wills
+          </Link>
+        </div>
+      </header>
+
+      <main className="max-w-6xl mx-auto px-4 sm:px-8 py-8 space-y-6">
+        {/* Header Breadcrumbs */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div className="space-y-1">
+            <div className="text-[11px] text-gray-400 font-medium">
+              <Link href="/dashboard" className="hover:underline">
+                My application
+              </Link>{" "}
+              <span className="px-1.5 text-gray-300">/</span> Support desk
             </div>
-            <h1 className="text-2xl font-serif font-bold text-[#0B1528] mt-1">
-              Legal Support & Court Assistance
+            <h1 className="font-serif text-3xl sm:text-4xl font-normal text-[#29213F]">
+              Support
             </h1>
-            <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
-              Communicate directly with our Abu Dhabi court-certified legal specialists regarding passports, transliterations, and registrations.
+            <p className="text-xs sm:text-sm text-gray-500 max-w-xl">
+              Message our legal team about documents, names, or your ADJD appointment. Replies appear here and in your verified email.
             </p>
           </div>
 
           <button
             type="button"
             onClick={() => setShowNewTicketModal(true)}
-            className="px-4 py-2.5 bg-[#0B1528] hover:bg-[#1a2844] text-white text-xs font-bold rounded-xl shadow-sm flex items-center gap-1.5 transition-all self-start sm:self-auto"
+            className="px-5 py-2.5 bg-[#6243AD] hover:bg-[#443074] text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 shrink-0 self-start sm:self-auto"
           >
-            <Plus className="w-4 h-4 text-[#A37E44]" />
-            Open New Inquiry
+            <Plus className="w-4 h-4" />
+            <span>New message</span>
           </button>
         </div>
 
+        {/* 2-Column Split: Conversation List (Left) vs. Active Thread (Right) */}
+        {tickets.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+            {/* Left Column: Ticket List */}
+            <nav className="space-y-2.5" aria-label="Conversations">
+              {tickets.map((t) => {
+                const isSelected = selectedTicket?.id === t.id;
+                const lastMsg =
+                  t.messages && t.messages.length > 0
+                    ? t.messages[t.messages.length - 1].message
+                    : "No messages yet";
+
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setSelectedTicketId(t.id)}
+                    className={`w-full text-left p-4 rounded-xl border transition-all flex flex-col gap-1.5 ${
+                      isSelected
+                        ? "bg-white border-[#6243AD] ring-2 ring-[#6243AD]/10 shadow-sm"
+                        : "bg-[#FFFEFA] border-[#E4DFEE] hover:border-gray-300 shadow-2xs"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between text-xs gap-2">
+                      {getChip(t.status)}
+                      <span className="text-[11px] text-gray-400 font-mono">
+                        {new Date(t.updatedAt || t.createdAt).toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                        })}
+                      </span>
+                    </div>
+
+                    <strong className="text-xs sm:text-sm font-semibold text-[#29213F] line-clamp-1">
+                      {t.subject}
+                    </strong>
+
+                    <span className="text-xs text-gray-500 line-clamp-1">
+                      {lastMsg}
+                    </span>
+                  </button>
+                );
+              })}
+            </nav>
+
+            {/* Right Column: Active Thread View */}
+            <div className="md:col-span-2">
+              {selectedTicket ? (
+                <TicketThreadView
+                  ticket={selectedTicket}
+                  userRole="CUSTOMER"
+                  onReplyAdded={fetchTickets}
+                />
+              ) : (
+                <div className="bg-[#FFFEFA] p-12 rounded-2xl border border-[#E4DFEE] text-center text-xs text-gray-400">
+                  Select a conversation from the left to view messages.
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* Empty State */
+          <div className="bg-[#FFFEFA] p-12 rounded-2xl border border-[#E4DFEE] text-center space-y-4 max-w-lg mx-auto shadow-card-soft">
+            <div className="w-12 h-12 rounded-full bg-[#F0EBF9] text-[#6243AD] flex items-center justify-center mx-auto">
+              <MessageSquare className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="font-serif text-lg font-bold text-[#29213F]">
+                No conversations yet
+              </h2>
+              <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
+                Have questions about consular passport documentation, court video attestations, or need guidance on your Will?
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowNewTicketModal(true)}
+              className="px-6 py-2.5 bg-[#6243AD] hover:bg-[#443074] text-white text-xs font-bold rounded-lg shadow-sm"
+            >
+              Start a conversation
+            </button>
+          </div>
+        )}
+
         {/* Modal: New Ticket */}
         {showNewTicketModal && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-xl border border-[#E5E0D8]">
-              <div className="border-b border-[#E5E0D8] pb-3">
-                <h3 className="text-lg font-serif font-bold text-[#0B1528]">
-                  Open Legal Support Ticket
+          <div className="fixed inset-0 bg-[#241837]/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+            <div className="bg-[#FFFEFA] rounded-2xl max-w-lg w-full p-6 sm:p-8 space-y-5 shadow-2xl border border-[#E4DFEE]">
+              <div className="flex items-center justify-between border-b border-[#E4DFEE] pb-3">
+                <h3 className="font-serif text-xl font-bold text-[#29213F]">
+                  New message to legal team
                 </h3>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  Our legal team typically responds within 2-4 business hours.
-                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowNewTicketModal(false)}
+                  className="w-8 h-8 rounded-full bg-[#F0EBF9] text-[#6243AD] hover:bg-[#DFD2EF] flex items-center justify-center font-bold"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
 
               <form onSubmit={handleCreateTicket} className="space-y-4 text-xs">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">
-                    Inquiry Topic
-                  </label>
-                  <select
-                    value={newSubject}
-                    onChange={(e) => {
-                      setNewSubject(e.target.value);
-                      if (e.target.value.includes("Child Passport")) {
-                        setNewMessage(TOPIC_PRESETS.child_passport.message);
-                      } else if (e.target.value.includes("Court Registry Fee")) {
-                        setNewMessage(TOPIC_PRESETS.court_fee.message);
-                      } else if (e.target.value.includes("Transliteration")) {
-                        setNewMessage(TOPIC_PRESETS.arabic_name.message);
-                      }
-                    }}
-                    className="w-full px-3 py-2.5 rounded-lg border border-[#E5E0D8] bg-white text-xs focus:outline-none focus:border-[#A37E44]"
-                  >
-                    <option value="Child Passport Assistance (Consular / Emergency Guidance)">
-                      Child Passport Assistance (Consular / Emergency Guidance)
-                    </option>
-                    <option value="Arabic Phonetic Transliteration Verification">
-                      Arabic Phonetic Transliteration Verification
-                    </option>
-                    <option value="Court Registry Fee Inquiry">
-                      Court Registry Fee Inquiry
-                    </option>
-                    <option value="Estate Distribution / Beneficiary Revision Request">
-                      Estate Distribution / Beneficiary Revision Request
-                    </option>
-                    <option value="General Court Registration Question">
-                      General Court Registration Question
-                    </option>
-                  </select>
-                </div>
+                {application?.packageType === "COUPLES" && (
+                  <div>
+                    <label className="font-semibold text-gray-700 block mb-1">
+                      Which Will is this inquiry about?
+                    </label>
+                    <select
+                      value={targetWill}
+                      onChange={(e) => setTargetWill(e.target.value)}
+                      className="w-full p-2.5 rounded-lg border border-[#DCD4E7] bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#6243AD]"
+                    >
+                      <option>Will 1 (Primary Testator)</option>
+                      <option>Will 2 (Spouse / Partner)</option>
+                      <option>Both Wills / General Application</option>
+                    </select>
+                  </div>
+                )}
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">
-                    Your Message
+                  <label className="font-semibold text-gray-700 block mb-1">
+                    Subject *
                   </label>
-                  <textarea
-                    rows={4}
+                  <input
+                    type="text"
                     required
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Describe your inquiry or request in detail..."
-                    className="w-full px-3.5 py-2.5 rounded-lg border border-[#E5E0D8] bg-white text-xs leading-relaxed focus:outline-none focus:border-[#A37E44]"
+                    value={newSubject}
+                    onChange={(e) => setNewSubject(e.target.value)}
+                    placeholder="e.g., Child passport renewal inquiry"
+                    className="w-full p-2.5 rounded-lg border border-[#DCD4E7] bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#6243AD]"
                   />
                 </div>
 
-                <div className="flex justify-end gap-2 pt-2 border-t border-[#E5E0D8]">
+                <div>
+                  <label className="font-semibold text-gray-700 block mb-1">
+                    Message *
+                  </label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder="Describe your inquiry, requested changes, or questions..."
+                    className="w-full p-2.5 rounded-lg border border-[#DCD4E7] bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#6243AD] resize-none"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-2">
                   <button
                     type="button"
                     onClick={() => setShowNewTicketModal(false)}
-                    className="px-4 py-2 text-xs text-gray-600 hover:text-gray-900"
+                    className="px-4 py-2 border border-[#E4DFEE] hover:bg-gray-50 text-gray-700 rounded-lg text-xs font-semibold"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    disabled={loading}
-                    className="px-5 py-2 bg-[#0B1528] text-white rounded-lg text-xs font-bold shadow-sm"
+                    disabled={loading || !newSubject.trim() || !newMessage.trim()}
+                    className="px-5 py-2 bg-[#6243AD] hover:bg-[#443074] disabled:opacity-50 text-white rounded-lg text-xs font-bold shadow-sm"
                   >
-                    Submit Ticket
+                    {loading ? "Sending..." : "Send message"}
                   </button>
                 </div>
               </form>
             </div>
           </div>
         )}
-
-        {/* Tickets Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Tickets List */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 font-mono">
-              Your Support Threads ({tickets.length})
-            </h3>
-
-            {tickets.length === 0 ? (
-              <div className="p-6 rounded-2xl bg-white border border-[#E5E0D8] text-center space-y-3">
-                <MessageSquare className="w-8 h-8 text-gray-300 mx-auto" />
-                <p className="text-xs text-gray-500">No active support tickets.</p>
-                <button
-                  type="button"
-                  onClick={() => setShowNewTicketModal(true)}
-                  className="text-xs text-[#A37E44] font-bold hover:underline"
-                >
-                  Create an inquiry
-                </button>
-              </div>
-            ) : (
-              tickets.map((t) => (
-                <div
-                  key={t.id}
-                  onClick={() => setSelectedTicketId(t.id)}
-                  className={`p-4 rounded-2xl border cursor-pointer transition-all ${
-                    selectedTicketId === t.id
-                      ? "bg-white border-[#0B1528] shadow-sm ring-1 ring-[#0B1528]"
-                      : "bg-white border-[#E5E0D8] hover:border-gray-400"
-                  }`}
-                >
-                  <div className="flex items-center justify-between text-[11px] mb-1">
-                    <span className="font-mono font-bold text-[#A37E44]">#{t.ticketNumber}</span>
-                    <span className="text-gray-400 font-mono text-[10px]">
-                      {new Date(t.updatedAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <h4 className="text-xs font-bold text-[#0B1528] line-clamp-1">{t.subject}</h4>
-                  <p className="text-[11px] text-gray-500 line-clamp-2 mt-1">
-                    {t.replies[t.replies.length - 1]?.message || "No messages"}
-                  </p>
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* Active Thread View */}
-          <div className="lg:col-span-2">
-            {selectedTicket ? (
-              <TicketThreadView
-                ticket={selectedTicket}
-                userRole="CUSTOMER"
-                onReplyAdded={fetchTickets}
-              />
-            ) : (
-              <div className="bg-white rounded-2xl border border-[#E5E0D8] h-[400px] flex items-center justify-center text-gray-400 text-xs italic">
-                Select a support thread to view messages
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      </main>
     </div>
   );
 }
 
 export default function CustomerSupportPage() {
   return (
-    <React.Suspense fallback={<div className="min-h-screen bg-[#FBF9F5] flex items-center justify-center p-8 text-gray-400">Loading Support...</div>}>
+    <React.Suspense
+      fallback={
+        <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center p-8 text-gray-400">
+          Loading Support Desk...
+        </div>
+      }
+    >
       <CustomerSupportContent />
     </React.Suspense>
   );

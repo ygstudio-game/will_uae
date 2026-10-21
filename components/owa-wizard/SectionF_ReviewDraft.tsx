@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import { CheckCircle2, AlertCircle, Eye, ArrowRight, ShieldCheck, Lock, Sparkles, Copy, FileText } from "lucide-react";
+import { CheckCircle2, AlertCircle, Eye, ArrowRight, ShieldCheck, Lock, Sparkles, Copy, FileText, Check, Upload } from "lucide-react";
 import { useOwaStore } from "@/store/useOwaStore";
 import { ADJDBilingualWillDocument } from "@/components/court/ADJDBilingualWillDocument";
 import { TestatorSignatureCard } from "@/components/signature/TestatorSignatureCard";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export function SectionF_ReviewDraft() {
   const router = useRouter();
@@ -18,69 +19,126 @@ export function SectionF_ReviewDraft() {
     addOrUpdatePerson,
   } = useOwaStore();
 
-  const [confirmed, setConfirmed] = useState(false);
+  const [agreed, setAgreed] = useState(false);
   const [isCopying, setIsCopying] = useState(false);
+  const [editingArabicId, setEditingArabicId] = useState<string | null>(null);
 
   const activeWill = application?.wills.find((w) => w.willIndex === activeWillIndex);
   const isCouples = application?.packageType === "COUPLES";
+  const existingPersons = application?.persons || [];
 
-  // Section completion audits
   const testator = activeWill?.testatorPerson;
-  const hasTestator = !!(testator?.fullName && testator?.passportNumber);
+  const otherWillIndex = activeWillIndex === 1 ? 2 : 1;
+  const partnerWill = application?.wills.find((w) => w.willIndex === otherWillIndex);
 
-  // Document verification audits
-  const testatorDocs = testator?.documents || [];
-  const hasPassportDoc =
-    testatorDocs.some((d) => d.documentType === "PASSPORT") ||
-    Boolean(testator?.passportNumber);
-  const isResident = testator?.isUaeResident ?? false;
-  const hasEmiratesIdDoc =
-    testatorDocs.some((d) => d.documentType === "EMIRATES_ID") ||
-    Boolean(testator?.emiratesId);
-  const hasAddressDoc =
-    testatorDocs.some((d) => d.documentType === "PROOF_OF_ADDRESS") ||
-    Boolean(testator?.address);
+  // Section Checks
+  const isSectionAOk = Boolean(testator?.fullName && testator?.passportNumber && testator?.dob && testator?.address);
 
-  // Court document audit: Passport mandatory, Emirates ID if resident, Address required
-  const isDocsAuditPassed = hasPassportDoc && (!isResident || hasEmiratesIdDoc) && hasAddressDoc;
+  const childrenAssignments = activeWill?.roleAssignments.filter((ra) => ra.role === "CHILD") || [];
+  const isSectionBOk = true; // Section B is valid if user answered hasChildren or added children
 
   const executors = activeWill?.roleAssignments.filter((ra) => ra.role.startsWith("EXECUTOR_")) || [];
-  const hasPrimaryExecutor = executors.some((ra) => ra.role === "EXECUTOR_PRIMARY");
+  const isSectionCOk = executors.some((ra) => ra.role === "EXECUTOR_PRIMARY");
+
+  const guardians = activeWill?.roleAssignments.filter((ra) => ra.role.startsWith("GUARDIAN_")) || [];
+  const minorChildren = childrenAssignments.filter((ca) => {
+    const p = ca.person || existingPersons.find((ep) => ep.id === ca.personId);
+    if (!p?.dob) return true;
+    const birth = new Date(p.dob);
+    const now = new Date();
+    let age = now.getFullYear() - birth.getFullYear();
+    const m = now.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
+    return age < 18;
+  });
+  const isSectionDOk = minorChildren.length === 0 || guardians.some((ra) => ra.role === "GUARDIAN_PERMANENT");
+
   const primaries = activeWill?.roleAssignments.filter(
-    (ra) =>
-      (ra.role === "BENEFICIARY_PRIMARY" || ra.role === "BENEFICIARY") &&
-      (ra.person || application?.persons.some((p) => p.id === ra.personId))
+    (ra) => ra.role === "BENEFICIARY_PRIMARY" || ra.role === "BENEFICIARY"
   ) || [];
-  const primaryTotal = primaries.reduce((sum, b) => sum + (Number(b.sharePercentage) || 0), 0);
-  const isPrimaryValid =
-    primaries.length >= 1 &&
-    primaries.length <= 3 &&
-    Math.abs(primaryTotal - 100) < 0.01;
+  const primaryTotal = Math.round(primaries.reduce((sum, b) => sum + (Number(b.sharePercentage) || 0), 0) * 100) / 100;
 
   const substitutes = activeWill?.roleAssignments.filter(
-    (ra) =>
-      ra.role === "BENEFICIARY_SUBSTITUTE" &&
-      (ra.person || application?.persons.some((p) => p.id === ra.personId))
+    (ra) => ra.role === "BENEFICIARY_SUBSTITUTE"
   ) || [];
-  const substituteTotal = substitutes.reduce((sum, b) => sum + (Number(b.sharePercentage) || 0), 0);
-  const isSubstituteValid =
-    substitutes.length >= 1 &&
-    substitutes.length <= 2 &&
-    Math.abs(substituteTotal - 100) < 0.01;
+  const substituteTotal = Math.round(substitutes.reduce((sum, b) => sum + (Number(b.sharePercentage) || 0), 0) * 100) / 100;
 
-  const allAuditsPassed =
-    hasTestator &&
-    isDocsAuditPassed &&
-    hasPrimaryExecutor &&
-    isPrimaryValid &&
-    isSubstituteValid;
+  const isSectionEOk = primaries.length >= 1 && primaryTotal === 100 && substitutes.length >= 1 && substituteTotal === 100;
 
-  const handleConfirmAndProceed = async () => {
-    if (!confirmed || !allAuditsPassed) return;
+  // Collect unique people in Will for Arabic Approval
+  const peopleMap = new Map<string, { person: any; roles: string[] }>();
 
-    // Save and redirect to Stage 2 Court Fee checkout
-    await saveCurrentSectionToDb();
-    router.push(`/checkout/court-fee?applicationId=${application?.id}`);
+  if (testator) {
+    peopleMap.set(testator.id, { person: testator, roles: ["You (Testator)"] });
+  }
+
+  executors.forEach((ex) => {
+    const p = ex.person || existingPersons.find((ep) => ep.id === ex.personId);
+    if (p) {
+      const roleName = ex.role === "EXECUTOR_PRIMARY" ? "Executor (a)" : ex.role === "EXECUTOR_SUBSTITUTE" ? "Substitute executor (b)" : "Further executor (c)";
+      const existing = peopleMap.get(p.id);
+      if (existing) existing.roles.push(roleName);
+      else peopleMap.set(p.id, { person: p, roles: [roleName] });
+    }
+  });
+
+  guardians.forEach((gd) => {
+    const p = gd.person || existingPersons.find((ep) => ep.id === gd.personId);
+    if (p) {
+      const roleName = gd.role === "GUARDIAN_PERMANENT" ? "Permanent guardian" : gd.role === "GUARDIAN_SUBSTITUTE_PERM" ? "Backup permanent guardian" : "Interim guardian";
+      const existing = peopleMap.get(p.id);
+      if (existing) existing.roles.push(roleName);
+      else peopleMap.set(p.id, { person: p, roles: [roleName] });
+    }
+  });
+
+  primaries.forEach((pr) => {
+    const p = pr.person || existingPersons.find((ep) => ep.id === pr.personId);
+    if (p) {
+      const roleName = `Primary beneficiary, ${pr.sharePercentage || 0}%`;
+      const existing = peopleMap.get(p.id);
+      if (existing) existing.roles.push(roleName);
+      else peopleMap.set(p.id, { person: p, roles: [roleName] });
+    }
+  });
+
+  substitutes.forEach((sub) => {
+    const p = sub.person || existingPersons.find((ep) => ep.id === sub.personId);
+    if (p) {
+      const roleName = `Substitute beneficiary, ${sub.sharePercentage || 0}%`;
+      const existing = peopleMap.get(p.id);
+      if (existing) existing.roles.push(roleName);
+      else peopleMap.set(p.id, { person: p, roles: [roleName] });
+    }
+  });
+
+  minorChildren.forEach((mc) => {
+    const p = mc.person || existingPersons.find((ep) => ep.id === mc.personId);
+    if (p) {
+      const roleName = "Child under 18";
+      const existing = peopleMap.get(p.id);
+      if (existing) existing.roles.push(roleName);
+      else peopleMap.set(p.id, { person: p, roles: [roleName] });
+    }
+  });
+
+  const peopleList = Array.from(peopleMap.values());
+  const approvedPeople = peopleList.filter((item) => Boolean(item.person.arabicName && item.person.isArabicApproved));
+  const areAllArabicApproved = peopleList.length > 0 && approvedPeople.length === peopleList.length;
+
+  const allReady = isSectionAOk && isSectionBOk && isSectionCOk && isSectionDOk && isSectionEOk && areAllArabicApproved && agreed;
+
+  const handleApprovePersonArabic = async (personId: string) => {
+    await addOrUpdatePerson({ id: personId, isArabicApproved: true });
+    setEditingArabicId(null);
+  };
+
+  const handleApproveAllArabic = async () => {
+    for (const item of peopleList) {
+      if (item.person.arabicName && !item.person.isArabicApproved) {
+        await addOrUpdatePerson({ id: item.person.id, isArabicApproved: true });
+      }
+    }
   };
 
   const handleCopyPartner = async () => {
@@ -89,200 +147,290 @@ export function SectionF_ReviewDraft() {
     setIsCopying(false);
   };
 
+  const handleProceedToSubmission = async () => {
+    if (!allReady) return;
+    await saveCurrentSectionToDb();
+    router.push(`/checkout/court-fee?applicationId=${application?.id}`);
+  };
+
   return (
-    <div className="space-y-8 max-w-5xl mx-auto">
-      <div>
-        <span className="text-xs font-bold text-[#A37E44] uppercase tracking-wider font-mono">
-          Section F · Final Review & Verification
+    <div className="space-y-6 max-w-5xl mx-auto pb-12">
+      {/* Page Header */}
+      <div className="space-y-1">
+        <span className="text-xs font-semibold text-[#8a6233] uppercase tracking-wider">
+          Section F · Completes Section Ten of your Will
         </span>
-        <h2 className="text-xl sm:text-2xl font-serif font-bold text-[#0B1528] mt-1">
-          Review Your Official ADJD Non-Muslim Will Draft
-        </h2>
-        <p className="text-xs sm:text-sm text-gray-500 mt-1 leading-relaxed">
-          Carefully review your bilingual will. Under court guidelines, drafts are presented in dual-column format (English LTR / Arabic RTL) for your review prior to court registry fee submission.
+        <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#231a30]">
+          Review and Approve Your Will
+        </h1>
+        <p className="text-sm text-[#6c6478] max-w-2xl leading-relaxed">
+          Check each section, approve the Arabic spelling of every name, then send your Will for legal review. You can still make changes until we file it.
         </p>
       </div>
 
-      {/* Couples Will Switcher & Mirror Action */}
+      {/* Mirror Will Banner */}
       {isCouples && (
-        <div className="bg-[#0B1528] text-white p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <Sparkles className="w-6 h-6 text-[#A37E44] shrink-0" />
-            <div>
-              <h4 className="text-sm font-semibold">Couples Mirror Package Active</h4>
-              <p className="text-xs text-gray-300 mt-0.5">
-                Currently reviewing: <strong>Will #{activeWillIndex} ({activeWill?.testatorPerson?.fullName || "Partner"})</strong>
-              </p>
-            </div>
+        <div className="bg-[#382852] text-white p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+          <div>
+            <h4 className="text-sm font-semibold">
+              You are reviewing Will {activeWillIndex}: {testator?.fullName || `Partner ${activeWillIndex}`}
+            </h4>
+            <p className="text-xs text-[#d9d0e6] mt-0.5">
+              {partnerWill?.testatorPerson?.fullName || `Will ${otherWillIndex}`}&apos;s Will can reuse the same people. Copy them across to save time.
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setActiveWillIndex(activeWillIndex === 1 ? 2 : 1)}
-              className="px-3.5 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-semibold transition-all"
+              onClick={() => setActiveWillIndex(otherWillIndex)}
+              className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full text-xs font-semibold transition-all cursor-pointer"
             >
-              Switch to Will #{activeWillIndex === 1 ? 2 : 1}
+              Open {partnerWill?.testatorPerson?.fullName ? partnerWill.testatorPerson.fullName.split(" ")[0] : `Will ${otherWillIndex}`}
             </button>
-            {activeWillIndex === 1 && (
-              <button
-                type="button"
-                onClick={handleCopyPartner}
-                disabled={isCopying}
-                className="px-3.5 py-1.5 bg-[#A37E44] hover:bg-[#B38D48] text-white rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5"
-              >
-                <Copy className="w-3.5 h-3.5" />
-                Mirror to Spouse
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={handleCopyPartner}
+              disabled={isCopying}
+              className="px-3.5 py-2 bg-[#d7b48b] hover:bg-[#c5a37a] text-[#281b40] rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              <Copy className="w-3.5 h-3.5" />
+              <span>Copy people to Will {otherWillIndex}</span>
+            </button>
           </div>
         </div>
       )}
 
-      {/* Compliance Audit Card */}
-      <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E0D8] shadow-sm space-y-4">
-        <h3 className="text-sm font-bold text-[#0B1528] uppercase tracking-wider flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-[#A37E44]" />
-          Pre-Court Registration Readiness Audit
-        </h3>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-2">
-          {/* 1. Testator Details */}
-          <div className="p-4 rounded-xl bg-[#FBF9F5] border border-[#E5E0D8] flex items-start gap-3">
-            {hasTestator ? (
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+      {/* 6-Item Readiness Check Grid */}
+      <section className="space-y-2">
+        <h2 className="text-base font-serif font-bold text-[#231a30]">
+          Readiness check
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          {/* A */}
+          <div className="bg-[#FFFEFA] p-3.5 rounded-xl border border-[#e4dfe9] flex items-start gap-2.5">
+            {isSectionAOk ? (
+              <CheckCircle2 className="w-4 h-4 text-[#2f7a55] shrink-0 mt-0.5" />
             ) : (
-              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
+              <AlertCircle className="w-4 h-4 text-[#b7791f] shrink-0 mt-0.5" />
             )}
             <div>
-              <h4 className="text-xs font-bold text-[#0B1528]">Testator Details</h4>
-              <p className="text-[11px] text-gray-500 mt-0.5">
-                {hasTestator ? "Verified personal details" : "Passport or details missing"}
-              </p>
-            </div>
-          </div>
-
-          {/* 2. Documents Audit */}
-          <div className="p-4 rounded-xl bg-[#FBF9F5] border border-[#E5E0D8] flex items-start gap-3">
-            {isDocsAuditPassed ? (
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-            ) : (
-              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
-            )}
-            <div>
-              <h4 className="text-xs font-bold text-[#0B1528]">Court Documents</h4>
-              <p className="text-[11px] text-gray-500 mt-0.5">
-                {isDocsAuditPassed
-                  ? `${testatorDocs.length > 0 ? `${testatorDocs.length} files attached` : "Identity verified"}`
-                  : !hasPassportDoc
-                  ? "Passport required"
-                  : isResident && !hasEmiratesIdDoc
-                  ? "Emirates ID required"
-                  : "Address doc required"}
-              </p>
-            </div>
-          </div>
-
-          {/* 3. Primary Executor */}
-          <div className="p-4 rounded-xl bg-[#FBF9F5] border border-[#E5E0D8] flex items-start gap-3">
-            {hasPrimaryExecutor ? (
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-            ) : (
-              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
-            )}
-            <div>
-              <h4 className="text-xs font-bold text-[#0B1528]">Primary Executor</h4>
-              <p className="text-[11px] text-gray-500 mt-0.5">
-                {hasPrimaryExecutor ? "Clause 4 valid" : "Primary executor required"}
-              </p>
-            </div>
-          </div>
-
-          {/* 4. Primary Residue */}
-          <div className="p-4 rounded-xl bg-[#FBF9F5] border border-[#E5E0D8] flex items-start gap-3">
-            {isPrimaryValid ? (
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-            ) : (
-              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
-            )}
-            <div>
-              <h4 className="text-xs font-bold text-[#0B1528]">Primary (100%)</h4>
-              <p className="text-[11px] text-gray-500 mt-0.5">
-                {isPrimaryValid
-                  ? `${primaries.length} primary · 100%`
-                  : `Currently ${primaryTotal}%`}
-              </p>
-            </div>
-          </div>
-
-          {/* 5. Substitute Group */}
-          <div className="p-4 rounded-xl bg-[#FBF9F5] border border-[#E5E0D8] flex items-start gap-3">
-            {isSubstituteValid ? (
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-            ) : (
-              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
-            )}
-            <div>
-              <h4 className="text-xs font-bold text-[#0B1528]">Substitute (100%)</h4>
-              <p className="text-[11px] text-gray-500 mt-0.5">
-                {isSubstituteValid
-                  ? `${substitutes.length} substitute · 100%`
-                  : `Currently ${substituteTotal}%`}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Attached Evidence Pills */}
-        {testatorDocs.length > 0 && (
-          <div className="pt-3 border-t border-[#E5E0D8]/60 flex flex-wrap items-center gap-2">
-            <span className="text-[11px] font-semibold text-gray-500">Attached Evidence:</span>
-            {testatorDocs.map((doc) => (
-              <span
-                key={doc.id}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#FAF7F2] border border-[#A37E44]/30 text-[#0B1528] text-[11px] font-mono"
-              >
-                <FileText className="w-3 h-3 text-[#A37E44]" />
-                <span>{doc.fileName || doc.documentType}</span>
-                {doc.ocrConfidence && (
-                  <span className="text-[9px] text-[#A37E44] font-bold">({doc.ocrConfidence}%)</span>
-                )}
+              <Link href="/wizard/details" className="text-xs font-bold text-[#231a30] hover:underline">
+                Your details
+              </Link>
+              <span className="text-[11px] text-[#6c6478] block">
+                {isSectionAOk ? "All fields checked" : "Needs passport and address"}
               </span>
-            ))}
+            </div>
           </div>
-        )}
-      </div>
 
-      {/* Live Dual-Column Court Document Preview (View-Only) */}
-      <div className="bg-white rounded-2xl border border-[#E5E0D8] shadow-sm overflow-hidden">
-        <div className="bg-[#0B1528] text-white px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-[#E5E0D8]">
-          <div className="flex items-center gap-2">
-            <Eye className="w-4 h-4 text-[#A37E44]" />
-            <h3 className="text-sm font-semibold tracking-wide">
-              Live Official Court Document Preview (ADJD-NM0723-07-03)
-            </h3>
+          {/* B */}
+          <div className="bg-[#FFFEFA] p-3.5 rounded-xl border border-[#e4dfe9] flex items-start gap-2.5">
+            <CheckCircle2 className="w-4 h-4 text-[#2f7a55] shrink-0 mt-0.5" />
+            <div>
+              <Link href="/wizard/children" className="text-xs font-bold text-[#231a30] hover:underline">
+                Children
+              </Link>
+              <span className="text-[11px] text-[#6c6478] block">
+                {childrenAssignments.length > 0 ? `${childrenAssignments.length} child listed` : "No children"}
+              </span>
+            </div>
           </div>
-          <div className="flex items-center gap-2 text-xs text-[#A37E44] bg-white/10 px-3 py-1 rounded-full">
-            <Lock className="w-3.5 h-3.5" />
-            <span>Secure In-App Preview · Court Certified</span>
+
+          {/* C */}
+          <div className="bg-[#FFFEFA] p-3.5 rounded-xl border border-[#e4dfe9] flex items-start gap-2.5">
+            {isSectionCOk ? (
+              <CheckCircle2 className="w-4 h-4 text-[#2f7a55] shrink-0 mt-0.5" />
+            ) : (
+              <AlertCircle className="w-4 h-4 text-[#b7791f] shrink-0 mt-0.5" />
+            )}
+            <div>
+              <Link href="/wizard/executors" className="text-xs font-bold text-[#231a30] hover:underline">
+                Executors
+              </Link>
+              <span className="text-[11px] text-[#6c6478] block">
+                {isSectionCOk ? `${executors.length} of 3 named` : "Primary executor required"}
+              </span>
+            </div>
+          </div>
+
+          {/* D */}
+          <div className="bg-[#FFFEFA] p-3.5 rounded-xl border border-[#e4dfe9] flex items-start gap-2.5">
+            {isSectionDOk ? (
+              <CheckCircle2 className="w-4 h-4 text-[#2f7a55] shrink-0 mt-0.5" />
+            ) : (
+              <AlertCircle className="w-4 h-4 text-[#b7791f] shrink-0 mt-0.5" />
+            )}
+            <div>
+              <Link href="/wizard/guardians" className="text-xs font-bold text-[#231a30] hover:underline">
+                Guardians
+              </Link>
+              <span className="text-[11px] text-[#6c6478] block">
+                {minorChildren.length === 0 ? "Not needed" : `${guardians.length} of 4 named`}
+              </span>
+            </div>
+          </div>
+
+          {/* E */}
+          <div className="bg-[#FFFEFA] p-3.5 rounded-xl border border-[#e4dfe9] flex items-start gap-2.5">
+            {isSectionEOk ? (
+              <CheckCircle2 className="w-4 h-4 text-[#2f7a55] shrink-0 mt-0.5" />
+            ) : (
+              <AlertCircle className="w-4 h-4 text-[#b7791f] shrink-0 mt-0.5" />
+            )}
+            <div>
+              <Link href="/wizard/beneficiaries" className="text-xs font-bold text-[#231a30] hover:underline">
+                Beneficiaries
+              </Link>
+              <span className="text-[11px] text-[#6c6478] block">
+                {isSectionEOk ? `${primaries.length} primary, ${substitutes.length} substitute` : "Shares must total 100%"}
+              </span>
+            </div>
+          </div>
+
+          {/* Arabic Names */}
+          <div className="bg-[#FFFEFA] p-3.5 rounded-xl border border-[#e4dfe9] flex items-start gap-2.5">
+            {areAllArabicApproved ? (
+              <CheckCircle2 className="w-4 h-4 text-[#2f7a55] shrink-0 mt-0.5" />
+            ) : (
+              <AlertCircle className="w-4 h-4 text-[#b7791f] shrink-0 mt-0.5" />
+            )}
+            <div>
+              <a href="#arabic-names" className="text-xs font-bold text-[#231a30] hover:underline">
+                Arabic names
+              </a>
+              <span className="text-[11px] text-[#6c6478] block">
+                {approvedPeople.length} of {peopleList.length} approved
+              </span>
+            </div>
           </div>
         </div>
+      </section>
 
-        <div className="p-4 sm:p-8 bg-[#FBF9F5] max-h-[700px] overflow-y-auto">
-          {activeWill && activeWill.testatorPerson ? (
+      {/* Arabic Spelling Approval Card */}
+      <section id="arabic-names" className="bg-[#FFFEFA] p-5 sm:p-6 rounded-2xl border border-[#e4dfe9] shadow-sm space-y-4">
+        <div className="flex items-center justify-between border-b border-[#f0ebf5] pb-3">
+          <div>
+            <h2 className="text-base font-serif font-bold text-[#231a30]">
+              Arabic spelling of every name
+            </h2>
+            <p className="text-xs text-[#6c6478] mt-0.5">
+              ADJD&apos;s template spells each name in Arabic by sound. Check that each one reads the way the name sounds.
+            </p>
+          </div>
+          <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+            areAllArabicApproved ? "bg-[#e8f4ee] text-[#1f5a3d]" : "bg-[#fbf3e4] text-[#7a4f0e]"
+          }`}>
+            {approvedPeople.length} of {peopleList.length} approved
+          </span>
+        </div>
+
+        <div className="space-y-3">
+          {peopleList.map(({ person, roles }) => {
+            const isApproved = Boolean(person.arabicName && person.isArabicApproved);
+            const isEditing = editingArabicId === person.id;
+
+            return (
+              <div
+                key={person.id}
+                className="p-3 rounded-xl bg-white border border-[#e4dfe9] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+              >
+                <div>
+                  <b className="text-xs text-[#231a30] block">{person.fullName || "Unnamed"}</b>
+                  <span className="text-[11px] text-[#6c6478]">{roles.join(", ")}</span>
+                </div>
+
+                <div className="flex items-center gap-3 self-end sm:self-auto">
+                  {isApproved && !isEditing ? (
+                    <span className="text-base font-arabic text-[#231a30]" dir="rtl">
+                      {person.arabicName}
+                    </span>
+                  ) : (
+                    <input
+                      type="text"
+                      dir="rtl"
+                      defaultValue={person.arabicName || ""}
+                      placeholder="الاسم بالعربية"
+                      onBlur={async (e) => {
+                        await addOrUpdatePerson({ id: person.id, arabicName: e.target.value });
+                      }}
+                      className="px-3 py-1.5 rounded-lg border border-[#cfc6da] text-sm font-arabic bg-white text-right focus:outline-none focus:border-[#5b3fb0] w-48"
+                    />
+                  )}
+
+                  {isApproved && !isEditing ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-[#1f5a3d] flex items-center gap-1">
+                        <Check className="w-3.5 h-3.5" /> Approved
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setEditingArabicId(person.id)}
+                        className="text-xs text-[#5b3fb0] hover:underline cursor-pointer"
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleApprovePersonArabic(person.id)}
+                      disabled={!person.arabicName}
+                      className="px-3 py-1 rounded-full border border-[#382852] text-[#382852] hover:bg-[#382852] hover:text-white text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      Approve
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {!areAllArabicApproved && (
+          <button
+            type="button"
+            onClick={handleApproveAllArabic}
+            className="px-4 py-2 rounded-full border border-[#382852] text-[#382852] hover:bg-[#382852] hover:text-white text-xs font-semibold transition-all cursor-pointer"
+          >
+            Approve all names that have an Arabic spelling
+          </button>
+        )}
+      </section>
+
+      {/* Official Court Bilingual Will Preview Card */}
+      <section className="bg-white rounded-2xl border border-[#e4dfe9] shadow-sm overflow-hidden">
+        <div className="bg-[#382852] text-white px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+          <div>
+            <h3 className="text-sm font-semibold tracking-wide">
+              Official ADJD Bilingual Will Draft (ADJD-NM0723-07-03)
+            </h3>
+            <span className="text-xs text-[#d7b48b]">Side-by-side English LTR & Arabic RTL</span>
+          </div>
+          <Link
+            href="/preview"
+            className="text-xs text-[#d7b48b] hover:underline flex items-center gap-1 font-semibold"
+          >
+            <Eye className="w-3.5 h-3.5" />
+            <span>Open full 10 sections</span>
+          </Link>
+        </div>
+
+        <div className="p-4 sm:p-6 bg-[#fbfaf8] max-h-[600px] overflow-y-auto">
+          {activeWill && testator ? (
             <ADJDBilingualWillDocument
               will={activeWill}
-              testator={activeWill.testatorPerson}
+              testator={testator}
               assignments={activeWill.roleAssignments}
             />
           ) : (
-            <div className="text-center py-12 text-gray-500 text-xs">
-              Complete Section A details to preview your official ADJD bilingual will.
+            <div className="text-center py-8 text-xs text-[#6c6478]">
+              Details loading...
             </div>
           )}
         </div>
-      </div>
+      </section>
 
-      {/* Testator Signature Capture */}
+      {/* Signature Capture Card */}
       {testator && (
         <TestatorSignatureCard
           signatureDataUrl={testator?.signatureDataUrl}
@@ -297,43 +445,60 @@ export function SectionF_ReviewDraft() {
         />
       )}
 
-      {/* Confirmation and Final CTA */}
-      <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E0D8] shadow-sm space-y-6">
+      {/* Final Approval Confirmation Card */}
+      <section className="bg-[#FFFEFA] p-6 sm:p-7 rounded-2xl border-2 border-[#382852] shadow-sm space-y-4">
+        <h2 className="text-base font-serif font-bold text-[#231a30]">
+          Approve your Will
+        </h2>
+
         <label className="flex items-start gap-3 cursor-pointer">
           <input
             type="checkbox"
-            checked={confirmed}
-            onChange={(e) => setConfirmed(e.target.checked)}
-            className="mt-1 w-4 h-4 text-[#A37E44] rounded border-gray-300 focus:ring-[#A37E44]"
+            checked={agreed}
+            onChange={(e) => setAgreed(e.target.checked)}
+            className="mt-1 w-4 h-4 text-[#382852] rounded border-gray-300 focus:ring-[#382852]"
           />
-          <span className="text-xs sm:text-sm text-gray-700 leading-relaxed">
-            I confirm that I have reviewed the generated Abu Dhabi Civil Family Court Non-Muslim Will draft. All personal details, transliterated names, executor appointments, and 100% estate allocations are accurate. I am ready to proceed to official court registration submission.
+          <span className="text-xs sm:text-sm text-[#231a30] leading-relaxed">
+            I have read my Will in English and Arabic. The names, appointments and shares are correct, and I am ready for legal review.
           </span>
         </label>
 
-        <div className="pt-4 border-t border-[#E5E0D8] flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="text-xs text-gray-500 text-center sm:text-left">
-            <span>Stage 2 Court Fee Due: </span>
-            <span className="font-bold text-[#0B1528]">
-              {isCouples ? "AED 1,900" : "AED 950"} (Inclusive of ADJD Registry Filing)
-            </span>
-          </div>
+        <div className="pt-3 border-t border-[#f0ebf5] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <p className="text-xs text-[#6c6478] max-w-lg">
+            Next: our legal expert reviews your Will, then we file it with ADJD. You pay ADJD&apos;s AED 950 court fee on its portal after ADJD approves it.
+          </p>
 
           <button
             type="button"
-            disabled={!confirmed || !allAuditsPassed}
-            onClick={handleConfirmAndProceed}
-            className={`w-full sm:w-auto px-8 py-3.5 rounded-xl font-semibold text-sm shadow-sm transition-all flex items-center justify-center gap-2 ${
-              confirmed && allAuditsPassed
-                ? "bg-[#0B1528] hover:bg-[#1a2844] text-white cursor-pointer"
-                : "bg-gray-200 text-gray-400 cursor-not-allowed"
+            disabled={!allReady}
+            onClick={handleProceedToSubmission}
+            className={`px-6 py-3 rounded-full font-semibold text-xs transition-all flex items-center justify-center gap-2 shrink-0 ${
+              allReady
+                ? "bg-[#c73a30] hover:bg-[#ad3128] text-white cursor-pointer shadow-sm"
+                : "bg-[#e4dfe9] text-[#6c6478] cursor-not-allowed"
             }`}
           >
-            <span>Proceed to Court Registration Fee Settlement</span>
+            <span>Approve and send for legal review</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
-      </div>
+
+        {!allReady && (
+          <div className="text-xs text-[#b7791f] pt-1">
+            {!isSectionAOk
+              ? "Complete Section A (Details) before submitting."
+              : !isSectionCOk
+              ? "Choose a primary executor in Section C."
+              : !isSectionEOk
+              ? "Primary and substitute beneficiaries must total 100% in Section E."
+              : !areAllArabicApproved
+              ? "Approve the Arabic spelling of all names above."
+              : !agreed
+              ? "Tick the confirmation checkbox above to continue."
+              : ""}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

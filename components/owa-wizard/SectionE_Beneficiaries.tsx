@@ -1,105 +1,23 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import {
-  Users,
-  Plus,
-  Trash2,
-  PieChart,
-  CheckCircle2,
-  AlertCircle,
-  UserCheck,
-  ArrowRight,
-  ArrowLeft,
-  ShieldAlert,
-  Info,
-  Edit2,
-  HeartHandshake,
-} from "lucide-react";
+import { Plus, Trash2, HeartHandshake, CheckCircle2, AlertCircle, X } from "lucide-react";
 import { useOwaStore } from "@/store/useOwaStore";
-import { useRouter } from "next/navigation";
 import { transliterateToName } from "@/lib/transliterate";
+import Link from "next/link";
 
-interface ShareInputProps {
-  value: number | undefined | null;
-  onChange: (val: number) => void;
-  disabled?: boolean;
-}
-
-function ShareInput({ value, onChange, disabled }: ShareInputProps) {
-  const [text, setText] = useState<string>(
-    value !== undefined && value !== null ? String(value) : ""
-  );
-  const [isFocused, setIsFocused] = useState<boolean>(false);
-
-  // Sync from props only when not focused
-  useEffect(() => {
-    if (!isFocused) {
-      setText(value !== undefined && value !== null ? String(value) : "");
-    }
-  }, [value, isFocused]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value;
-    if (/^[0-9]*\.?[0-9]*$/.test(raw)) {
-      setText(raw);
-    }
-  };
-
-  const handleCommit = () => {
-    const parsed = parseFloat(text);
-    if (isNaN(parsed) || parsed < 0) {
-      setText("0");
-      onChange(0);
-    } else if (parsed > 100) {
-      setText("100");
-      onChange(100);
-    } else {
-      setText(String(parsed));
-      onChange(parsed);
-    }
-  };
-
-  return (
-    <div className="relative">
-      <input
-        type="text"
-        inputMode="decimal"
-        value={text}
-        onFocus={() => setIsFocused(true)}
-        onChange={handleChange}
-        onBlur={() => {
-          setIsFocused(false);
-          handleCommit();
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.currentTarget.blur();
-          }
-        }}
-        disabled={disabled}
-        placeholder="100"
-        className="w-full px-3 py-2 pr-7 rounded-lg border border-[#E5E0D8] bg-white text-xs font-bold text-[#0B1528] focus:outline-none focus:border-[#A37E44]"
-      />
-      <span className="absolute right-2.5 top-2 text-xs font-bold text-gray-400">
-        %
-      </span>
-    </div>
-  );
-}
+const PRIMARY_COLORS = ["#5b3fb0", "#4a3a86", "#d7b48b", "#2f7a55"];
+const SUB_COLORS = ["#c73a30", "#7a1d14"];
+const SUB_LETTERS = ["A", "B"];
 
 export function SectionE_Beneficiaries() {
-  const router = useRouter();
   const {
     application,
     activeWillIndex,
     addOrUpdatePerson,
     assignPersonToRole,
     removeRoleAssignment,
-    saveCurrentSectionToDb,
   } = useOwaStore();
-
-  const [subPage, setSubPage] = useState<0 | 1 | 2>(0); // 0: Primaries, 1: Substitutes, 2: Review
 
   const activeWill = application?.wills.find((w) => w.willIndex === activeWillIndex);
   const existingPersons = application?.persons || [];
@@ -114,26 +32,7 @@ export function SectionE_Beneficiaries() {
         p.relationship?.toLowerCase() === "husband")
   );
 
-  // Active children IDs to filter out orphan children from dropdown
-  const activeChildrenIds = new Set(
-    (activeWill?.roleAssignments || [])
-      .filter((ra) => ra.role === "CHILD")
-      .map((ra) => ra.personId)
-  );
-
-  // Clean list of existing persons: exclude testator and orphan child records
-  const validExistingPersons = existingPersons.filter((p) => {
-    if (p.id === testatorId) return false;
-    const isChild =
-      p.relationship?.toLowerCase() === "child" ||
-      p.fullName?.toLowerCase().startsWith("child");
-    if (isChild && !activeChildrenIds.has(p.id)) {
-      return false;
-    }
-    return true;
-  });
-
-  // Extract Primaries and Substitutes
+  // Active role assignments
   const primaryAssignments = (activeWill?.roleAssignments || [])
     .filter((ra) => ra.role === "BENEFICIARY_PRIMARY" || ra.role === "BENEFICIARY")
     .sort((a, b) => a.appointmentOrder - b.appointmentOrder);
@@ -142,972 +41,620 @@ export function SectionE_Beneficiaries() {
     .filter((ra) => ra.role === "BENEFICIARY_SUBSTITUTE")
     .sort((a, b) => a.appointmentOrder - b.appointmentOrder);
 
-  // Calculations: Primaries
-  const primaryTotal = primaryAssignments.reduce(
-    (sum, ra) => sum + (Number(ra.sharePercentage) || 0),
-    0
-  );
-  const primaryRemaining = Math.round((100 - primaryTotal) * 100) / 100;
-  const isPrimaryValid =
-    primaryAssignments.length >= 1 &&
-    primaryAssignments.length <= 3 &&
-    Math.abs(primaryTotal - 100) < 0.01 &&
-    primaryAssignments.every((ra) => ra.personId && (Number(ra.sharePercentage) || 0) > 0) &&
-    new Set(primaryAssignments.map((ra) => ra.personId)).size === primaryAssignments.length;
+  // Totals
+  const primaryTotal = Math.round(
+    primaryAssignments.reduce((sum, ra) => sum + (Number(ra.sharePercentage) || 0), 0) * 100
+  ) / 100;
+  const substituteTotal = Math.round(
+    substituteAssignments.reduce((sum, ra) => sum + (Number(ra.sharePercentage) || 0), 0) * 100
+  ) / 100;
 
-  // Calculations: Substitutes
-  const substituteTotal = substituteAssignments.reduce(
-    (sum, ra) => sum + (Number(ra.sharePercentage) || 0),
-    0
-  );
-  const substituteRemaining = Math.round((100 - substituteTotal) * 100) / 100;
-  const hasPrimaryAsSubstitute = substituteAssignments.some((sub) =>
-    primaryAssignments.some((pri) => pri.personId === sub.personId)
-  );
-  const isSubstituteValid =
-    substituteAssignments.length >= 1 &&
-    substituteAssignments.length <= 2 &&
-    Math.abs(substituteTotal - 100) < 0.01 &&
-    substituteAssignments.every((ra) => ra.personId && (Number(ra.sharePercentage) || 0) > 0) &&
-    new Set(substituteAssignments.map((ra) => ra.personId)).size === substituteAssignments.length &&
-    !hasPrimaryAsSubstitute;
+  const soleSpouse =
+    potentialSpouse &&
+    primaryAssignments.length === 1 &&
+    primaryAssignments[0].personId === potentialSpouse.id &&
+    primaryTotal === 100;
 
-  // Handlers: Primaries
-  const handleAddPrimary = async () => {
-    if (primaryAssignments.length >= 3) return;
-
-    const defaultShare = primaryAssignments.length === 0 ? 100 : Math.max(0, primaryRemaining);
-    const newPerson = await addOrUpdatePerson({
-      fullName: `Primary Beneficiary ${primaryAssignments.length + 1}`,
-      relationship: "Beneficiary",
-      nationality: "",
-    });
-
-    if (newPerson) {
-      assignPersonToRole(
-        newPerson.id,
-        "BENEFICIARY_PRIMARY",
-        primaryAssignments.length + 1,
-        defaultShare
-      );
-    }
-  };
-
-  const handleAppointSpouseAsPrimary = async () => {
-    let spousePersonId = potentialSpouse?.id;
-    if (!spousePersonId) {
-      const newSpouse = await addOrUpdatePerson({
-        fullName: "",
-        relationship: "Spouse",
-        nationality: "",
-        isUaeResident: true,
-      });
-      if (newSpouse) {
-        spousePersonId = newSpouse.id;
-      }
-    }
-
-    if (spousePersonId) {
-      if (primaryAssignments.length > 0) {
-        assignPersonToRole(spousePersonId, "BENEFICIARY_PRIMARY", 1, 100);
-        for (let i = 1; i < primaryAssignments.length; i++) {
-          removeRoleAssignment(primaryAssignments[i].id);
-        }
-      } else {
-        assignPersonToRole(spousePersonId, "BENEFICIARY_PRIMARY", 1, 100);
-      }
-    }
-  };
-
-  const handleBeneficiaryNameBlur = async (
-    personId: string,
-    fullNameValue: string,
-    currentArabic?: string | null
-  ) => {
-    await handleUpdatePersonDetails(personId, { fullName: fullNameValue });
-    if (fullNameValue.trim() && !currentArabic?.trim()) {
-      const transliterated = await transliterateToName(fullNameValue);
-      if (transliterated) {
-        await handleUpdatePersonDetails(personId, {
-          fullName: fullNameValue,
-          arabicName: transliterated,
-        });
-      }
-    }
-  };
-
-  const handleUpdatePrimaryShare = (assignmentId: string, share: number) => {
-    const assignment = primaryAssignments.find((ra) => ra.id === assignmentId);
-    if (!assignment) return;
-    assignPersonToRole(
-      assignment.personId,
-      "BENEFICIARY_PRIMARY",
-      assignment.appointmentOrder,
-      share
-    );
-  };
-
-  const handleSelectExistingPrimary = (assignmentId: string, personId: string) => {
-    const assignment = primaryAssignments.find((ra) => ra.id === assignmentId);
-    if (!assignment) return;
-    assignPersonToRole(
-      personId,
-      "BENEFICIARY_PRIMARY",
-      assignment.appointmentOrder,
-      assignment.sharePercentage || undefined
-    );
-  };
-
-  // Handlers: Substitutes
-  const handleAddSubstitute = async () => {
-    if (substituteAssignments.length >= 2) return;
-
-    const slotLabel = substituteAssignments.length === 0 ? "A" : "B";
-    const defaultShare = substituteAssignments.length === 0 ? 100 : Math.max(0, substituteRemaining);
-    const newPerson = await addOrUpdatePerson({
-      fullName: `Substitute Beneficiary ${slotLabel}`,
-      relationship: "Substitute Beneficiary",
-      nationality: "",
-    });
-
-    if (newPerson) {
-      assignPersonToRole(
-        newPerson.id,
-        "BENEFICIARY_SUBSTITUTE",
-        substituteAssignments.length + 1,
-        defaultShare
-      );
-    }
-  };
-
-  // Auto-initialize Primary 1 if none exists (per OWA client spec: "Initially show one card labelled Primary beneficiary 1, with 100%")
-  const hasAutoInitializedPrimary = useRef(false);
+  // Auto-initialize Primary 1 if none exists
+  const hasAutoInitialized = useRef(false);
   useEffect(() => {
-    if (!hasAutoInitializedPrimary.current && primaryAssignments.length === 0) {
-      hasAutoInitializedPrimary.current = true;
-      handleAddPrimary();
+    if (!hasAutoInitialized.current && primaryAssignments.length === 0) {
+      hasAutoInitialized.current = true;
+      (async () => {
+        const newPerson = await addOrUpdatePerson({
+          fullName: "",
+          relationship: potentialSpouse ? "Spouse" : "Family Member",
+          nationality: "British",
+          isUaeResident: true,
+        });
+        if (newPerson) {
+          assignPersonToRole(newPerson.id, "BENEFICIARY_PRIMARY", 1, 100);
+        }
+      })();
     }
   }, [primaryAssignments.length]);
 
-  // Auto-initialize Substitute A if user visits sub-page 1 and none exists (per OWA client spec)
-  const hasAutoInitializedSubstitute = useRef(false);
-  useEffect(() => {
-    if (subPage === 1 && !hasAutoInitializedSubstitute.current && substituteAssignments.length === 0) {
-      hasAutoInitializedSubstitute.current = true;
-      handleAddSubstitute();
-    }
-  }, [subPage, substituteAssignments.length]);
+  // Handlers
+  const handleAddPrimary = async (personId?: string) => {
+    if (primaryAssignments.length >= 4) return;
+    const remaining = Math.max(0, 100 - primaryTotal);
+    let targetPersonId = personId;
 
-  const handleRemoveSubstitute = (assignmentId: string) => {
-    removeRoleAssignment(assignmentId);
-    // If B is removed, revert remaining A to 100%
-    const remainingSubs = substituteAssignments.filter((ra) => ra.id !== assignmentId);
-    if (remainingSubs.length === 1) {
+    if (!targetPersonId) {
+      const newPerson = await addOrUpdatePerson({
+        fullName: "",
+        relationship: "Beneficiary",
+        nationality: "British",
+        isUaeResident: true,
+      });
+      targetPersonId = newPerson?.id;
+    }
+
+    if (targetPersonId) {
       assignPersonToRole(
-        remainingSubs[0].personId,
-        "BENEFICIARY_SUBSTITUTE",
-        1,
-        100
+        targetPersonId,
+        "BENEFICIARY_PRIMARY",
+        primaryAssignments.length + 1,
+        remaining
       );
     }
   };
 
-  const handleUpdateSubstituteShare = (assignmentId: string, share: number) => {
-    const assignment = substituteAssignments.find((ra) => ra.id === assignmentId);
-    if (!assignment) return;
-    assignPersonToRole(
-      assignment.personId,
-      "BENEFICIARY_SUBSTITUTE",
-      assignment.appointmentOrder,
-      share
+  const handleAddSubstitute = async (personId?: string) => {
+    if (substituteAssignments.length >= 2) return;
+    const remaining = Math.max(0, 100 - substituteTotal);
+    let targetPersonId = personId;
+
+    if (!targetPersonId) {
+      const newPerson = await addOrUpdatePerson({
+        fullName: "",
+        relationship: "Substitute Beneficiary",
+        nationality: "British",
+        isUaeResident: true,
+      });
+      targetPersonId = newPerson?.id;
+    }
+
+    if (targetPersonId) {
+      assignPersonToRole(
+        targetPersonId,
+        "BENEFICIARY_SUBSTITUTE",
+        substituteAssignments.length + 1,
+        remaining
+      );
+    }
+  };
+
+  const handleAppointSpouse100 = async () => {
+    let spouseId = potentialSpouse?.id;
+    if (!spouseId) {
+      const newSpouse = await addOrUpdatePerson({
+        fullName: "",
+        relationship: "Spouse",
+        nationality: "British",
+        isUaeResident: true,
+      });
+      spouseId = newSpouse?.id;
+    }
+
+    if (spouseId) {
+      // Remove others
+      for (let i = 1; i < primaryAssignments.length; i++) {
+        removeRoleAssignment(primaryAssignments[i].id);
+      }
+      if (primaryAssignments.length > 0) {
+        assignPersonToRole(spouseId, "BENEFICIARY_PRIMARY", 1, 100);
+      } else {
+        assignPersonToRole(spouseId, "BENEFICIARY_PRIMARY", 1, 100);
+      }
+    }
+  };
+
+  const handleShareChange = (assignmentId: string, role: "BENEFICIARY_PRIMARY" | "BENEFICIARY_SUBSTITUTE", order: number, rawVal: string) => {
+    const parsed = parseFloat(rawVal) || 0;
+    const assignment =
+      role === "BENEFICIARY_PRIMARY"
+        ? primaryAssignments.find((a) => a.id === assignmentId)
+        : substituteAssignments.find((a) => a.id === assignmentId);
+
+    if (assignment) {
+      assignPersonToRole(assignment.personId, role, order, Math.min(100, Math.max(0, parsed)));
+    }
+  };
+
+  const handleNameBlur = async (personId: string, fullNameValue: string, currentArabic?: string | null) => {
+    await addOrUpdatePerson({ id: personId, fullName: fullNameValue });
+    if (fullNameValue.trim() && !currentArabic?.trim()) {
+      const transliterated = await transliterateToName(fullNameValue);
+      if (transliterated) {
+        await addOrUpdatePerson({ id: personId, fullName: fullNameValue, arabicName: transliterated });
+      }
+    }
+  };
+
+  // Status message helpers
+  const getPrimaryStatusMessage = () => {
+    if (primaryTotal === 100) {
+      return (
+        <span className="text-xs font-semibold text-[#1f5a3d] flex items-center gap-1">
+          <CheckCircle2 className="w-3.5 h-3.5" /> Primary shares total 100%
+        </span>
+      );
+    }
+    if (primaryTotal < 100) {
+      return (
+        <span className="text-xs font-semibold text-[#7a4f0e] flex items-center gap-1">
+          <AlertCircle className="w-3.5 h-3.5" /> Primary shares total {primaryTotal}%. {Math.round((100 - primaryTotal) * 100) / 100}% left to assign.
+        </span>
+      );
+    }
+    return (
+      <span className="text-xs font-semibold text-[#b42318] flex items-center gap-1">
+        <AlertCircle className="w-3.5 h-3.5" /> Primary shares total {primaryTotal}%. Reduce by {Math.round((primaryTotal - 100) * 100) / 100}%.
+      </span>
     );
   };
 
-  const handleSelectExistingSubstitute = (assignmentId: string, personId: string) => {
-    const assignment = substituteAssignments.find((ra) => ra.id === assignmentId);
-    if (!assignment) return;
-    assignPersonToRole(
-      personId,
-      "BENEFICIARY_SUBSTITUTE",
-      assignment.appointmentOrder,
-      assignment.sharePercentage || undefined
+  const getSubStatusMessage = () => {
+    if (substituteTotal === 100) {
+      return (
+        <span className="text-xs font-semibold text-[#1f5a3d] flex items-center gap-1">
+          <CheckCircle2 className="w-3.5 h-3.5" /> Substitute shares total 100%
+        </span>
+      );
+    }
+    if (substituteTotal < 100) {
+      return (
+        <span className="text-xs font-semibold text-[#7a4f0e] flex items-center gap-1">
+          <AlertCircle className="w-3.5 h-3.5" /> Substitute shares total {substituteTotal}%. {Math.round((100 - substituteTotal) * 100) / 100}% left to assign.
+        </span>
+      );
+    }
+    return (
+      <span className="text-xs font-semibold text-[#b42318] flex items-center gap-1">
+        <AlertCircle className="w-3.5 h-3.5" /> Substitute shares total {substituteTotal}%. Reduce by {Math.round((substituteTotal - 100) * 100) / 100}%.
+      </span>
     );
-  };
-
-  const handleUpdatePersonDetails = async (personId: string, updates: Record<string, any>) => {
-    await addOrUpdatePerson({
-      id: personId,
-      ...updates,
-    });
-  };
-
-  const handleFinalSaveAndContinue = async () => {
-    await saveCurrentSectionToDb();
-    router.push(`/wizard/review?applicationId=${application?.id}`);
   };
 
   return (
-    <div className="space-y-8 max-w-4xl mx-auto">
-      {/* Header */}
-      <div>
-        <span className="text-xs font-bold text-[#A37E44] uppercase tracking-wider font-mono">
-          Section E · Statutory Estate Distribution
+    <div className="space-y-6 max-w-5xl mx-auto pb-12">
+      {/* Page Header */}
+      <div className="space-y-1">
+        <span className="text-xs font-semibold text-[#8a6233] uppercase tracking-wider">
+          Section E · Fills Section Seven of your Will
         </span>
-        <h2 className="text-xl sm:text-2xl font-serif font-bold text-[#0B1528] mt-1">
-          Estate Beneficiaries (Clause 7)
-        </h2>
-        <p className="text-xs sm:text-sm text-gray-500 mt-1 leading-relaxed">
-          Allocate your UAE estate residue to primary beneficiaries, and define the shared substitute group if none survives you.
+        <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#231a30]">
+          Who Inherits Your Estate
+        </h1>
+        <p className="text-sm text-[#6c6478] max-w-2xl leading-relaxed">
+          Name up to four primary beneficiaries and the share each receives. Then name who inherits if none of them survives you.
         </p>
       </div>
 
-      {/* Stepped Sub-Navigation Pills (Matching Prototype) */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <button
-          type="button"
-          onClick={() => setSubPage(0)}
-          className={`p-3.5 rounded-xl border text-left transition-all ${
-            subPage === 0
-              ? "bg-[#0B1528] text-white border-[#0B1528] shadow-sm"
-              : isPrimaryValid
-              ? "bg-white text-gray-800 border-emerald-200 hover:border-gray-300"
-              : "bg-white text-gray-800 border-[#E5E0D8] hover:border-gray-300"
-          }`}
-        >
-          <div className="text-[10px] font-mono uppercase font-bold tracking-wider opacity-75">
-            Step 1 of 3
-          </div>
-          <div className="text-xs font-bold mt-0.5 flex items-center justify-between">
-            <span>1 · Primary Beneficiaries</span>
-            {isPrimaryValid && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
-          </div>
-          <div className="text-[11px] opacity-75 mt-0.5">
-            1 to 3 people · Total 100%
-          </div>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setSubPage(1)}
-          className={`p-3.5 rounded-xl border text-left transition-all ${
-            subPage === 1
-              ? "bg-[#0B1528] text-white border-[#0B1528] shadow-sm"
-              : isSubstituteValid
-              ? "bg-white text-gray-800 border-emerald-200 hover:border-gray-300"
-              : "bg-white text-gray-800 border-[#E5E0D8] hover:border-gray-300"
-          }`}
-        >
-          <div className="text-[10px] font-mono uppercase font-bold tracking-wider opacity-75">
-            Step 2 of 3
-          </div>
-          <div className="text-xs font-bold mt-0.5 flex items-center justify-between">
-            <span>2 · Shared Substitutes</span>
-            {isSubstituteValid && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
-          </div>
-          <div className="text-[11px] opacity-75 mt-0.5">
-            A alone or A & B · Total 100%
-          </div>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setSubPage(2)}
-          className={`p-3.5 rounded-xl border text-left transition-all ${
-            subPage === 2
-              ? "bg-[#0B1528] text-white border-[#0B1528] shadow-sm"
-              : "bg-white text-gray-800 border-[#E5E0D8] hover:border-gray-300"
-          }`}
-        >
-          <div className="text-[10px] font-mono uppercase font-bold tracking-wider opacity-75">
-            Step 3 of 3
-          </div>
-          <div className="text-xs font-bold mt-0.5 flex items-center justify-between">
-            <span>3 · Review Beneficiaries</span>
-            {isPrimaryValid && isSubstituteValid && (
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-            )}
-          </div>
-          <div className="text-[11px] opacity-75 mt-0.5">
-            Two distinct allocations
-          </div>
-        </button>
-      </div>
-
-      {/* =========================================================================
-          SUB-PAGE 0: PRIMARY BENEFICIARIES
-      ========================================================================== */}
-      {subPage === 0 && (
-        <div className="space-y-6">
-          <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E0D8] shadow-sm space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E5E0D8] pb-4">
-              <div>
-                <h3 className="text-base font-serif font-bold text-[#0B1528]">
-                  Primary Beneficiaries
-                </h3>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  Who should receive your estate, and what percentage should each receive?
+      {/* 2-Column Split Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        {/* Left Column: Beneficiary Setup */}
+        <div className="lg:col-span-2 space-y-5">
+          {/* CARD 1: Primary Beneficiaries */}
+          <section className="bg-[#FFFEFA] p-5 sm:p-6 rounded-2xl border-2 border-[#382852] shadow-sm space-y-4">
+            <div className="flex items-start justify-between gap-3 border-b border-[#f0ebf5] pb-3">
+              <div className="space-y-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#b42318]">
+                  1 · Primary beneficiaries · 1 to 4, total 100%
+                </span>
+                <h2 className="text-base sm:text-lg font-serif font-bold text-[#231a30]">
+                  Who receives your estate
+                </h2>
+                <p className="text-xs text-[#6c6478]">
+                  They share the whole residue of your UAE estate: everything left after debts and costs.
                 </p>
               </div>
-
-              {/* Allocation badge */}
-              <div
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border flex items-center gap-2 ${
-                  Math.abs(primaryTotal - 100) < 0.01
-                    ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                    : "bg-amber-50 text-amber-800 border-amber-200"
-                }`}
-              >
-                <PieChart className="w-3.5 h-3.5 text-[#A37E44]" />
-                <span>
-                  Primary allocation: {primaryTotal.toFixed(1)}% of 100% ·{" "}
-                  {Math.abs(primaryTotal - 100) < 0.01
-                    ? "Fully allocated"
-                    : primaryRemaining > 0
-                    ? `${primaryRemaining}% remaining`
-                    : `${Math.abs(primaryRemaining)}% overallocated`}
-                </span>
-              </div>
-            </div>
-
-            {/* Quick Appoint Spouse Banner */}
-            <div className="bg-[#FAF7F2] p-4 rounded-xl border border-[#A37E44]/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-[#0B1528] text-[#A37E44] flex items-center justify-center shrink-0">
-                  <HeartHandshake className="w-4 h-4" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-[#0B1528]">Surviving Spouse Estate Allocation (Clause 7)</h4>
-                  <p className="text-[11px] text-gray-600">
-                    {potentialSpouse ? (
-                      <>Assign 100% of your UAE estate residue to <strong>{potentialSpouse.fullName}</strong>.</>
-                    ) : (
-                      <>Leave 100% of your UAE estate residue to your surviving spouse (standard ADJD clause).</>
-                    )}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={handleAppointSpouseAsPrimary}
-                className="px-3.5 py-1.5 bg-[#A37E44] hover:bg-[#B38D48] text-white text-xs font-semibold rounded-lg shadow-sm whitespace-nowrap transition-all flex items-center gap-1.5"
-              >
-                <HeartHandshake className="w-3.5 h-3.5" />
-                Appoint Spouse as 100% Primary
-              </button>
-            </div>
-
-            {/* Explanatory Legal Notice */}
-            <div className="p-3.5 rounded-xl bg-[#FAF7F2] border-l-4 border-[#A37E44] text-xs text-gray-700 leading-relaxed flex items-start gap-2.5">
-              <Info className="w-4 h-4 text-[#A37E44] shrink-0 mt-0.5" />
-              <span>
-                <strong>Proportional redistribution rule:</strong> If a primary beneficiary does not survive you, their share will be divided among your surviving primary beneficiaries in proportion to their original shares. If only one survives, they receive the whole estate residue.
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#efeaf7] text-[#4a3a86] shrink-0">
+                {primaryAssignments.length} of 4
               </span>
             </div>
 
-            {/* List of Primaries */}
-            <div className="space-y-5 pt-2">
-              {primaryAssignments.length === 0 && (
-                <div className="text-center py-8 border-2 border-dashed border-[#E5E0D8] rounded-xl text-gray-500 text-xs">
-                  No primary beneficiary added yet. Click below to add your primary sole beneficiary (100%).
-                </div>
-              )}
+            {/* Quick Spouse 100% Shortcut */}
+            {potentialSpouse && !soleSpouse && (
+              <div className="bg-[#f7f5fb] p-3 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <span className="text-xs text-[#231a30]">
+                  <b className="font-semibold">Leaving everything to {potentialSpouse.fullName || "your spouse"}?</b> Make them your only primary beneficiary, at 100%.
+                </span>
+                <button
+                  type="button"
+                  onClick={handleAppointSpouse100}
+                  className="px-3.5 py-1.5 rounded-full border border-[#382852] text-[#382852] hover:bg-[#382852] hover:text-white text-xs font-semibold transition-all whitespace-nowrap self-start sm:self-auto cursor-pointer"
+                >
+                  Give {potentialSpouse.fullName ? potentialSpouse.fullName.split(" ")[0] : "Spouse"} 100%
+                </button>
+              </div>
+            )}
 
+            {/* Primary Share Rows */}
+            <div className="space-y-3">
               {primaryAssignments.map((assignment, index) => {
                 const person =
-                  existingPersons.find((p) => p.id === assignment.personId) ||
-                  assignment.person;
-                const personId = assignment.personId;
-                const isTestatorSelected = testatorId && personId === testatorId;
-                const isSpouse =
-                  person?.relationship?.toLowerCase() === "spouse" ||
-                  person?.relationship?.toLowerCase() === "wife" ||
-                  person?.relationship?.toLowerCase() === "husband";
+                  assignment.person || existingPersons.find((p) => p.id === assignment.personId);
 
                 return (
                   <div
                     key={assignment.id}
-                    className="p-5 sm:p-6 rounded-xl border border-[#E5E0D8] bg-[#FBF9F5]/40 space-y-4"
+                    className="p-3 rounded-xl bg-white border border-[#e4dfe9] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                   >
-                    <div className="flex items-center justify-between border-b border-[#E5E0D8]/60 pb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="w-6 h-6 rounded-full bg-[#0B1528] text-white flex items-center justify-center text-xs font-bold">
-                          {index + 1}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="w-7 h-7 rounded-full bg-[#382852] text-white font-serif font-bold text-xs flex items-center justify-center shrink-0">
+                        {index + 1}
+                      </span>
+                      <div className="min-w-0">
+                        <input
+                          type="text"
+                          defaultValue={person?.fullName || ""}
+                          placeholder={`Primary Beneficiary ${index + 1}`}
+                          onBlur={(e) => handleNameBlur(person?.id || "", e.target.value, person?.arabicName)}
+                          className="font-semibold text-sm text-[#231a30] bg-transparent border-0 border-b border-transparent hover:border-[#cfc6da] focus:border-[#5b3fb0] focus:outline-none px-0 py-0.5 w-full truncate"
+                        />
+                        <span className="text-[11px] text-[#6c6478] block truncate">
+                          {person?.relationship || "Beneficiary"} · {person?.nationality || "British"}
                         </span>
-                        <h4 className="text-sm font-bold text-[#0B1528]">
-                          Primary Beneficiary {index + 1}
-                        </h4>
-                        {isSpouse && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-900 border border-amber-300">
-                            <HeartHandshake className="w-3 h-3 text-[#A37E44]" />
-                            Spouse
-                          </span>
-                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={assignment.sharePercentage ?? ""}
+                          onChange={(e) =>
+                            handleShareChange(assignment.id, "BENEFICIARY_PRIMARY", assignment.appointmentOrder, e.target.value)
+                          }
+                          className="w-16 px-2 py-1.5 rounded-lg border border-[#cfc6da] text-xs font-mono font-bold text-right text-[#231a30] focus:outline-none focus:border-[#5b3fb0]"
+                        />
+                        <span className="text-xs font-bold text-[#6c6478]">%</span>
                       </div>
 
                       {primaryAssignments.length > 1 && (
                         <button
                           type="button"
                           onClick={() => removeRoleAssignment(assignment.id)}
-                          className="text-xs text-red-600 hover:text-red-700 flex items-center gap-1"
+                          className="w-8 h-8 rounded-lg border border-[#cfc6da] hover:border-[#b42318] text-[#6c6478] hover:text-[#b42318] flex items-center justify-center transition-colors cursor-pointer"
+                          aria-label="Remove beneficiary"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          <span>Remove</span>
+                          <X className="w-4 h-4" />
                         </button>
                       )}
-                    </div>
-
-                    {/* Safeguard warnings */}
-                    {isTestatorSelected && (
-                      <div className="p-2.5 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-2">
-                        <ShieldAlert className="w-4 h-4 shrink-0" />
-                        <span>Safeguard: You (the Testator) cannot be designated as your own beneficiary.</span>
-                      </div>
-                    )}
-
-                    {/* Existing Person Selector */}
-                    {validExistingPersons.length > 0 && (
-                      <div className="flex items-center justify-between p-2.5 rounded-lg bg-white border border-[#E5E0D8] text-xs">
-                        <div className="flex items-center gap-1.5 text-gray-600 font-medium">
-                          <UserCheck className="w-3.5 h-3.5 text-[#A37E44]" />
-                          <span>Select an existing person:</span>
-                        </div>
-                        <select
-                          value={personId || ""}
-                          onChange={(e) => handleSelectExistingPrimary(assignment.id, e.target.value)}
-                          className="px-2 py-1 rounded border border-[#E5E0D8] bg-white text-xs text-[#0B1528] font-medium max-w-[240px]"
-                        >
-                          <option value="">Choose a person</option>
-                          {validExistingPersons.map((p) => (
-                            <option key={p.id} value={p.id}>
-                              {p.fullName} ({p.relationship || p.nationality || "Person"})
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-
-                    {/* Form Fields */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <div className="sm:col-span-2">
-                        <label className="block text-[11px] font-semibold text-gray-700 uppercase tracking-wider mb-1">
-                          Full Legal Name (English) *
-                        </label>
-                        <input
-                          type="text"
-                          defaultValue={person?.fullName || ""}
-                          key={`pri-name-${person?.fullName}`}
-                          onBlur={(e) =>
-                            handleBeneficiaryNameBlur(
-                              personId,
-                              e.target.value,
-                              person?.arabicName
-                            )
-                          }
-                          placeholder="e.g. Emma Claire Carter"
-                          className="w-full px-3 py-2 rounded-lg border border-[#E5E0D8] bg-white text-xs text-[#0B1528] font-medium focus:outline-none focus:border-[#A37E44]"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[11px] font-semibold text-gray-700 uppercase tracking-wider mb-1">
-                          Share Percentage (%) *
-                        </label>
-                        <ShareInput
-                          value={assignment.sharePercentage}
-                          onChange={(val) => handleUpdatePrimaryShare(assignment.id, val)}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[11px] font-semibold text-gray-700 uppercase tracking-wider mb-1">
-                          Arabic Script Name
-                        </label>
-                        <input
-                          type="text"
-                          dir="rtl"
-                          defaultValue={person?.arabicName || ""}
-                          key={`pri-arabic-${person?.arabicName}`}
-                          onBlur={(e) =>
-                            handleUpdatePersonDetails(personId, { arabicName: e.target.value })
-                          }
-                          placeholder="إيما كلير كارتر"
-                          className="w-full px-3 py-2 rounded-lg border border-[#E5E0D8] bg-white text-xs font-arabic text-right text-[#0B1528] focus:outline-none focus:border-[#A37E44]"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[11px] font-semibold text-gray-700 uppercase tracking-wider mb-1">
-                          Passport Number
-                        </label>
-                        <input
-                          type="text"
-                          defaultValue={person?.passportNumber || ""}
-                          onBlur={(e) =>
-                            handleUpdatePersonDetails(personId, { passportNumber: e.target.value })
-                          }
-                          placeholder="e.g. GB98765432"
-                          className="w-full px-3 py-2 rounded-lg border border-[#E5E0D8] bg-white text-xs font-mono font-medium text-[#0B1528] focus:outline-none focus:border-[#A37E44]"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[11px] font-semibold text-gray-700 uppercase tracking-wider mb-1">
-                          Relationship
-                        </label>
-                        <input
-                          type="text"
-                          defaultValue={person?.relationship || ""}
-                          onBlur={(e) =>
-                            handleUpdatePersonDetails(personId, { relationship: e.target.value })
-                          }
-                          placeholder="e.g. Spouse, Son, Daughter"
-                          className="w-full px-3 py-2 rounded-lg border border-[#E5E0D8] bg-white text-xs text-[#0B1528] focus:outline-none focus:border-[#A37E44]"
-                        />
-                      </div>
                     </div>
                   </div>
                 );
               })}
-
-              {/* Add Primary button (Cap at 3) */}
-              <button
-                type="button"
-                onClick={handleAddPrimary}
-                disabled={primaryAssignments.length >= 3}
-                className="w-full py-3.5 border-2 border-dashed border-[#A37E44]/40 hover:border-[#A37E44] bg-[#FBF9F5] hover:bg-[#A37E44]/5 disabled:opacity-40 disabled:cursor-not-allowed text-[#A37E44] rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                <span>+ Add primary beneficiary ({primaryAssignments.length}/3)</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Action buttons */}
-          <div className="flex justify-end pt-2">
-            <button
-              type="button"
-              onClick={() => setSubPage(1)}
-              disabled={!isPrimaryValid}
-              className="px-6 py-2.5 bg-[#0B1528] hover:bg-[#101c30] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-xl transition-all flex items-center gap-2 shadow-sm"
-            >
-              <span>Continue to substitute beneficiaries</span>
-              <ArrowRight className="w-4 h-4 text-[#A37E44]" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* =========================================================================
-          SUB-PAGE 1: SHARED SUBSTITUTES
-      ========================================================================== */}
-      {subPage === 1 && (
-        <div className="space-y-6">
-          <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E0D8] shadow-sm space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E5E0D8] pb-4">
-              <div>
-                <h3 className="text-base font-serif font-bold text-[#0B1528]">
-                  If none of your primary beneficiaries survives you
-                </h3>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  Choose who should receive your estate residue if none of your primary beneficiaries survives you. Give 100% to A, or divide 100% between A and B.
-                </p>
-              </div>
-
-              {/* Allocation badge */}
-              <div
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border flex items-center gap-2 ${
-                  Math.abs(substituteTotal - 100) < 0.01
-                    ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                    : "bg-amber-50 text-amber-800 border-amber-200"
-                }`}
-              >
-                <PieChart className="w-3.5 h-3.5 text-[#A37E44]" />
-                <span>
-                  Substitute allocation: {substituteTotal.toFixed(1)}% of 100% ·{" "}
-                  {Math.abs(substituteTotal - 100) < 0.01
-                    ? "Fully allocated"
-                    : substituteRemaining > 0
-                    ? `${substituteRemaining}% remaining`
-                    : `${Math.abs(substituteRemaining)}% overallocated`}
-                </span>
-              </div>
             </div>
 
-            {/* Cross-group safeguard alert */}
-            {hasPrimaryAsSubstitute && (
-              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-2">
-                <ShieldAlert className="w-4 h-4 shrink-0" />
-                <span>Safeguard violation: A primary beneficiary cannot be chosen as an A or B substitute (they cannot survive a condition where all primaries have failed).</span>
+            {/* Primary Live Allocation Bar */}
+            {primaryAssignments.length > 0 && (
+              <div className="space-y-1.5 pt-1">
+                <div className="h-7 w-full bg-[#f7f5fb] border border-[#cfc6da] rounded-lg overflow-hidden flex">
+                  {primaryAssignments.map((assignment, index) => {
+                    const person = assignment.person || existingPersons.find((p) => p.id === assignment.personId);
+                    const pct = Number(assignment.sharePercentage) || 0;
+                    if (pct <= 0) return null;
+                    const base = Math.max(primaryTotal, 100);
+                    const widthPct = (pct / base) * 100;
+
+                    return (
+                      <div
+                        key={assignment.id}
+                        style={{
+                          width: `${widthPct}%`,
+                          backgroundColor: PRIMARY_COLORS[index % PRIMARY_COLORS.length],
+                        }}
+                        className="h-full flex items-center justify-center text-white text-[11px] font-bold px-1 truncate transition-all duration-300"
+                        title={`${person?.fullName || `Beneficiary ${index + 1}`}: ${pct}%`}
+                      >
+                        {pct >= 10 && `${person?.fullName ? person.fullName.split(" ")[0] : `${index + 1}`} ${pct}%`}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div>{getPrimaryStatusMessage()}</div>
               </div>
             )}
 
-            {/* Substitute cards */}
-            <div className="space-y-5 pt-2">
-              {substituteAssignments.length === 0 && (
-                <div className="text-center py-8 border-2 border-dashed border-[#E5E0D8] rounded-xl text-gray-500 text-xs">
-                  Substitute A is required. Click below to add Substitute Beneficiary A (100%).
-                </div>
-              )}
+            {/* Pro-rata hint */}
+            {primaryAssignments.length > 1 && (
+              <p className="text-[11px] text-[#6c6478] border-l-2 border-[#d7b48b] pl-2.5 leading-relaxed">
+                If a primary beneficiary dies before you, the survivors share their part in proportion to their own shares. If only one survives, they receive the whole residue.
+              </p>
+            )}
 
+            {/* Add Primary Picker */}
+            {primaryAssignments.length < 4 && (
+              <div className="pt-2 flex flex-col sm:flex-row sm:items-center gap-2">
+                <select
+                  defaultValue=""
+                  onChange={(e) => {
+                    if (e.target.value) handleAddPrimary(e.target.value);
+                  }}
+                  className="flex-1 px-3 py-2 rounded-lg border border-[#cfc6da] text-xs font-medium text-[#231a30] bg-white focus:outline-none focus:border-[#5b3fb0]"
+                >
+                  <option value="" disabled>
+                    Choose someone already in your Will
+                  </option>
+                  {existingPersons
+                    .filter((p) => p.id !== testatorId && !primaryAssignments.some((a) => a.personId === p.id))
+                    .map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.fullName || "Unnamed"} ({p.relationship || "Person"})
+                      </option>
+                    ))}
+                </select>
+
+                <button
+                  type="button"
+                  onClick={() => handleAddPrimary()}
+                  className="px-3.5 py-2 bg-[#382852] hover:bg-[#281b40] text-white text-xs font-semibold rounded-lg shadow-sm flex items-center justify-center gap-1.5 transition-all shrink-0 cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add a new person
+                </button>
+              </div>
+            )}
+          </section>
+
+          {/* CARD 2: Substitute Beneficiaries */}
+          <section className="bg-[#FFFEFA] p-5 sm:p-6 rounded-2xl border border-[#e4dfe9] shadow-sm space-y-4">
+            <div className="flex items-start justify-between gap-3 border-b border-[#f0ebf5] pb-3">
+              <div className="space-y-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#b42318]">
+                  2 · If none of your primary beneficiaries survives you
+                </span>
+                <h2 className="text-base sm:text-lg font-serif font-bold text-[#231a30]">
+                  Substitute beneficiaries
+                </h2>
+                <p className="text-xs text-[#6c6478]">
+                  Substitute A is required. Give A 100%, or divide 100% between A and B.
+                </p>
+              </div>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#efeaf7] text-[#4a3a86] shrink-0">
+                {substituteAssignments.length} of 2
+              </span>
+            </div>
+
+            {/* Substitute Share Rows */}
+            <div className="space-y-3">
               {substituteAssignments.map((assignment, index) => {
-                const slotLabel = index === 0 ? "A" : "B";
                 const person =
-                  existingPersons.find((p) => p.id === assignment.personId) ||
-                  assignment.person;
-                const personId = assignment.personId;
+                  assignment.person || existingPersons.find((p) => p.id === assignment.personId);
+                const letter = SUB_LETTERS[index];
+                const aName =
+                  substituteAssignments[0]?.person?.fullName ||
+                  existingPersons.find((p) => p.id === substituteAssignments[0]?.personId)?.fullName ||
+                  "A";
 
                 return (
                   <div
                     key={assignment.id}
-                    className="p-5 sm:p-6 rounded-xl border border-[#E5E0D8] bg-[#FBF9F5]/40 space-y-4"
+                    className="p-3 rounded-xl bg-white border border-[#e4dfe9] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                   >
-                    <div className="flex items-center justify-between border-b border-[#E5E0D8]/60 pb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="w-6 h-6 rounded-full bg-[#A37E44] text-white flex items-center justify-center text-xs font-bold">
-                          {slotLabel}
-                        </span>
-                        <h4 className="text-sm font-bold text-[#0B1528]">
-                          Substitute Beneficiary {slotLabel} {index === 0 ? "(Mandatory)" : "(Optional)"}
-                        </h4>
-                      </div>
-
-                      {index > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveSubstitute(assignment.id)}
-                          className="text-xs text-red-600 hover:text-red-700 flex items-center gap-1"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          <span>Remove</span>
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Fallback notice exclusively under A */}
-                    {index === 0 && (
-                      <div className="p-3 rounded-xl bg-[#FAF7F2] border-l-4 border-[#A37E44] text-xs text-gray-700 leading-relaxed flex items-start gap-2.5">
-                        <Info className="w-4 h-4 text-[#A37E44] shrink-0 mt-0.5" />
-                        <span>
-                          <strong>A's children fallback clause:</strong> If this substitute distribution applies and A does not survive you or fails to take a vested interest, A's share passes to A's surviving children equally.
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Existing Person Selector */}
-                    {validExistingPersons.length > 0 && (
-                      <div className="flex items-center justify-between p-2.5 rounded-lg bg-white border border-[#E5E0D8] text-xs">
-                        <div className="flex items-center gap-1.5 text-gray-600 font-medium">
-                          <UserCheck className="w-3.5 h-3.5 text-[#A37E44]" />
-                          <span>Select an existing person:</span>
-                        </div>
-                        <select
-                          value={personId || ""}
-                          onChange={(e) => handleSelectExistingSubstitute(assignment.id, e.target.value)}
-                          className="px-2 py-1 rounded border border-[#E5E0D8] bg-white text-xs text-[#0B1528] font-medium max-w-[240px]"
-                        >
-                          <option value="">Choose a person</option>
-                          {validExistingPersons
-                            .filter(
-                              (p) =>
-                                p.id !== testatorId &&
-                                !primaryAssignments.some((pri) => pri.personId === p.id)
-                            )
-                            .map((p) => (
-                              <option key={p.id} value={p.id}>
-                                {p.fullName} ({p.relationship || p.nationality || "Person"})
-                              </option>
-                            ))}
-                        </select>
-                      </div>
-                    )}
-
-                    {/* Form Fields */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <div className="sm:col-span-2">
-                        <label className="block text-[11px] font-semibold text-gray-700 uppercase tracking-wider mb-1">
-                          Full Legal Name (English) *
-                        </label>
+                    <div className="flex items-start gap-3 min-w-0">
+                      <span className="w-7 h-7 rounded-full border-2 border-[#382852] text-[#231a30] font-serif font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                        {letter}
+                      </span>
+                      <div className="min-w-0">
                         <input
                           type="text"
                           defaultValue={person?.fullName || ""}
-                          key={`sub-name-${person?.fullName}`}
-                          onBlur={(e) =>
-                            handleBeneficiaryNameBlur(
-                              personId,
-                              e.target.value,
-                              person?.arabicName
-                            )
-                          }
-                          placeholder={`e.g. David Alan Whitfield`}
-                          className="w-full px-3 py-2 rounded-lg border border-[#E5E0D8] bg-white text-xs text-[#0B1528] font-medium focus:outline-none focus:border-[#A37E44]"
+                          placeholder={`Substitute Beneficiary ${letter}`}
+                          onBlur={(e) => handleNameBlur(person?.id || "", e.target.value, person?.arabicName)}
+                          className="font-semibold text-sm text-[#231a30] bg-transparent border-0 border-b border-transparent hover:border-[#cfc6da] focus:border-[#5b3fb0] focus:outline-none px-0 py-0.5 w-full truncate"
                         />
+                        <span className="text-[11px] text-[#6c6478] block">
+                          {index === 0
+                            ? `If ${person?.fullName ? person.fullName.split(" ")[0] : "A"} dies before you, this share passes to their children in equal shares.`
+                            : `If ${person?.fullName ? person.fullName.split(" ")[0] : "B"} dies before you, this share passes to ${aName.split(" ")[0]}, pro rata.`}
+                        </span>
                       </div>
+                    </div>
 
-                      <div>
-                        <label className="block text-[11px] font-semibold text-gray-700 uppercase tracking-wider mb-1">
-                          Share Percentage (%) *
-                        </label>
-                        <ShareInput
-                          value={assignment.sharePercentage}
-                          onChange={(val) => handleUpdateSubstituteShare(assignment.id, val)}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[11px] font-semibold text-gray-700 uppercase tracking-wider mb-1">
-                          Arabic Script Name
-                        </label>
+                    <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                      <div className="flex items-center gap-1">
                         <input
-                          type="text"
-                          dir="rtl"
-                          defaultValue={person?.arabicName || ""}
-                          key={`sub-arabic-${person?.arabicName}`}
-                          onBlur={(e) =>
-                            handleUpdatePersonDetails(personId, { arabicName: e.target.value })
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={assignment.sharePercentage ?? ""}
+                          onChange={(e) =>
+                            handleShareChange(assignment.id, "BENEFICIARY_SUBSTITUTE", assignment.appointmentOrder, e.target.value)
                           }
-                          placeholder="ديفيد ألان ويتفيلد"
-                          className="w-full px-3 py-2 rounded-lg border border-[#E5E0D8] bg-white text-xs font-arabic text-right text-[#0B1528] focus:outline-none focus:border-[#A37E44]"
+                          className="w-16 px-2 py-1.5 rounded-lg border border-[#cfc6da] text-xs font-mono font-bold text-right text-[#231a30] focus:outline-none focus:border-[#5b3fb0]"
                         />
+                        <span className="text-xs font-bold text-[#6c6478]">%</span>
                       </div>
 
-                      <div>
-                        <label className="block text-[11px] font-semibold text-gray-700 uppercase tracking-wider mb-1">
-                          Passport Number
-                        </label>
-                        <input
-                          type="text"
-                          defaultValue={person?.passportNumber || ""}
-                          onBlur={(e) =>
-                            handleUpdatePersonDetails(personId, { passportNumber: e.target.value })
-                          }
-                          placeholder="e.g. GB12345678"
-                          className="w-full px-3 py-2 rounded-lg border border-[#E5E0D8] bg-white text-xs font-mono font-medium text-[#0B1528] focus:outline-none focus:border-[#A37E44]"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[11px] font-semibold text-gray-700 uppercase tracking-wider mb-1">
-                          Relationship
-                        </label>
-                        <input
-                          type="text"
-                          defaultValue={person?.relationship || ""}
-                          onBlur={(e) =>
-                            handleUpdatePersonDetails(personId, { relationship: e.target.value })
-                          }
-                          placeholder="e.g. Brother, Sister, Friend"
-                          className="w-full px-3 py-2 rounded-lg border border-[#E5E0D8] bg-white text-xs text-[#0B1528] focus:outline-none focus:border-[#A37E44]"
-                        />
-                      </div>
+                      {substituteAssignments.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeRoleAssignment(assignment.id)}
+                          className="w-8 h-8 rounded-lg border border-[#cfc6da] hover:border-[#b42318] text-[#6c6478] hover:text-[#b42318] flex items-center justify-center transition-colors cursor-pointer"
+                          aria-label="Remove substitute"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
               })}
+            </div>
 
-              {/* Add Substitute B button (Cap at 2) */}
-              {substituteAssignments.length < 2 && (
+            {/* Substitute Live Allocation Bar */}
+            {substituteAssignments.length > 0 && (
+              <div className="space-y-1.5 pt-1">
+                <div className="h-7 w-full bg-[#f7f5fb] border border-[#cfc6da] rounded-lg overflow-hidden flex">
+                  {substituteAssignments.map((assignment, index) => {
+                    const person = assignment.person || existingPersons.find((p) => p.id === assignment.personId);
+                    const pct = Number(assignment.sharePercentage) || 0;
+                    if (pct <= 0) return null;
+                    const base = Math.max(substituteTotal, 100);
+                    const widthPct = (pct / base) * 100;
+
+                    return (
+                      <div
+                        key={assignment.id}
+                        style={{
+                          width: `${widthPct}%`,
+                          backgroundColor: SUB_COLORS[index % SUB_COLORS.length],
+                        }}
+                        className="h-full flex items-center justify-center text-white text-[11px] font-bold px-1 truncate transition-all duration-300"
+                        title={`${SUB_LETTERS[index]}: ${person?.fullName || "Substitute"}: ${pct}%`}
+                      >
+                        {pct >= 10 && `${SUB_LETTERS[index]}: ${person?.fullName ? person.fullName.split(" ")[0] : ""} ${pct}%`}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div>{getSubStatusMessage()}</div>
+              </div>
+            )}
+
+            {/* Add Substitute Picker */}
+            {substituteAssignments.length < 2 && (
+              <div className="pt-2 flex flex-col sm:flex-row sm:items-center gap-2">
+                <select
+                  defaultValue=""
+                  onChange={(e) => {
+                    if (e.target.value) handleAddSubstitute(e.target.value);
+                  }}
+                  className="flex-1 px-3 py-2 rounded-lg border border-[#cfc6da] text-xs font-medium text-[#231a30] bg-white focus:outline-none focus:border-[#5b3fb0]"
+                >
+                  <option value="" disabled>
+                    Choose someone already in your Will
+                  </option>
+                  {existingPersons
+                    .filter(
+                      (p) =>
+                        p.id !== testatorId &&
+                        !primaryAssignments.some((a) => a.personId === p.id) &&
+                        !substituteAssignments.some((a) => a.personId === p.id)
+                    )
+                    .map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.fullName || "Unnamed"} ({p.relationship || "Person"})
+                      </option>
+                    ))}
+                </select>
+
                 <button
                   type="button"
-                  onClick={handleAddSubstitute}
-                  className="w-full py-3.5 border-2 border-dashed border-[#A37E44]/40 hover:border-[#A37E44] bg-[#FBF9F5] hover:bg-[#A37E44]/5 text-[#A37E44] rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2"
+                  onClick={() => handleAddSubstitute()}
+                  className="px-3.5 py-2 bg-[#382852] hover:bg-[#281b40] text-white text-xs font-semibold rounded-lg shadow-sm flex items-center justify-center gap-1.5 transition-all shrink-0 cursor-pointer"
                 >
-                  <Plus className="w-4 h-4" />
-                  <span>
-                    {substituteAssignments.length === 0
-                      ? "+ Add substitute beneficiary A (100%)"
-                      : "+ Add substitute beneficiary B (1/2)"}
-                  </span>
+                  <Plus className="w-3.5 h-3.5" />
+                  {substituteAssignments.length === 0 ? "Choose substitute A" : "Add substitute B"}
                 </button>
+              </div>
+            )}
+          </section>
+
+          {/* CARD 3: Rules applied */}
+          <section className="bg-[#efeaf7] p-5 rounded-2xl border border-transparent space-y-2">
+            <h2 className="text-sm font-serif font-bold text-[#231a30]">
+              Rules the template applies for you
+            </h2>
+            <ul className="text-xs text-[#3b3346] space-y-1.5 list-disc pl-5 leading-relaxed">
+              <li>A share due to someone under 21 stays in trust until they turn 21.</li>
+              <li>Your executors can use the income or capital of that share for the beneficiary&apos;s maintenance, education or benefit.</li>
+              <li>Any share that cannot pass under the clauses above goes to the other beneficiaries, in proportion to their shares.</li>
+            </ul>
+          </section>
+        </div>
+
+        {/* Right Column: Estate Flow Aside */}
+        <aside className="lg:col-span-1 bg-[#FFFEFA] p-5 sm:p-6 rounded-2xl border border-[#e4dfe9] shadow-sm space-y-4">
+          <div>
+            <h2 className="text-base font-serif font-bold text-[#231a30]">
+              How your estate passes
+            </h2>
+          </div>
+
+          <div className="space-y-3">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#6c6478] block">
+              First
+            </span>
+
+            <div className="grid grid-cols-2 gap-2">
+              {primaryAssignments.map((assignment, index) => {
+                const p = assignment.person || existingPersons.find((ep) => ep.id === assignment.personId);
+                return (
+                  <div
+                    key={assignment.id}
+                    className="border-l-4 rounded-lg p-2 bg-[#f7f5fb] border-[#cfc6da]"
+                    style={{ borderLeftColor: PRIMARY_COLORS[index % PRIMARY_COLORS.length] }}
+                  >
+                    <b className="text-xs text-[#231a30] block truncate">
+                      {p?.fullName ? p.fullName.split(" ")[0] : `Primary ${index + 1}`}
+                    </b>
+                    <span className="text-xs text-[#6c6478] font-mono">
+                      {assignment.sharePercentage || 0}%
+                    </span>
+                  </div>
+                );
+              })}
+              {primaryAssignments.length === 0 && (
+                <div className="col-span-2 text-xs text-[#6c6478] italic">
+                  No primary beneficiary yet
+                </div>
               )}
             </div>
-          </div>
 
-          {/* Action buttons */}
-          <div className="flex items-center justify-between pt-2">
-            <button
-              type="button"
-              onClick={() => setSubPage(0)}
-              className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-semibold rounded-xl transition-all flex items-center gap-1.5"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back to primaries</span>
-            </button>
+            <p className="text-[11px] text-[#6c6478] text-center pt-1 italic">
+              {primaryAssignments.length > 1
+                ? "If one dies first, the others share their part pro rata"
+                : "Receives the whole residue"}
+            </p>
 
-            <button
-              type="button"
-              onClick={() => setSubPage(2)}
-              disabled={!isSubstituteValid}
-              className="px-6 py-2.5 bg-[#0B1528] hover:bg-[#101c30] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-xl transition-all flex items-center gap-2 shadow-sm"
-            >
-              <span>Review beneficiaries</span>
-              <ArrowRight className="w-4 h-4 text-[#A37E44]" />
-            </button>
-          </div>
-        </div>
-      )}
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#6c6478] block pt-3 border-t border-[#f0ebf5]">
+              Only if none of them survives you
+            </span>
 
-      {/* =========================================================================
-          SUB-PAGE 2: REVIEW BENEFICIARIES (MATCHING PROTOTYPE)
-      ========================================================================== */}
-      {subPage === 2 && (
-        <div className="space-y-6">
-          <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E0D8] shadow-sm space-y-6">
-            <div className="border-b border-[#E5E0D8] pb-4">
-              <span className="text-[10px] font-mono uppercase font-bold text-[#A37E44] tracking-wider">
-                Step 3 of 3 · Final Allocation Verification
-              </span>
-              <h3 className="text-lg font-serif font-bold text-[#0B1528] mt-0.5">
-                Review your beneficiaries
-              </h3>
-              <p className="text-xs text-gray-500 mt-0.5">
-                These are two alternative distributions, not a combined allocation.
-              </p>
+            <div className="grid grid-cols-2 gap-2">
+              {substituteAssignments.map((assignment, index) => {
+                const p = assignment.person || existingPersons.find((ep) => ep.id === assignment.personId);
+                return (
+                  <div
+                    key={assignment.id}
+                    className="border-l-4 rounded-lg p-2 bg-[#f7f5fb] border-[#cfc6da]"
+                    style={{ borderLeftColor: SUB_COLORS[index % SUB_COLORS.length] }}
+                  >
+                    <b className="text-xs text-[#231a30] block truncate">
+                      {SUB_LETTERS[index]}: {p?.fullName ? p.fullName.split(" ")[0] : `Sub ${SUB_LETTERS[index]}`}
+                    </b>
+                    <span className="text-xs text-[#6c6478] font-mono">
+                      {assignment.sharePercentage || 0}%
+                    </span>
+                  </div>
+                );
+              })}
+              {substituteAssignments.length === 0 && (
+                <div className="col-span-2 text-xs text-[#6c6478] italic">
+                  No substitute yet
+                </div>
+              )}
             </div>
 
-            {/* Table 1: Primary Beneficiaries */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold text-[#0B1528] uppercase tracking-wider flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#0B1528]"></span>
-                  Primary Beneficiaries
-                </h4>
-                <button
-                  type="button"
-                  onClick={() => setSubPage(0)}
-                  className="text-xs text-[#A37E44] hover:underline font-semibold flex items-center gap-1"
-                >
-                  <Edit2 className="w-3.5 h-3.5" />
-                  Edit primaries
-                </button>
-              </div>
-
-              <div className="border border-[#E5E0D8] rounded-xl overflow-hidden">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-[#FBF9F5] text-gray-500 font-mono uppercase text-[10px] border-b border-[#E5E0D8]">
-                    <tr>
-                      <th className="px-4 py-2.5 font-bold">Person</th>
-                      <th className="px-4 py-2.5 font-bold text-right">Share (%)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#E5E0D8]">
-                    {primaryAssignments.map((ra) => {
-                      const person =
-                        existingPersons.find((p) => p.id === ra.personId) || ra.person;
-                      return (
-                        <tr key={ra.id} className="hover:bg-gray-50/50">
-                          <td className="px-4 py-3 font-medium text-gray-900">
-                            {person?.fullName || "Not selected"}
-                          </td>
-                          <td className="px-4 py-3 text-right font-bold text-[#0B1528]">
-                            {ra.sharePercentage}%
-                          </td>
-                        </tr>
-                      );
-                    })}
-                    <tr className="bg-[#FAF7F2]/60 font-bold">
-                      <td className="px-4 py-2.5 text-gray-700">Total Primary Allocation</td>
-                      <td className="px-4 py-2.5 text-right text-[#A37E44]">
-                        {primaryTotal}%
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="p-3 rounded-xl bg-[#FBF9F5] text-xs text-gray-600 leading-relaxed border border-[#E5E0D8]/60">
-                If some primary beneficiaries do not survive you, the surviving primaries share proportionally. A sole surviving primary receives 100%.
-              </div>
-            </div>
-
-            {/* Table 2: Substitute Beneficiaries */}
-            <div className="space-y-3 pt-2">
-              <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold text-[#0B1528] uppercase tracking-wider flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#A37E44]"></span>
-                  Shared Substitute Group
-                </h4>
-                <button
-                  type="button"
-                  onClick={() => setSubPage(1)}
-                  className="text-xs text-[#A37E44] hover:underline font-semibold flex items-center gap-1"
-                >
-                  <Edit2 className="w-3.5 h-3.5" />
-                  Edit substitutes
-                </button>
-              </div>
-
-              <div className="border border-[#E5E0D8] rounded-xl overflow-hidden">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-[#FBF9F5] text-gray-500 font-mono uppercase text-[10px] border-b border-[#E5E0D8]">
-                    <tr>
-                      <th className="px-4 py-2.5 font-bold">Person</th>
-                      <th className="px-4 py-2.5 font-bold text-right">Share (%)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#E5E0D8]">
-                    {substituteAssignments.map((ra, idx) => {
-                      const person =
-                        existingPersons.find((p) => p.id === ra.personId) || ra.person;
-                      return (
-                        <tr key={ra.id} className="hover:bg-gray-50/50">
-                          <td className="px-4 py-3 font-medium text-gray-900">
-                            <span className="font-bold text-[#A37E44] mr-1.5">
-                              {idx === 0 ? "A ·" : "B ·"}
-                            </span>
-                            {person?.fullName || "Not selected"}
-                          </td>
-                          <td className="px-4 py-3 text-right font-bold text-[#0B1528]">
-                            {ra.sharePercentage}%
-                          </td>
-                        </tr>
-                      );
-                    })}
-                    <tr className="bg-[#FAF7F2]/60 font-bold">
-                      <td className="px-4 py-2.5 text-gray-700">Total Substitute Allocation</td>
-                      <td className="px-4 py-2.5 text-right text-[#A37E44]">
-                        {substituteTotal}%
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="p-3 rounded-xl bg-[#FBF9F5] text-xs text-gray-600 leading-relaxed border border-[#E5E0D8]/60">
-                This substitute group applies only if none of your primary beneficiaries survives you. A's surviving-children clause remains attached to A.
-              </div>
-            </div>
-
-            {/* Validation errors */}
-            {(!isPrimaryValid || !isSubstituteValid) && (
-              <p className="text-xs text-red-600 font-semibold">
-                Please complete both allocations (each strictly 100%) before proceeding to the draft review.
-              </p>
-            )}
+            <p className="text-[11px] text-[#6c6478] text-center pt-1 italic">
+              If A has died: A&apos;s children, in equal shares
+            </p>
           </div>
 
-          {/* Action buttons */}
-          <div className="flex items-center justify-between pt-2">
-            <button
-              type="button"
-              onClick={() => setSubPage(1)}
-              className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-semibold rounded-xl transition-all flex items-center gap-1.5"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back to substitutes</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleFinalSaveAndContinue}
-              disabled={!isPrimaryValid || !isSubstituteValid}
-              className="px-6 py-2.5 bg-[#0B1528] hover:bg-[#101c30] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-xl transition-all flex items-center gap-2 shadow-sm"
-            >
-              <span>Save and continue to draft review</span>
-              <ArrowRight className="w-4 h-4 text-[#A37E44]" />
-            </button>
+          <div className="pt-3 border-t border-[#f0ebf5]">
+            <Link href="/sample" className="text-xs text-[#5b3fb0] font-semibold underline">
+              See this on the sample Will
+            </Link>
           </div>
-        </div>
-      )}
+        </aside>
+      </div>
     </div>
   );
 }

@@ -43,6 +43,15 @@ const OWA_SECTIONS: OwaSectionId[] = [
   "review",
 ];
 
+const SECTION_NAMES: Record<OwaSectionId, string> = {
+  details: "Section A: Details",
+  children: "Section B: Children",
+  executors: "Section C: Executors",
+  guardians: "Section D: Guardians",
+  beneficiaries: "Section E: Beneficiaries",
+  review: "Section F: Review and approve",
+};
+
 function WizardStepContent() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -143,36 +152,44 @@ function WizardStepContent() {
 
         {/* Wizard Bottom Controls (Only on sections A through E) */}
         {rawStep !== "review" && (
-          <footer className="sticky bottom-0 bg-white/95 backdrop-blur-md border-t border-[#E5E0D8] py-4 px-4 sm:px-8 shadow-lg z-20">
-            <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <footer className="sticky bottom-0 bg-white/95 backdrop-blur-md border-t border-[#e4dfe9] py-3.5 px-4 sm:px-8 shadow-sm z-20">
+            <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
               <div>
                 {prevSection ? (
                   <button
                     type="button"
                     onClick={() => handleNavigate(prevSection)}
-                    className="px-4 py-2 text-xs font-semibold text-gray-700 hover:text-[#0B1528] rounded-lg border border-[#E5E0D8] hover:bg-gray-50 flex items-center gap-1.5 transition-all"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 text-[14px] font-semibold text-[#231a30] bg-white border border-[#cfc6da] hover:border-[#382852] rounded-full transition-colors"
                   >
-                    <ArrowLeft className="w-3.5 h-3.5" />
-                    Previous Section
+                    <ArrowLeft className="w-4 h-4 text-[#6c6478]" />
+                    <span>Back to {SECTION_NAMES[prevSection]}</span>
                   </button>
                 ) : (
-                  <div />
+                  <button
+                    type="button"
+                    onClick={() => router.push("/dashboard")}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 text-[14px] font-semibold text-[#231a30] bg-white border border-[#cfc6da] hover:border-[#382852] rounded-full transition-colors"
+                  >
+                    <ArrowLeft className="w-4 h-4 text-[#6c6478]" />
+                    <span>Back to Dashboard</span>
+                  </button>
                 )}
               </div>
 
-              <div className="flex items-center gap-3">
-                <span className="text-[11px] text-gray-400 hidden sm:inline-block">
-                  Auto-saved to Abu Dhabi Civil Registry schema
+              <div className="flex items-center gap-4">
+                <span className="text-[12px] font-medium text-[#2f7a55] hidden sm:inline-flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Saved as you type
                 </span>
 
                 {nextSection && (
                   <button
                     type="button"
                     onClick={() => handleNavigate(nextSection)}
-                    className="px-6 py-2.5 bg-[#0B1528] hover:bg-[#1a2844] text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-2 transition-all"
+                    className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#c73a30] hover:bg-[#ad3128] text-white text-[14px] font-semibold rounded-full shadow-sm transition-colors"
                   >
-                    <span>Save & Continue</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <span>Save and continue to {SECTION_NAMES[nextSection]}</span>
+                    <ArrowRight className="w-4 h-4 text-white" />
                   </button>
                 )}
               </div>

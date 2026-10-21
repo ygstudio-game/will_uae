@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { CheckCircle2, Shield, User, Users, FileText, HeartHandshake, Eye, AlertCircle } from "lucide-react";
+import { Check, Shield, User, Users, FileText, HeartHandshake, Eye, AlertCircle, ArrowLeft } from "lucide-react";
 import { OwaSectionId, OWA_SECTIONS } from "@/types/owa";
 import { useOwaStore } from "@/store/useOwaStore";
 
@@ -15,6 +15,15 @@ interface OwaNavigationProps {
   canContinue?: boolean;
   saveError?: string | null;
 }
+
+const STEP_DEFINITIONS: { id: OwaSectionId; code: string; title: string }[] = [
+  { id: "details", code: "A", title: "Your details" },
+  { id: "children", code: "B", title: "Children" },
+  { id: "executors", code: "C", title: "Executors" },
+  { id: "guardians", code: "D", title: "Guardians" },
+  { id: "beneficiaries", code: "E", title: "Beneficiaries" },
+  { id: "review", code: "F", title: "Review and approve" },
+];
 
 export function OwaNavigation({
   currentSection: propSection,
@@ -29,6 +38,7 @@ export function OwaNavigation({
     currentSection: storeSection,
     application,
     activeWillIndex,
+    setActiveWillIndex,
     isSaving: storeSaving,
     isSectionComplete,
   } = useOwaStore();
@@ -36,82 +46,117 @@ export function OwaNavigation({
   const currentSection = propSection || storeSection;
   const isSaving = propSaving ?? storeSaving;
   const isCouples = application?.packageType === "COUPLES";
-  const activeWill = application?.wills?.find((w) => w.willIndex === activeWillIndex);
+  const activeWill = application?.wills?.find((w) => w.willIndex === activeWillIndex) || application?.wills?.[0];
+  const partnerWill = application?.wills?.find((w) => w.willIndex !== activeWillIndex);
 
-  const getSectionIcon = (id: OwaSectionId) => {
-    switch (id) {
-      case "details":
-        return <User className="w-3.5 h-3.5" />;
-      case "children":
-        return <Users className="w-3.5 h-3.5" />;
-      case "executors":
-        return <Shield className="w-3.5 h-3.5" />;
-      case "guardians":
-        return <HeartHandshake className="w-3.5 h-3.5" />;
-      case "beneficiaries":
-        return <FileText className="w-3.5 h-3.5" />;
-      case "review":
-        return <Eye className="w-3.5 h-3.5" />;
-      default:
-        return <CheckCircle2 className="w-3.5 h-3.5" />;
-    }
-  };
+  const testatorName = activeWill?.testatorPerson?.fullName?.split(" ")[0] || "You";
+  const partnerName = partnerWill?.testatorPerson?.fullName?.split(" ")[0] || "Partner";
+
+  const queryStr = application?.id ? `?applicationId=${application.id}` : "";
 
   return (
-    <div className="bg-white border-b border-[#E5E0D8] sticky top-0 z-30 shadow-2xs">
-      <div className="max-w-6xl mx-auto px-4 sm:px-8 py-3">
-        {/* Top Header: Will index & Package badge */}
-        <div className="flex items-center justify-between text-xs pb-3 border-b border-[#E5E0D8]/60">
-          <div className="flex items-center gap-2">
-            <span className="font-serif font-bold text-sm text-[#0B1528]">
-              Abu Dhabi Civil Court Non-Muslim Will
-            </span>
-            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[#A37E44]/10 text-[#A37E44]">
-              {application?.packageType || "INDIVIDUAL"}
-            </span>
-          </div>
-
+    <div className="bg-[#FFFEFA] border-b border-[#E4DFEE] sticky top-0 z-30 shadow-2xs">
+      <div className="max-w-6xl mx-auto px-4 sm:px-8 py-3 space-y-3">
+        {/* Top Info Row */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs border-b border-[#E4DFEE]/70 pb-2.5">
+          {/* Will Label & Package Badge */}
           <div className="flex items-center gap-3">
-            {isCouples && (
-              <span className="text-[11px] font-semibold text-gray-600 bg-gray-100 px-2.5 py-0.5 rounded-full">
-                Active: Will #{activeWillIndex} ({activeWill?.testatorPerson?.fullName || "Partner"})
-              </span>
-            )}
-            <span className="text-[11px] text-gray-400 font-mono hidden sm:inline-block">
-              {isSaving ? "Saving changes..." : "Auto-saved"}
+            <Link
+              href="/dashboard"
+              className="text-gray-500 hover:text-[#6243AD] flex items-center gap-1 font-semibold text-[11px]"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Dashboard</span>
+            </Link>
+
+            <span className="text-gray-300">|</span>
+
+            <span className="font-serif font-bold text-sm text-[#29213F]">
+              {isCouples
+                ? `Will ${activeWillIndex + 1} of 2: ${testatorName}`
+                : "Your Will: " + testatorName}
             </span>
+
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#F0EBF9] text-[#6243AD] border border-[#DFD2EF]">
+              {isCouples ? "Mirror Wills" : "Single Will"}
+            </span>
+          </div>
+
+          {/* Couples Switcher & Auto-Save Indicator */}
+          <div className="flex items-center gap-4">
+            {isCouples && (
+              <div className="flex items-center bg-[#F7F4FC] border border-[#E4DFEE] p-0.5 rounded-lg text-xs font-semibold">
+                <button
+                  type="button"
+                  onClick={() => setActiveWillIndex(0)}
+                  className={`px-2.5 py-1 rounded-md transition-all ${
+                    activeWillIndex === 0
+                      ? "bg-[#29213F] text-white shadow-2xs"
+                      : "text-gray-600 hover:text-[#29213F]"
+                  }`}
+                >
+                  Will 1: {application?.wills?.[0]?.testatorPerson?.fullName?.split(" ")[0] || "Partner 1"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveWillIndex(1)}
+                  className={`px-2.5 py-1 rounded-md transition-all ${
+                    activeWillIndex === 1
+                      ? "bg-[#29213F] text-white shadow-2xs"
+                      : "text-gray-600 hover:text-[#29213F]"
+                  }`}
+                >
+                  Will 2: {partnerName}
+                </button>
+              </div>
+            )}
+
+            <div className="flex items-center gap-1 text-[11px] text-[#366D58] font-semibold">
+              <Check className="w-3.5 h-3.5" />
+              <span>{isSaving ? "Saving changes..." : "Saved as you type"}</span>
+            </div>
           </div>
         </div>
 
-        {/* 6-Section Stepper Pills */}
-        <div className="pt-3 overflow-x-auto scrollbar-none flex items-center gap-2 sm:gap-3">
-          {OWA_SECTIONS.map((sec, idx) => {
-            const isCurrent = sec.id === currentSection;
-            const isCompleted = isSectionComplete(sec.id);
-            const queryStr = application?.id ? `?applicationId=${application.id}` : "";
+        {/* 6 Step Pills Nav */}
+        <nav aria-label="Will sections">
+          <ol className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-1">
+            {STEP_DEFINITIONS.map((s) => {
+              const isCur = s.id === currentSection;
+              const isDone = isSectionComplete(s.id);
 
-            return (
-              <Link
-                key={sec.id}
-                href={`/wizard/${sec.id}${queryStr}`}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border ${
-                  isCurrent
-                    ? "bg-[#0B1528] text-white border-[#0B1528] shadow-sm"
-                    : isCompleted
-                    ? "bg-[#FAF7F2] text-gray-800 border-[#E5E0D8] hover:border-gray-400"
-                    : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
-                }`}
-              >
-                <span className="opacity-70 font-mono text-[10px]">0{idx + 1}.</span>
-                {getSectionIcon(sec.id)}
-                <span>{sec.label}</span>
-                {isCompleted && !isCurrent && (
-                  <CheckCircle2 className="w-3 h-3 text-emerald-600 ml-0.5" />
-                )}
-              </Link>
-            );
-          })}
-        </div>
+              return (
+                <li key={s.id} className="shrink-0">
+                  <Link
+                    href={`/wizard/${s.id}${queryStr}`}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border ${
+                      isCur
+                        ? "bg-[#29213F] text-white border-[#29213F] shadow-2xs font-bold"
+                        : isDone
+                        ? "bg-[#FFFEFA] text-gray-800 border-[#E4DFEE] hover:border-[#6243AD]"
+                        : "bg-white text-gray-400 border-dashed border-[#DCD4E7] hover:text-gray-600"
+                    }`}
+                  >
+                    {isDone && !isCur ? (
+                      <span className="w-4 h-4 rounded-full bg-[#E7F0EB] text-[#366D58] flex items-center justify-center text-[10px]">
+                        ✓
+                      </span>
+                    ) : (
+                      <span
+                        className={`text-[11px] font-bold ${
+                          isCur ? "text-[#D7B48B]" : "text-gray-400"
+                        }`}
+                      >
+                        {s.code}
+                      </span>
+                    )}
+                    <span>{s.title}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ol>
+        </nav>
       </div>
     </div>
   );

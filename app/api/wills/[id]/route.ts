@@ -76,6 +76,10 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         emailAddress: testator?.email,
         contactNumber: testator?.phone,
         domicileCountry: will.domicileCountry,
+        signatureDataUrl:
+          testator?.documents?.find((d) => d.fileName?.includes("signature"))?.fileUrl ||
+          (testator?.documents?.[0]?.extractedData as any)?.signatureDataUrl ||
+          null,
         parties,
         children,
       },

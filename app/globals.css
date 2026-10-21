@@ -111,3 +111,51 @@ p {
   text-align: right;
   font-family: var(--font-amiri);
 }
+
+/* Post-Payment Radial Ornament from OWA_PostPayment_User_Test.html */
+.hero-ornament {
+  position: absolute;
+  right: 24px;
+  top: 15px;
+  width: 120px;
+  height: 120px;
+  border: 1px solid rgba(197, 168, 128, 0.45);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.hero-ornament::after {
+  content: '';
+  position: absolute;
+  inset: 16px;
+  border: 1px solid rgba(197, 168, 128, 0.35);
+  border-radius: 50%;
+}
+
+/* Allocation Bar Transitions */
+.allocation-bar {
+  display: flex;
+  height: 28px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #E4DFEE;
+  background: #F7F5FB;
+}
+.allocation-bar > div {
+  display: grid;
+  place-items: center;
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: flex-basis 0.25s ease;
+}
+
+/* Hide scrollbar utility */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

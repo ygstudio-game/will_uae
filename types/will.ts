@@ -72,6 +72,7 @@ export interface TestatorDetails {
   domicileCountry: string;
   hasChildren?: boolean;
   hasTitledAssets?: boolean;
+  signatureDataUrl?: string | null;
 }
 
 export interface StatutoryConfirmations {
