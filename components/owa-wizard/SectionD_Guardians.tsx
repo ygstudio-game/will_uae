@@ -21,7 +21,7 @@ const GUARDIAN_SLOTS: GuardianSlotDef[] = [
     role: "GUARDIAN_PERMANENT",
     order: 1,
     label: "Permanent guardian",
-    tag: "Required",
+    tag: "Recommended",
     color: "#5b3fb0",
     desc: "Raises your children while they are under the age of full capacity.",
   },
@@ -336,7 +336,7 @@ export function SectionD_Guardians() {
               >
                 <div className="space-y-1">
                   <span className="text-[11px] font-bold uppercase tracking-[1.2px] text-[#C73A30] block">
-                    {slot.label.toUpperCase()}
+                    {slot.label.toUpperCase()} · {slot.tag.toUpperCase()}
                   </span>
                   <h2 className="text-xl sm:text-[22px] font-serif font-bold text-[#0B1528] leading-tight tracking-tight">
                     {guardianPerson.fullName || "Named Guardian"}
@@ -452,6 +452,7 @@ export function SectionD_Guardians() {
         personToEdit={modalPersonToEdit}
         defaultRelationship={modalDefaultRelationship}
         title={modalTitle}
+        allowCharity={false}
         onSave={(saved) => {
           if (modalAssignSlot) {
             assignPersonToRole(saved.id, modalAssignSlot.role, modalAssignSlot.order);

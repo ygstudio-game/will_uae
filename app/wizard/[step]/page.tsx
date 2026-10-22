@@ -252,6 +252,13 @@ function WizardStepContent() {
           fieldId: "field-domicileCountry",
         };
       }
+      if (p?.isUaeResident && !p?.emiratesId?.trim()) {
+        return {
+          isValid: false,
+          reason: "Please enter your Emirates ID number (required for UAE residents).",
+          fieldId: "field-emiratesId",
+        };
+      }
       if (!p?.phone?.trim()) {
         return {
           isValid: false,

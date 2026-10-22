@@ -1068,6 +1068,7 @@ export function SectionE_Beneficiaries() {
         personToEdit={personToEdit}
         defaultRelationship={defaultRelationship}
         title={modalTitle}
+        allowCharity={true}
         onSave={handleModalSave}
       />
     </div>

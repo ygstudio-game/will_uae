@@ -410,6 +410,7 @@ export function SectionC_Executors() {
             ? `Add person for ${modalAssignSlot.label}`
             : "Add a person"
         }
+        allowCharity={false}
         onSave={(savedPerson) => {
           if (modalAssignSlot) {
             assignPersonToRole(savedPerson.id, modalAssignSlot.role, modalAssignSlot.order);

@@ -131,23 +131,7 @@ export function SectionF_ReviewDraft() {
   });
 
   const peopleList = Array.from(peopleMap.values());
-  const approvedPeople = peopleList.filter((item) => Boolean(item.person.arabicName && item.person.isArabicApproved));
-  const areAllArabicApproved = peopleList.length > 0 && approvedPeople.length === peopleList.length;
-
-  const allReady = isSectionAOk && isSectionBOk && isSectionCOk && isSectionDOk && isSectionEOk && areAllArabicApproved && agreed;
-
-  const handleApprovePersonArabic = async (personId: string) => {
-    await addOrUpdatePerson({ id: personId, isArabicApproved: true });
-    setEditingArabicId(null);
-  };
-
-  const handleApproveAllArabic = async () => {
-    for (const item of peopleList) {
-      if (item.person.arabicName && !item.person.isArabicApproved) {
-        await addOrUpdatePerson({ id: item.person.id, isArabicApproved: true });
-      }
-    }
-  };
+  const allReady = isSectionAOk && isSectionBOk && isSectionCOk && isSectionDOk && isSectionEOk && agreed;
 
   const handleCopyPartner = async () => {
     setIsCopying(true);
@@ -285,24 +269,20 @@ export function SectionF_ReviewDraft() {
 
           {/* Arabic Names */}
           <div className="bg-[#FFFEFA] p-3.5 rounded-xl border border-[#e4dfe9] flex items-start gap-2.5">
-            {areAllArabicApproved ? (
-              <CheckCircle2 className="w-4 h-4 text-[#2f7a55] shrink-0 mt-0.5" />
-            ) : (
-              <AlertCircle className="w-4 h-4 text-[#b7791f] shrink-0 mt-0.5" />
-            )}
+            <CheckCircle2 className="w-4 h-4 text-[#2f7a55] shrink-0 mt-0.5" />
             <div>
               <a href="#arabic-names" className="text-xs font-bold text-[#231a30] hover:underline">
                 Arabic names
               </a>
               <span className="text-[11px] text-[#6c6478] block">
-                {approvedPeople.length} of {peopleList.length} approved
+                {peopleList.length} transliterated for ADJD
               </span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Arabic Spelling Approval Card */}
+      {/* Arabic Spelling of Names Card - Clean display for review and draft */}
       <section id="arabic-names" className="bg-[#FFFEFA] p-5 sm:p-6 rounded-2xl border border-[#e4dfe9] shadow-sm space-y-4">
         <div className="flex items-center justify-between border-b border-[#f0ebf5] pb-3">
           <div>
@@ -310,28 +290,25 @@ export function SectionF_ReviewDraft() {
               Arabic spelling of every name
             </h2>
             <p className="text-xs text-[#6c6478] mt-0.5">
-              ADJD&apos;s template spells each name in Arabic by sound. Check that each one reads the way the name sounds.
+              ADJD requires each person&apos;s name to appear in both English and phonetic Arabic transliteration.
             </p>
           </div>
-          <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-            areAllArabicApproved ? "bg-[#e8f4ee] text-[#1f5a3d]" : "bg-[#fbf3e4] text-[#7a4f0e]"
-          }`}>
-            {approvedPeople.length} of {peopleList.length} approved
+          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[#FAF7EE] text-[#8A6233] border border-[#e2d5be]">
+            {peopleList.length} names recorded
           </span>
         </div>
 
         <div className="space-y-3">
           {peopleList.map(({ person, roles }) => {
-            const isApproved = Boolean(person.arabicName && person.isArabicApproved);
             const isEditing = editingArabicId === person.id;
 
             return (
               <div
                 key={person.id}
-                className="p-3 rounded-xl bg-white border border-[#e4dfe9] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                className="p-3.5 rounded-xl bg-white border border-[#e4dfe9] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs"
               >
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-[1.2px] text-[#C73A30] block">
+                  <span className="text-[10px] font-bold uppercase tracking-[1.2px] text-[#A37E44] block">
                     {roles.join(" · ").toUpperCase()}
                   </span>
                   <h3 className="text-base font-serif font-bold text-[#0B1528]">
@@ -340,11 +317,7 @@ export function SectionF_ReviewDraft() {
                 </div>
 
                 <div className="flex items-center gap-3 self-end sm:self-auto">
-                  {isApproved && !isEditing ? (
-                    <span className="text-base font-arabic text-[#231a30] font-normal" dir="rtl">
-                      {person.arabicName}
-                    </span>
-                  ) : (
+                  {isEditing ? (
                     <input
                       type="text"
                       dir="rtl"
@@ -352,49 +325,30 @@ export function SectionF_ReviewDraft() {
                       placeholder="الاسم بالعربية"
                       onBlur={async (e) => {
                         await addOrUpdatePerson({ id: person.id, arabicName: e.target.value });
+                        setEditingArabicId(null);
                       }}
-                      className="px-3 py-1.5 rounded-lg border border-[#cfc6da] text-sm font-arabic text-[#8A6233] font-medium bg-white text-right focus:outline-none focus:border-[#5b3fb0] w-48"
+                      autoFocus
+                      className="px-3 py-1.5 rounded-lg border border-[#A37E44] text-sm font-arabic text-[#0B1528] font-medium bg-white text-right focus:outline-none w-48 shadow-sm"
                     />
-                  )}
-
-                  {isApproved && !isEditing ? (
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-[#1f5a3d] flex items-center gap-1">
-                        <Check className="w-3.5 h-3.5" /> Approved
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <span className="text-base font-arabic font-semibold text-[#0B1528] px-3.5 py-1.5 bg-[#FAF7EE] rounded-lg border border-[#e2d5be]" dir="rtl">
+                        {person.arabicName || "—"}
                       </span>
                       <button
                         type="button"
                         onClick={() => setEditingArabicId(person.id)}
-                        className="text-xs text-[#5b3fb0] hover:underline cursor-pointer"
+                        className="text-xs text-[#A37E44] hover:underline cursor-pointer font-medium"
                       >
                         Edit
                       </button>
                     </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => handleApprovePersonArabic(person.id)}
-                      disabled={!person.arabicName}
-                      className="px-3 py-1 rounded-full border border-[#382852] text-[#382852] hover:bg-[#382852] hover:text-white text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-                    >
-                      Approve
-                    </button>
                   )}
                 </div>
               </div>
             );
           })}
         </div>
-
-        {!areAllArabicApproved && (
-          <button
-            type="button"
-            onClick={handleApproveAllArabic}
-            className="px-4 py-2 rounded-full border border-[#382852] text-[#382852] hover:bg-[#382852] hover:text-white text-xs font-semibold transition-all cursor-pointer"
-          >
-            Approve all names that have an Arabic spelling
-          </button>
-        )}
       </section>
 
       {/* Official Court Bilingual Will Preview Card */}
@@ -446,22 +400,26 @@ export function SectionF_ReviewDraft() {
       )}
 
       {/* Final Approval Confirmation Card */}
-      <section className="bg-[#FFFEFA] p-6 sm:p-7 rounded-2xl border-2 border-[#382852] shadow-sm space-y-4">
-        <h2 className="text-base font-serif font-bold text-[#231a30]">
+      <section className="bg-[#FFFEFA] p-6 sm:p-7 rounded-2xl border-2 border-[#382852] shadow-sm space-y-5">
+        <h2 className="text-lg font-serif font-bold text-[#0B1528] flex items-center gap-2">
+          <ShieldCheck className="w-5 h-5 text-[#A37E44]" />
           Approve your Will
         </h2>
 
-        <label className="flex items-start gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={agreed}
-            onChange={(e) => setAgreed(e.target.checked)}
-            className="mt-1 w-4 h-4 text-[#382852] rounded border-gray-300 focus:ring-[#382852]"
-          />
-          <span className="text-xs sm:text-sm text-[#231a30] leading-relaxed">
-            I have read my Will in English and Arabic. The names, appointments and shares are correct, and I am ready for legal review.
-          </span>
-        </label>
+        {/* Highlighted box with rich luxury gold/bronze border and warm ivory fill */}
+        <div className="p-4 sm:p-5 rounded-xl bg-gradient-to-r from-[#FAF7EE] to-[#FFFDF9] border-2 border-[#A37E44] shadow-sm hover:border-[#8A6233] transition-all">
+          <label className="flex items-start gap-3.5 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+              className="mt-1 w-5 h-5 accent-[#A37E44] rounded border-2 border-[#A37E44] text-[#A37E44] focus:ring-[#A37E44] cursor-pointer"
+            />
+            <span className="text-sm sm:text-base font-semibold text-[#0B1528] leading-relaxed">
+              I have read my Will in English and Arabic. The names, appointments and shares are correct, and I am ready for legal review.
+            </span>
+          </label>
+        </div>
 
         <div className="pt-3 border-t border-[#f0ebf5] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <p className="text-xs text-[#6c6478] max-w-lg">
@@ -474,7 +432,7 @@ export function SectionF_ReviewDraft() {
             onClick={handleProceedToSubmission}
             className={`px-6 py-3 rounded-full font-semibold text-xs transition-all flex items-center justify-center gap-2 shrink-0 ${
               allReady
-                ? "bg-[#c73a30] hover:bg-[#ad3128] text-white cursor-pointer shadow-sm"
+                ? "bg-[#0B1528] hover:bg-[#1a2942] text-white cursor-pointer shadow-md"
                 : "bg-[#e4dfe9] text-[#6c6478] cursor-not-allowed"
             }`}
           >
@@ -491,10 +449,8 @@ export function SectionF_ReviewDraft() {
               ? "Choose a primary executor in Section C."
               : !isSectionEOk
               ? "Primary and substitute beneficiaries must total 100% in Section E."
-              : !areAllArabicApproved
-              ? "Approve the Arabic spelling of all names above."
               : !agreed
-              ? "Tick the confirmation checkbox above to continue."
+              ? "Please tick the highlighted confirmation box above to continue."
               : ""}
           </div>
         )}

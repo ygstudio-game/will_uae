@@ -657,6 +657,7 @@ export const useOwaStore = create<OwaState>()(
         switch (section) {
           case "details": {
             const p = will.testatorPerson;
+            const eidOk = !p?.isUaeResident || Boolean(p?.emiratesId?.trim());
             return !!(
               p?.fullName?.trim() &&
               p?.dob &&
@@ -665,7 +666,8 @@ export const useOwaStore = create<OwaState>()(
               p?.address?.trim() &&
               will.domicileCountry?.trim() &&
               p?.phone?.trim() &&
-              p?.email?.trim()
+              p?.email?.trim() &&
+              eidOk
             );
           }
           case "children": {

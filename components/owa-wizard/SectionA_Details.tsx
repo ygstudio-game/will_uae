@@ -632,7 +632,7 @@ export function SectionA_Details() {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label htmlFor="field-arabicName" className="block text-[14px] font-semibold text-[#231a30]">
-                Full name in Arabic <span className="font-normal text-[#6c6478]">(optional)</span>
+                Full name in Arabic *
               </label>
               {autofilledFields.arabicName && (
                 <span className="text-[11px] text-[#1f5a3d] font-semibold bg-[#e8f4ee] px-2 py-0.5 rounded-md">
@@ -733,7 +733,7 @@ export function SectionA_Details() {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label htmlFor="field-emiratesId" className="block text-[14px] font-semibold text-[#231a30]">
-                Emirates ID number <span className="font-normal text-[#6c6478]">(optional)</span>
+                Emirates ID number {isUaeResident ? "*" : <span className="font-normal text-[#6c6478]">(optional)</span>}
               </label>
               {autofilledFields.emiratesId && (
                 <span className="text-[11px] text-[#1f5a3d] font-semibold bg-[#e8f4ee] px-2 py-0.5 rounded-md">
@@ -744,6 +744,7 @@ export function SectionA_Details() {
             <input
               id="field-emiratesId"
               type="text"
+              required={Boolean(isUaeResident)}
               value={emiratesId}
               onChange={(e) => {
                 setEmiratesId(e.target.value);
@@ -754,7 +755,7 @@ export function SectionA_Details() {
               className="w-full min-h-[48px] px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-[15px] font-mono text-[#231a30] focus:outline-none focus:border-[#382852] focus:ring-2 focus:ring-[#d7b48b]/30 bg-white transition-all"
             />
             <p className="text-[13px] text-[#6c6478] mt-1.5">
-              If you live in the UAE.
+              {isUaeResident ? "Required for UAE residents." : "If you live in the UAE."}
             </p>
           </div>
         </div>

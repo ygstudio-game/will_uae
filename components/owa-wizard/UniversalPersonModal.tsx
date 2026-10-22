@@ -40,6 +40,7 @@ export interface UniversalPersonModalProps {
   defaultRelationship?: string;
   title?: string;
   subtitle?: string;
+  allowCharity?: boolean;
 }
 
 export function UniversalPersonModal({
@@ -50,10 +51,15 @@ export function UniversalPersonModal({
   defaultRelationship = "Spouse",
   title,
   subtitle,
+  allowCharity = false,
 }: UniversalPersonModalProps) {
   const { application, activeWillIndex, addOrUpdatePerson } = useOwaStore();
   const activeWill = application?.wills.find((w) => w.willIndex === activeWillIndex);
   const defaultNationality = activeWill?.testatorPerson?.nationality || "British";
+
+  const availableRelationships = allowCharity
+    ? RELATIONSHIP_OPTIONS
+    : RELATIONSHIP_OPTIONS.filter((r) => r !== "Charity");
 
   const [formData, setFormData] = useState<Partial<PersonData>>({
     fullName: "",
@@ -66,6 +72,7 @@ export function UniversalPersonModal({
     emiratesId: "",
   });
 
+  const [customRelationship, setCustomRelationship] = useState("");
   const [personDocuments, setPersonDocuments] = useState<UploadedDocumentData[]>([]);
   const [uploadedPassportName, setUploadedPassportName] = useState<string | null>(null);
   const [uploadedEmiratesIdName, setUploadedEmiratesIdName] = useState<string | null>(null);
@@ -77,17 +84,21 @@ export function UniversalPersonModal({
 
   useEffect(() => {
     if (personToEdit) {
+      const rel = personToEdit.relationship || defaultRelationship;
+      const isPredefined = availableRelationships.includes(rel);
+      const initialRel = isPredefined ? rel : "Other";
       setFormData({
         id: personToEdit.id,
         fullName: personToEdit.fullName || "",
         arabicName: personToEdit.arabicName || "",
-        relationship: personToEdit.relationship || defaultRelationship,
+        relationship: initialRel,
         nationality: personToEdit.nationality || defaultNationality,
         dob: personToEdit.dob ? new Date(personToEdit.dob).toISOString().split("T")[0] : "",
         passportNumber: personToEdit.passportNumber || "",
         isUaeResident: personToEdit.isUaeResident ?? true,
         emiratesId: personToEdit.emiratesId || "",
       });
+      setCustomRelationship(!isPredefined ? rel : "");
 
       const docs = personToEdit.documents || [];
       setPersonDocuments(docs);
@@ -106,6 +117,7 @@ export function UniversalPersonModal({
         isUaeResident: true,
         emiratesId: "",
       });
+      setCustomRelationship("");
       setPersonDocuments([]);
       setUploadedPassportName(null);
       setUploadedEmiratesIdName(null);
@@ -114,7 +126,7 @@ export function UniversalPersonModal({
     setOcrSuccessMessage(null);
     setOcrError(null);
     setAutofilledFields({});
-  }, [personToEdit, defaultRelationship, defaultNationality, isOpen]);
+  }, [personToEdit, defaultRelationship, defaultNationality, isOpen, allowCharity]);
 
   if (!isOpen) return null;
 
@@ -241,6 +253,16 @@ export function UniversalPersonModal({
     e.preventDefault();
     if (!formData.fullName?.trim()) return;
 
+    if (formData.isUaeResident && !formData.emiratesId?.trim()) {
+      setOcrError("Emirates ID is required for UAE residents.");
+      return;
+    }
+
+    const finalRelationship =
+      formData.relationship === "Other"
+        ? (customRelationship.trim() || "Other")
+        : (formData.relationship || defaultRelationship);
+
     setIsSubmitting(true);
     try {
       let finalArabic = formData.arabicName?.trim() || "";
@@ -253,7 +275,7 @@ export function UniversalPersonModal({
         id: personToEdit?.id,
         fullName: formData.fullName.trim(),
         arabicName: finalArabic,
-        relationship: formData.relationship || defaultRelationship,
+        relationship: finalRelationship,
         nationality: formData.nationality?.trim() || defaultNationality,
         dob: formData.dob || null,
         passportNumber: formData.passportNumber?.trim() || null,
@@ -525,7 +547,7 @@ export function UniversalPersonModal({
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="text-xs font-semibold text-[#231a30]">
-                Name in Arabic <span className="font-normal text-[#6c6478]">(optional)</span>
+                Name in Arabic *
               </label>
               {autofilledFields.arabicName && (
                 <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#1f5a3d] bg-[#e8f4ee] px-1.5 py-0.5 rounded">
@@ -542,7 +564,7 @@ export function UniversalPersonModal({
               className="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-lg border border-[#cfc6da] focus:outline-none focus:border-[#5b3fb0] focus:ring-1 focus:ring-[#5b3fb0] font-arabic text-[#8A6233] font-medium bg-white"
             />
             <span className="text-[11px] text-[#6c6478] mt-1 block">
-              Spelled phonetically by sound. You can edit and verify in Section F.
+              Spelled phonetically by sound. Generated automatically if left blank.
             </span>
           </div>
 
@@ -557,12 +579,27 @@ export function UniversalPersonModal({
                 onChange={(e) => setFormData({ ...formData, relationship: e.target.value })}
                 className="w-full text-xs sm:text-sm px-3 py-2.5 rounded-lg border border-[#cfc6da] focus:outline-none focus:border-[#5b3fb0] bg-white text-[#231a30]"
               >
-                {RELATIONSHIP_OPTIONS.map((rel) => (
+                {availableRelationships.map((rel) => (
                   <option key={rel} value={rel}>
                     {rel}
                   </option>
                 ))}
               </select>
+              {formData.relationship === "Other" && (
+                <div className="mt-2.5">
+                  <label className="block text-xs font-semibold text-[#231a30] mb-1">
+                    Please specify relationship *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={customRelationship}
+                    onChange={(e) => setCustomRelationship(e.target.value)}
+                    placeholder="e.g. Business Partner, Cousin"
+                    className="w-full text-xs sm:text-sm px-3.5 py-2 rounded-lg border border-[#cfc6da] focus:outline-none focus:border-[#5b3fb0] bg-white text-[#231a30]"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Nationality */}
@@ -667,7 +704,7 @@ export function UniversalPersonModal({
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-xs font-semibold text-[#231a30]">
-                  Emirates ID number <span className="font-normal text-[#6c6478]">(optional)</span>
+                  Emirates ID number *
                 </label>
                 {autofilledFields.emiratesId && (
                   <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#1f5a3d] bg-[#e8f4ee] px-1.5 py-0.5 rounded">
@@ -677,6 +714,7 @@ export function UniversalPersonModal({
               </div>
               <input
                 type="text"
+                required
                 value={formData.emiratesId || ""}
                 onChange={(e) => setFormData({ ...formData, emiratesId: e.target.value })}
                 placeholder="784-XXXX-XXXXXXX-X"

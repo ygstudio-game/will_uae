@@ -567,7 +567,7 @@ export function SectionB_Children() {
 
                   <div>
                     <label className="block text-xs font-semibold text-[#231a30] mb-1">
-                      Full name in Arabic <span className="font-normal text-[#6c6478]">(optional)</span>
+                      Full name in Arabic *
                     </label>
                     <input
                       type="text"
@@ -648,7 +648,7 @@ export function SectionB_Children() {
                   {child?.isUaeResident && (
                     <div className="sm:col-span-2">
                       <label className="block text-xs font-semibold text-[#231a30] mb-1">
-                        Emirates ID number <span className="font-normal text-[#6c6478]">(optional)</span>
+                        Emirates ID number *
                       </label>
                       <input
                         type="text"
