@@ -188,7 +188,22 @@ export const useOwaStore = create<OwaState>()(
         syncWithDbAccount: async () => {
           set({ isLoadingData: true, loadingMessage: "Syncing application with your account..." });
           try {
-            const res = await fetch("/api/applications/current");
+            const state = get();
+            const hasLocalDraftData =
+              Boolean(state.application?.wills?.[0]?.testatorPerson?.fullName?.trim()) ||
+              (Boolean(state.application?.persons) && (state.application?.persons?.length || 0) > 1);
+
+            let res;
+            if (hasLocalDraftData && state.applicationId?.startsWith("draft-")) {
+              res = await fetch("/api/applications/current", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ localApp: state.application }),
+              });
+            } else {
+              res = await fetch("/api/applications/current");
+            }
+
             const data = await res.json();
             if (data.success && data.application) {
               set({
@@ -246,7 +261,11 @@ export const useOwaStore = create<OwaState>()(
               body: JSON.stringify({
                 willId: activeWill.id,
                 domicileCountry: activeWill.domicileCountry,
+                hasChildrenUnder18: activeWill.hasChildrenUnder18,
+                childrenAnswered: activeWill.childrenAnswered,
                 isDraftConfirmed: activeWill.isDraftConfirmed,
+                testatorPerson: activeWill.testatorPerson,
+                persons: state.application.persons,
                 roleAssignments: activeWill.roleAssignments.map((ra) => ({
                   personId: ra.personId,
                   role: ra.role,
@@ -261,7 +280,15 @@ export const useOwaStore = create<OwaState>()(
               throw new Error(data.error || "Save failed.");
             }
 
-            set({ isSaving: false });
+            if (data.application) {
+              set({
+                application: data.application,
+                applicationId: data.application.id,
+                isSaving: false,
+              });
+            } else {
+              set({ isSaving: false });
+            }
             return true;
           } catch (err: any) {
             console.error("Save error:", err);

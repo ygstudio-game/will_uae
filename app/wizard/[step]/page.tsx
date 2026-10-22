@@ -86,10 +86,15 @@ function WizardStepContent() {
 
   const appIdQuery = searchParams.get("applicationId");
 
+  const syncedRef = React.useRef(false);
+
   useEffect(() => {
-    if (appIdQuery && appIdQuery !== applicationId) {
-      loadApplicationFromDb(appIdQuery);
-    } else if (!appIdQuery && (!applicationId || applicationId.startsWith("draft-"))) {
+    if (appIdQuery) {
+      if (appIdQuery !== applicationId) {
+        loadApplicationFromDb(appIdQuery);
+      }
+    } else if (!syncedRef.current) {
+      syncedRef.current = true;
       syncWithDbAccount();
     }
   }, [appIdQuery, applicationId, loadApplicationFromDb, syncWithDbAccount]);

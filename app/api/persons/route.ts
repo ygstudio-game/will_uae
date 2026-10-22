@@ -64,45 +64,73 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let person;
-    if (id) {
-      // Update existing
-      person = await prisma.person.update({
-        where: { id },
-        data: {
-          fullName: fullName.trim(),
-          arabicName: arabicName?.trim() || null,
-          isArabicApproved: !!isArabicApproved,
-          dob: dob ? new Date(dob) : null,
-          nationality: nationality?.trim() || null,
-          passportNumber: passportNumber?.trim() || null,
-          emiratesId: emiratesId?.trim() || null,
-          isUaeResident: isUaeResident ?? true,
-          address: address?.trim() || null,
-          email: email?.trim() || null,
-          phone: phone?.trim() || null,
-        },
-        include: { documents: true },
+    let person = null;
+    if (id && !id.startsWith("draft-") && !id.startsWith("person-")) {
+      const existing = await prisma.person.findUnique({ where: { id } });
+      if (existing) {
+        person = await prisma.person.update({
+          where: { id },
+          data: {
+            fullName: fullName.trim(),
+            arabicName: arabicName?.trim() || null,
+            isArabicApproved: Boolean(isArabicApproved),
+            dob: dob ? new Date(dob) : null,
+            nationality: nationality?.trim() || null,
+            passportNumber: passportNumber?.trim() || null,
+            emiratesId: emiratesId?.trim() || null,
+            isUaeResident: isUaeResident ?? true,
+            address: address?.trim() || null,
+            email: email?.trim() || null,
+            phone: phone?.trim() || null,
+          },
+          include: { documents: true },
+        });
+      }
+    }
+
+    if (!person) {
+      // Check if a person with this name already exists in this application
+      const existingByName = await prisma.person.findFirst({
+        where: { applicationId, fullName: fullName.trim() },
       });
-    } else {
-      // Create new
-      person = await prisma.person.create({
-        data: {
-          applicationId,
-          fullName: fullName.trim(),
-          arabicName: arabicName?.trim() || null,
-          isArabicApproved: !!isArabicApproved,
-          dob: dob ? new Date(dob) : null,
-          nationality: nationality?.trim() || null,
-          passportNumber: passportNumber?.trim() || null,
-          emiratesId: emiratesId?.trim() || null,
-          isUaeResident: isUaeResident ?? true,
-          address: address?.trim() || null,
-          email: email?.trim() || null,
-          phone: phone?.trim() || null,
-        },
-        include: { documents: true },
-      });
+
+      if (existingByName) {
+        person = await prisma.person.update({
+          where: { id: existingByName.id },
+          data: {
+            arabicName: arabicName?.trim() || existingByName.arabicName,
+            isArabicApproved: Boolean(isArabicApproved),
+            dob: dob ? new Date(dob) : existingByName.dob,
+            nationality: nationality?.trim() || existingByName.nationality,
+            passportNumber: passportNumber?.trim() || existingByName.passportNumber,
+            emiratesId: emiratesId?.trim() || existingByName.emiratesId,
+            isUaeResident: isUaeResident ?? existingByName.isUaeResident,
+            address: address?.trim() || existingByName.address,
+            email: email?.trim() || existingByName.email,
+            phone: phone?.trim() || existingByName.phone,
+          },
+          include: { documents: true },
+        });
+      } else {
+        // Create new
+        person = await prisma.person.create({
+          data: {
+            applicationId,
+            fullName: fullName.trim(),
+            arabicName: arabicName?.trim() || null,
+            isArabicApproved: Boolean(isArabicApproved),
+            dob: dob ? new Date(dob) : null,
+            nationality: nationality?.trim() || null,
+            passportNumber: passportNumber?.trim() || null,
+            emiratesId: emiratesId?.trim() || null,
+            isUaeResident: isUaeResident ?? true,
+            address: address?.trim() || null,
+            email: email?.trim() || null,
+            phone: phone?.trim() || null,
+          },
+          include: { documents: true },
+        });
+      }
     }
 
     return NextResponse.json({ success: true, person });

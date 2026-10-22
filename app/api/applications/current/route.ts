@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/auth-otp";
+import { normalizeRoleType } from "@/lib/roles";
 
 export const dynamic = "force-dynamic";
 
@@ -184,6 +185,90 @@ export async function POST(req: NextRequest) {
               phone: p.phone?.trim() || null,
             }
           });
+        }
+      }
+    }
+
+    // If localApp has wills, sync active will fields and role assignments
+    if (localApp?.wills && Array.isArray(localApp.wills) && localApp.wills[0]) {
+      const localWill = localApp.wills[0];
+      let dbWill = await prisma.will.findFirst({
+        where: { applicationId: appId },
+      });
+
+      // Find the testator person in DB
+      const dbTestator = await prisma.person.findFirst({
+        where: {
+          applicationId: appId,
+          OR: [
+            { relationship: "Self" },
+            { fullName: localWill.testatorPerson?.fullName?.trim() || session.name || "" },
+          ],
+        },
+      });
+
+      if (!dbWill) {
+        dbWill = await prisma.will.create({
+          data: {
+            applicationId: appId,
+            willIndex: 1,
+            versionTag: "ADJD-NM0723-07-03",
+            domicileCountry: localWill.domicileCountry || "United Kingdom",
+            hasChildrenUnder18: Boolean(localWill.hasChildrenUnder18),
+            isDraftConfirmed: Boolean(localWill.isDraftConfirmed),
+            testatorPersonId: dbTestator?.id,
+          },
+        });
+      } else {
+        await prisma.will.update({
+          where: { id: dbWill.id },
+          data: {
+            domicileCountry: localWill.domicileCountry || dbWill.domicileCountry,
+            hasChildrenUnder18:
+              localWill.hasChildrenUnder18 !== undefined
+                ? Boolean(localWill.hasChildrenUnder18)
+                : dbWill.hasChildrenUnder18,
+            isDraftConfirmed:
+              localWill.isDraftConfirmed !== undefined
+                ? Boolean(localWill.isDraftConfirmed)
+                : dbWill.isDraftConfirmed,
+            ...(dbTestator?.id ? { testatorPersonId: dbTestator.id } : {}),
+          },
+        });
+      }
+
+      // Sync role assignments if present
+      if (Array.isArray(localWill.roleAssignments) && localWill.roleAssignments.length > 0) {
+        await prisma.roleAssignment.deleteMany({
+          where: { willId: dbWill.id },
+        });
+
+        for (const ra of localWill.roleAssignments) {
+          const person = await prisma.person.findFirst({
+            where: {
+              applicationId: appId,
+              OR: [
+                { id: ra.personId },
+                { fullName: ra.person?.fullName?.trim() || "" },
+              ],
+            },
+          });
+
+          const normalizedRole = normalizeRoleType(ra.role);
+          if (person && normalizedRole) {
+            await prisma.roleAssignment.create({
+              data: {
+                willId: dbWill.id,
+                personId: person.id,
+                role: normalizedRole,
+                appointmentOrder: ra.appointmentOrder || 1,
+                sharePercentage:
+                  ra.sharePercentage !== null && ra.sharePercentage !== undefined
+                    ? Number(ra.sharePercentage)
+                    : null,
+              },
+            });
+          }
         }
       }
     }

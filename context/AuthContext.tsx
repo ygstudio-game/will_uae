@@ -55,6 +55,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await fetch("/api/auth/signout", { method: "POST" });
     } catch (_) {}
     setUser(null);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem("owa_application_store");
+      } catch (_) {}
+    }
     window.location.href = "/";
   }, []);
 
