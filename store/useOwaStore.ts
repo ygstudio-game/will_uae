@@ -16,13 +16,23 @@ interface OwaState {
   application: ApplicationData | null;
   isSaving: boolean;
   saveError: string | null;
+  isNavigatingSection: boolean;
+  navigatingTarget: OwaSectionId | null;
+  isLoadingData: boolean;
+  loadingMessage: string | null;
 
   // Actions
+  setNavigatingSection: (
+    isNavigating: boolean,
+    target?: OwaSectionId | null,
+    message?: string | null
+  ) => void;
   setApplicationId: (id: string | null) => void;
   setActiveWillIndex: (index: number) => void;
   setCurrentSection: (section: OwaSectionId) => void;
   setApplication: (app: ApplicationData | null) => void;
   loadApplicationFromDb: (id: string) => Promise<boolean>;
+  syncWithDbAccount: () => Promise<boolean>;
   saveCurrentSectionToDb: () => Promise<boolean>;
   
   // Person Repository
@@ -34,6 +44,10 @@ interface OwaState {
     role: RoleType,
     order?: number,
     sharePercentage?: number
+  ) => void;
+  updateRoleShares: (
+    role: RoleType,
+    updates: { assignmentId?: string; personId?: string; sharePercentage: number }[]
   ) => void;
   removeRoleAssignment: (roleAssignmentId: string) => void;
 
@@ -123,14 +137,32 @@ export const useOwaStore = create<OwaState>()(
         application: initialApp,
         isSaving: false,
         saveError: null,
+        isNavigatingSection: false,
+        navigatingTarget: null,
+        isLoadingData: false,
+        loadingMessage: null,
 
+        setNavigatingSection: (isNavigating, target = null, message = null) =>
+          set({
+            isNavigatingSection: isNavigating,
+            navigatingTarget: target,
+            loadingMessage: message,
+          }),
         setApplicationId: (id) => set({ applicationId: id }),
         setActiveWillIndex: (index) => set({ activeWillIndex: index }),
-        setCurrentSection: (section) => set({ currentSection: section }),
+        setCurrentSection: (section) =>
+          set({
+            currentSection: section,
+            isNavigatingSection: false,
+            navigatingTarget: null,
+            isLoadingData: false,
+            loadingMessage: null,
+          }),
         setApplication: (app) => set({ application: app }),
 
         loadApplicationFromDb: async (id: string) => {
           if (!id || id.startsWith("draft-")) return false;
+          set({ isLoadingData: true, loadingMessage: "Loading court application records..." });
           try {
             const res = await fetch(`/api/applications/${id}`);
             const data = await res.json();
@@ -138,13 +170,42 @@ export const useOwaStore = create<OwaState>()(
               set({
                 applicationId: id,
                 application: data.application,
+                isLoadingData: false,
+                loadingMessage: null,
                 saveError: null,
               });
               return true;
             }
+            set({ isLoadingData: false, loadingMessage: null });
             return false;
           } catch (err: any) {
             console.error("Failed to load application from DB:", err);
+            set({ isLoadingData: false, loadingMessage: null });
+            return false;
+          }
+        },
+
+        syncWithDbAccount: async () => {
+          set({ isLoadingData: true, loadingMessage: "Syncing application with your account..." });
+          try {
+            const res = await fetch("/api/applications/current");
+            const data = await res.json();
+            if (data.success && data.application) {
+              set({
+                applicationId: data.application.id,
+                application: data.application,
+                isLoadingData: false,
+                loadingMessage: null,
+                isSaving: false,
+                saveError: null,
+              });
+              return true;
+            }
+            set({ isLoadingData: false, loadingMessage: null });
+            return false;
+          } catch (err: any) {
+            console.error("Failed to sync with DB account:", err);
+            set({ isLoadingData: false, loadingMessage: null });
             return false;
           }
         },
@@ -152,8 +213,23 @@ export const useOwaStore = create<OwaState>()(
         saveCurrentSectionToDb: async () => {
           const state = get();
           if (!state.application) return false;
-          if (!state.applicationId || state.applicationId.startsWith("draft-")) {
-            return true;
+
+          let targetAppId = state.applicationId;
+
+          // If in local draft mode, attempt to auto-sync with DB account
+          if (!targetAppId || targetAppId.startsWith("draft-")) {
+            try {
+              const syncRes = await fetch("/api/applications/current");
+              const syncData = await syncRes.json();
+              if (syncData.success && syncData.application) {
+                targetAppId = syncData.application.id;
+                set({ applicationId: targetAppId });
+              } else {
+                return true; // Not logged in yet, saved to localStorage
+              }
+            } catch {
+              return true;
+            }
           }
 
           const activeWill = state.application.wills.find(
@@ -164,7 +240,7 @@ export const useOwaStore = create<OwaState>()(
           set({ isSaving: true, saveError: null });
 
           try {
-            const res = await fetch(`/api/applications/${state.applicationId}`, {
+            const res = await fetch(`/api/applications/${targetAppId}`, {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -295,11 +371,30 @@ export const useOwaStore = create<OwaState>()(
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   ...personData,
-                  id: personData.id,
+                  id: personId,
                   applicationId: currentAppId,
                 }),
               }).catch(() => {});
             } catch (_) {}
+          } else {
+            // Check if user is authenticated and sync automatically
+            fetch("/api/applications/current")
+              .then((r) => r.json())
+              .then((d) => {
+                if (d.success && d.application?.id) {
+                  set({ applicationId: d.application.id });
+                  fetch("/api/persons", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      ...personData,
+                      id: personId,
+                      applicationId: d.application.id,
+                    }),
+                  }).catch(() => {});
+                }
+              })
+              .catch(() => {});
           }
 
           return updatedPerson;
@@ -332,18 +427,22 @@ export const useOwaStore = create<OwaState>()(
           const activeWill = updatedWills[activeWillIdx];
           const person = currentApp.persons.find((p) => p.id === personId);
 
+          const existingAssignment = activeWill.roleAssignments.find(
+            (ra) => (ra.role === role && ra.appointmentOrder === order) || (ra.role === role && ra.personId === personId)
+          );
+
           let filtered = activeWill.roleAssignments.filter(
-            (ra) => !(ra.role === role && ra.appointmentOrder === order)
+            (ra) => !(ra.role === role && (ra.appointmentOrder === order || ra.personId === personId))
           );
 
           const newAssignment: RoleAssignmentData = {
-            id: `role-assign-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+            id: existingAssignment ? existingAssignment.id : `role-assign-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
             willId: activeWill.id,
             personId,
             role,
             appointmentOrder: order,
-            sharePercentage: sharePercentage !== undefined ? sharePercentage : null,
-            person,
+            sharePercentage: sharePercentage !== undefined ? sharePercentage : (existingAssignment?.sharePercentage ?? null),
+            person: person || existingAssignment?.person,
           };
 
           filtered.push(newAssignment);
@@ -358,6 +457,49 @@ export const useOwaStore = create<OwaState>()(
           set({
             application: {
               ...currentApp,
+              wills: updatedWills,
+            },
+          });
+        },
+
+        updateRoleShares: (role, updates) => {
+          const state = get();
+          if (!state.application) return;
+
+          const activeWillIdx = state.application.wills.findIndex(
+            (w) => w.willIndex === state.activeWillIndex
+          );
+          if (activeWillIdx < 0) return;
+
+          const activeWill = state.application.wills[activeWillIdx];
+          const updatedAssignments = activeWill.roleAssignments.map((ra) => {
+            if (ra.role !== role && !(role === "BENEFICIARY_PRIMARY" && ra.role === "BENEFICIARY")) {
+              return ra;
+            }
+            const update = updates.find(
+              (u) =>
+                (u.assignmentId && u.assignmentId === ra.id) ||
+                (u.personId && u.personId === ra.personId)
+            );
+            if (update !== undefined) {
+              return {
+                ...ra,
+                sharePercentage: update.sharePercentage,
+              };
+            }
+            return ra;
+          });
+
+          const updatedWills = [...state.application.wills];
+          updatedWills[activeWillIdx] = {
+            ...activeWill,
+            roleAssignments: updatedAssignments,
+            isDraftConfirmed: false,
+          };
+
+          set({
+            application: {
+              ...state.application,
               wills: updatedWills,
             },
           });
@@ -486,8 +628,19 @@ export const useOwaStore = create<OwaState>()(
         if (!will) return false;
 
         switch (section) {
-          case "details":
-            return !!(will.testatorPerson?.fullName && will.testatorPerson?.passportNumber);
+          case "details": {
+            const p = will.testatorPerson;
+            return !!(
+              p?.fullName?.trim() &&
+              p?.dob &&
+              p?.nationality?.trim() &&
+              p?.passportNumber?.trim() &&
+              p?.address?.trim() &&
+              will.domicileCountry?.trim() &&
+              p?.phone?.trim() &&
+              p?.email?.trim()
+            );
+          }
           case "children": {
             const children = will.roleAssignments.filter((ra) => ra.role === "CHILD");
             // Must be explicitly answered or have children added
@@ -528,8 +681,8 @@ export const useOwaStore = create<OwaState>()(
               (ra) => ra.role === "BENEFICIARY_SUBSTITUTE"
             );
 
-            // 1. Primary rules: 1 to 3 appointments, positive shares summing to 100%
-            if (primaries.length < 1 || primaries.length > 3) return false;
+            // 1. Primary rules: 1 to 4 appointments, positive shares summing to 100%
+            if (primaries.length < 1 || primaries.length > 4) return false;
             const primarySum = primaries.reduce((acc, b) => acc + (Number(b.sharePercentage) || 0), 0);
             if (Math.abs(primarySum - 100) >= 0.01) return false;
             if (primaries.some((b) => (Number(b.sharePercentage) || 0) <= 0)) return false;

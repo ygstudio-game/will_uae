@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useOwaStore } from "@/store/useOwaStore";
 import { useAuth } from "@/context/AuthContext";
 import { OwaSectionId } from "@/types/owa";
-import { MessageSquare, FileText, Shield, Check } from "lucide-react";
+import { MessageSquare, FileText, Shield, Check, Loader2 } from "lucide-react";
 
 interface OwaSidebarProps {
   currentSection: OwaSectionId;
@@ -36,10 +36,15 @@ export function OwaSidebar({ currentSection }: OwaSidebarProps) {
     setActiveWillIndex,
     isSectionComplete,
     saveCurrentSectionToDb,
+    isNavigatingSection,
+    navigatingTarget,
+    setNavigatingSection,
   } = useOwaStore();
 
   const isCouples = mounted && (application?.packageType === "COUPLES" || (application?.wills?.length || 0) > 1);
-  const currentWill = application?.wills?.[activeWillIndex];
+  const currentWill =
+    application?.wills?.find((w) => w.willIndex === activeWillIndex) ||
+    application?.wills?.[0];
   const testatorName =
     (mounted && currentWill?.testatorPerson?.fullName?.trim()) ||
     application?.account?.fullName?.trim() ||
@@ -48,10 +53,18 @@ export function OwaSidebar({ currentSection }: OwaSidebarProps) {
     "Your Name";
 
   const handleStepClick = async (targetSection: OwaSectionId) => {
-    if (targetSection === currentSection) return;
-    await saveCurrentSectionToDb();
-    const queryStr = application?.id ? `?applicationId=${application.id}` : "";
-    router.push(`/wizard/${targetSection}${queryStr}`);
+    if (targetSection === currentSection || isNavigatingSection) return;
+    const targetStep = STEPS.find((s) => s.id === targetSection);
+    const targetLabel = targetStep?.label || targetSection;
+    setNavigatingSection(true, targetSection, `Opening ${targetLabel}... Please wait a moment`);
+    try {
+      await saveCurrentSectionToDb();
+      const queryStr = application?.id ? `?applicationId=${application.id}` : "";
+      router.push(`/wizard/${targetSection}${queryStr}`);
+    } catch (err) {
+      console.error("Step navigation error:", err);
+      setNavigatingSection(false, null);
+    }
   };
 
   return (
@@ -100,31 +113,41 @@ export function OwaSidebar({ currentSection }: OwaSidebarProps) {
         <div className="flex flex-col gap-1">
           {STEPS.map((step) => {
             const isActive = step.id === currentSection;
+            const isTarget = isNavigatingSection && navigatingTarget === step.id;
             const isDone = mounted && isSectionComplete(step.id);
 
             return (
               <button
                 key={step.id}
                 type="button"
+                disabled={isNavigatingSection}
                 onClick={() => handleStepClick(step.id)}
-                className={`w-full flex items-center gap-3 p-[10px_11px] rounded-[7px] text-left text-[13px] font-medium transition-colors border ${
-                  isActive
+                className={`w-full flex items-center gap-3 p-[10px_11px] rounded-[7px] text-left text-[13px] font-medium transition-all active:scale-[0.98] duration-150 ease-out border cursor-pointer ${
+                  isActive || isTarget
                     ? "bg-[#f0ebf9] text-[#6243ad] border-[#dfd2ef]"
                     : "bg-transparent text-[#29213f] border-transparent hover:bg-[#f7f4fc]"
-                }`}
+                } ${isNavigatingSection && !isTarget ? "opacity-60 cursor-not-allowed" : ""}`}
               >
-                {/* Step number badge / checkmark */}
+                {/* Step number badge / checkmark / spinner */}
                 <span
                   suppressHydrationWarning
                   className={`w-[22px] height-[22px] h-[22px] rounded-full flex items-center justify-center text-[11px] flex-shrink-0 border font-medium ${
-                    isDone
+                    isTarget
+                      ? "bg-white border-[#6243ad] text-[#6243ad]"
+                      : isDone
                       ? "bg-[#e7f0eb] border-transparent text-[#366d58]"
                       : isActive
                       ? "bg-white border-[#6243ad] text-[#6243ad]"
                       : "bg-[#fffefa] border-[#e4dfee] text-[#797287]"
                   }`}
                 >
-                  {isDone ? <Check className="w-3 h-3 stroke-[2.5]" /> : step.num}
+                  {isTarget ? (
+                    <Loader2 className="w-3 h-3 text-[#6243ad] animate-spin" />
+                  ) : isDone ? (
+                    <Check className="w-3 h-3 stroke-[2.5]" />
+                  ) : (
+                    step.num
+                  )}
                 </span>
 
                 <span className="flex-1 truncate">{step.label}</span>
@@ -132,7 +155,7 @@ export function OwaSidebar({ currentSection }: OwaSidebarProps) {
                 {/* Right dot */}
                 <span
                   className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                    isActive ? "bg-[#6243ad]" : "bg-[#cabddd]"
+                    isActive || isTarget ? "bg-[#6243ad]" : "bg-[#cabddd]"
                   }`}
                 />
               </button>

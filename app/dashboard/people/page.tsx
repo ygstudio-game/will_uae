@@ -65,7 +65,7 @@ function PeopleContent() {
     });
 
     // People from application repository
-    activeApp?.people?.forEach((p) => {
+    activeApp?.persons?.forEach((p) => {
       addIfNew(p);
     });
 
@@ -182,7 +182,6 @@ function PeopleContent() {
         emiratesId: "",
         isUaeResident: true,
         address: "",
-        country: "United Arab Emirates",
         email: "",
         phone: "",
       });
@@ -305,7 +304,7 @@ function PeopleContent() {
                               {person.fullName || "Unnamed person"}
                             </h3>
                             {person.arabicName ? (
-                              <p className="text-xs text-[#797287] font-arabic truncate" dir="rtl">
+                              <p className="text-xs text-[#8A6233] font-arabic font-medium truncate" dir="rtl">
                                 {person.arabicName}
                               </p>
                             ) : (
@@ -331,9 +330,7 @@ function PeopleContent() {
                         <div className="flex items-start gap-1.5 text-xs text-[#797287]">
                           <MapPin className="w-3.5 h-3.5 text-[#797287]/60 shrink-0 mt-0.5" />
                           <span className="line-clamp-2">
-                            {person.address
-                              ? `${person.address}${person.country ? `, ${person.country}` : ""}`
-                              : "Residential address needed"}
+                            {person.address || (person.isUaeResident ? "UAE resident" : "Residential address needed")}
                           </span>
                         </div>
 
@@ -457,7 +454,7 @@ function PeopleContent() {
                   value={formData.arabicName || ""}
                   onChange={(e) => setFormData({ ...formData, arabicName: e.target.value })}
                   placeholder="جون مايكل سميث"
-                  className="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-lg border border-[#DCD4E7] focus:outline-none focus:border-[#6243AD] focus:ring-1 focus:ring-[#6243AD] font-arabic"
+                  className="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-lg border border-[#DCD4E7] focus:outline-none focus:border-[#6243AD] focus:ring-1 focus:ring-[#6243AD] font-arabic text-[#8A6233] font-medium"
                 />
                 <span className="text-[10px] text-[#797287] mt-1 block">
                   ADJD court requires phonetic transliteration. Leave blank if unsure; our legal team will provide verified Arabic.

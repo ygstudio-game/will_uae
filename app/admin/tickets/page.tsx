@@ -11,6 +11,7 @@ import {
   Clock,
   AlertCircle,
   Building,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -51,8 +52,10 @@ export default function AdminTicketsPage() {
       const data = await res.json();
       if (data.success) {
         setTickets(data.tickets);
-        if (data.tickets.length > 0 && !selectedTicketId) {
-          setSelectedTicketId(data.tickets[0].id);
+        if (data.tickets.length > 0) {
+          setSelectedTicketId((prev) =>
+            prev && data.tickets.some((t: any) => t.id === prev) ? prev : data.tickets[0].id
+          );
         }
       }
     } catch (err) {
@@ -91,6 +94,19 @@ export default function AdminTicketsPage() {
 
   return (
     <div className="min-h-screen bg-[#FBF9F5] py-8 px-4 sm:px-8">
+      {/* Top slide-in progress indicator (Emil Kowalski feedback design) */}
+      {loading && (
+        <div className="fixed inset-x-0 top-0 z-50 flex flex-col items-center pointer-events-none transition-all duration-200">
+          <div className="w-full h-1 bg-[#E5E0D8] overflow-hidden">
+            <div className="w-full h-full bg-gradient-to-r from-[#A37E44] via-[#0B1528] to-[#A37E44] animate-pulse" />
+          </div>
+          <div className="mt-3 px-4 py-2 rounded-full bg-[#0B1528]/95 text-white text-xs font-medium shadow-2xl backdrop-blur-md flex items-center gap-2.5 transition-all duration-200 animate-in fade-in slide-in-from-top-2 border border-[#A37E44]/40">
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#A37E44]" />
+            <span>Syncing support desk... Please wait a moment</span>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -114,6 +130,21 @@ export default function AdminTicketsPage() {
                 Centralized messaging across all active Non-Muslim Will applications
               </p>
             </div>
+          </div>
+
+          {/* Real-time DB Sync Badge */}
+          <div className="flex items-center gap-2 text-xs self-start sm:self-auto">
+            {loading ? (
+              <span className="flex items-center gap-1.5 text-[#0B1528] font-medium bg-[#f0ebf9] px-2.5 py-1 rounded-full border border-[#dfd2ef]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#0B1528] animate-ping" />
+                Syncing desk...
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 text-[#1f5a3d] font-medium bg-[#e8f4ee] px-2.5 py-1 rounded-full border border-[#b9dcc9]">
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#1f5a3d]" />
+                <span>Live with database</span>
+              </span>
+            )}
           </div>
         </div>
 
@@ -178,73 +209,117 @@ export default function AdminTicketsPage() {
           </div>
         </div>
 
-        {/* Tickets Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Ticket Selector List */}
-          <div className="space-y-3 max-h-[600px] overflow-y-auto">
-            {filteredTickets.map((t) => {
-              const isSelected = selectedTicketId === t.id;
-
-              return (
-                <div
-                  key={t.id}
-                  onClick={() => setSelectedTicketId(t.id)}
-                  className={`p-4 rounded-2xl border cursor-pointer transition-all ${
-                    isSelected
-                      ? "bg-white border-[#0B1528] shadow-sm ring-1 ring-[#0B1528]"
-                      : "bg-white border-[#E5E0D8] hover:border-gray-400"
-                  }`}
-                >
-                  <div className="flex items-center justify-between text-[11px] mb-1">
-                    <span className="font-mono font-bold text-[#A37E44]">#{t.ticketNumber}</span>
-                    <span className="text-gray-400 font-mono text-[10px]">
-                      {new Date(t.updatedAt).toLocaleDateString()}
-                    </span>
+        {/* Tickets Grid with Blur Transition */}
+        <div
+          className={`transition-all duration-200 ease-out ${
+            loading && tickets.length > 0
+              ? "opacity-60 filter blur-[1.5px] pointer-events-none select-none"
+              : "opacity-100 filter blur-0"
+          }`}
+        >
+          {loading && tickets.length === 0 ? (
+            /* Sleek Initial Loading Skeleton */
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="p-4 rounded-2xl border border-[#E5E0D8] bg-white animate-pulse space-y-2"
+                  >
+                    <div className="flex justify-between">
+                      <div className="h-3 bg-gray-200 rounded w-16" />
+                      <div className="h-3 bg-gray-100 rounded w-12" />
+                    </div>
+                    <div className="h-4 bg-gray-200 rounded w-3/4" />
+                    <div className="h-3 bg-gray-100 rounded w-full" />
                   </div>
+                ))}
+              </div>
+              <div className="lg:col-span-2 h-[600px] rounded-2xl border border-[#E5E0D8] bg-white animate-pulse flex flex-col items-center justify-center gap-3">
+                <Loader2 className="w-6 h-6 animate-spin text-[#A37E44]" />
+                <span className="text-xs text-gray-500">Connecting to court database...</span>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Ticket Selector List */}
+              <div className="space-y-3 max-h-[600px] overflow-y-auto">
+                {filteredTickets.map((t) => {
+                  const isSelected = selectedTicketId === t.id;
 
-                  <div className="font-semibold text-xs text-[#0B1528] line-clamp-1">
-                    {t.subject}
-                  </div>
-
-                  <div className="text-[11px] text-gray-500 mt-1 flex items-center justify-between">
-                    <span>{t.application?.account?.fullName || "Client"}</span>
-                    <span
-                      className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
-                        t.status === "RESOLVED"
-                          ? "bg-emerald-100 text-emerald-800"
-                          : t.status === "AWAITING_CUSTOMER"
-                          ? "bg-amber-100 text-amber-800"
-                          : "bg-blue-100 text-blue-800"
+                  return (
+                    <div
+                      key={t.id}
+                      onClick={() => setSelectedTicketId(t.id)}
+                      className={`p-4 rounded-2xl border cursor-pointer transition-all ${
+                        isSelected
+                          ? "bg-white border-[#0B1528] shadow-sm ring-1 ring-[#0B1528]"
+                          : "bg-white border-[#E5E0D8] hover:border-gray-400"
                       }`}
                     >
-                      {t.status}
-                    </span>
+                      <div className="flex items-center justify-between text-[11px] mb-1">
+                        <span className="font-mono font-bold text-[#A37E44]">#{t.ticketNumber}</span>
+                        <span className="text-gray-400 font-mono text-[10px]">
+                          {new Date(t.updatedAt).toLocaleDateString()}
+                        </span>
+                      </div>
+
+                      <div className="font-semibold text-xs text-[#0B1528] line-clamp-1">
+                        {t.subject}
+                      </div>
+
+                      {(() => {
+                        const rList = t.replies || t.messages || [];
+                        const snippet = rList.length > 0 ? rList[rList.length - 1].message : null;
+                        return snippet ? (
+                          <p className="text-[11px] text-gray-500 line-clamp-1 mt-0.5">
+                            {snippet}
+                          </p>
+                        ) : null;
+                      })()}
+
+                      <div className="text-[11px] text-gray-500 mt-1 flex items-center justify-between">
+                        <span>{t.application?.account?.fullName || "Client"}</span>
+                        <span
+                          className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+                            t.status === "RESOLVED"
+                              ? "bg-emerald-100 text-emerald-800"
+                              : t.status === "AWAITING_CUSTOMER"
+                              ? "bg-amber-100 text-amber-800"
+                              : "bg-blue-100 text-blue-800"
+                          }`}
+                        >
+                          {t.status}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {filteredTickets.length === 0 && (
+                  <div className="p-8 rounded-2xl bg-white border border-[#E5E0D8] text-center text-gray-400 text-xs italic">
+                    No support tickets found for active filter.
                   </div>
-                </div>
-              );
-            })}
-
-            {filteredTickets.length === 0 && (
-              <div className="p-8 rounded-2xl bg-white border border-[#E5E0D8] text-center text-gray-400 text-xs italic">
-                No support tickets found for active filter.
+                )}
               </div>
-            )}
-          </div>
 
-          {/* Active Thread View with Admin Powers */}
-          <div className="lg:col-span-2">
-            {selectedTicket ? (
-              <TicketThreadView
-                ticket={selectedTicket}
-                userRole="ADMIN"
-                onReplyAdded={fetchTickets}
-              />
-            ) : (
-              <div className="bg-white rounded-2xl border border-[#E5E0D8] h-[600px] flex items-center justify-center text-gray-400 text-xs italic">
-                Select a ticket to begin communication
+              {/* Active Thread View with Admin Powers */}
+              <div className="lg:col-span-2">
+                {selectedTicket ? (
+                  <TicketThreadView
+                    ticket={selectedTicket}
+                    userRole="ADMIN"
+                    onReplyAdded={fetchTickets}
+                    onSendingChange={(sending) => setLoading(sending)}
+                  />
+                ) : (
+                  <div className="bg-white rounded-2xl border border-[#E5E0D8] h-[600px] flex items-center justify-center text-gray-400 text-xs italic">
+                    Select a ticket to begin communication
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

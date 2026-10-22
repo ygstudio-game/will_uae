@@ -1,30 +1,41 @@
 "use client";
 
-import React, { useState } from "react";
-import { Send, CheckCircle2, AlertCircle, Clock, Paperclip, Check } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { Send, CheckCircle2, AlertCircle, Clock, Paperclip, Check, RotateCw, Loader2 } from "lucide-react";
 import { TicketStatus } from "@prisma/client";
 
 interface TicketThreadViewProps {
   ticket: any;
   userRole: "CUSTOMER" | "ADMIN";
   onReplyAdded: () => void;
+  onSendingChange?: (sending: boolean, label?: string) => void;
 }
 
 export function TicketThreadView({
   ticket,
   userRole,
   onReplyAdded,
+  onSendingChange,
 }: TicketThreadViewProps) {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [statusUpdating, setStatusUpdating] = useState(false);
   const [statusUpdate, setStatusUpdate] = useState<TicketStatus | null>(null);
   const [attachedFileName, setAttachedFileName] = useState<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const messagesList = ticket?.replies || ticket?.messages || [];
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messagesList.length, ticket?.id]);
 
   const handleSendReply = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim()) return;
+    if (!message.trim() || !ticket?.id) return;
 
     setLoading(true);
+    onSendingChange?.(true, userRole === "CUSTOMER" ? "Delivering reply to legal team..." : "Delivering client message...");
     try {
       const fullMessage = attachedFileName
         ? `${message.trim()}\n\n[Attachment: ${attachedFileName}]`
@@ -46,11 +57,40 @@ export function TicketThreadView({
         setAttachedFileName(null);
         setStatusUpdate(null);
         onReplyAdded();
+      } else {
+        alert(data.error || "Failed to send reply. Please try again.");
       }
     } catch (err) {
       console.error("Failed to send reply:", err);
     } finally {
       setLoading(false);
+      onSendingChange?.(false);
+    }
+  };
+
+  const handleAdminStatusToggle = async (newStatus: TicketStatus) => {
+    if (!ticket?.id || statusUpdating) return;
+    setStatusUpdating(true);
+    onSendingChange?.(true, `Updating conversation status to ${newStatus.replace("_", " ")}...`);
+    try {
+      const res = await fetch(`/api/tickets/${ticket.id}/replies`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: `[Court Status Update: Conversation marked as ${newStatus.replace("_", " ")}]`,
+          senderRole: "ADMIN",
+          updateStatus: newStatus,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        onReplyAdded();
+      }
+    } catch (err) {
+      console.error("Failed to update status:", err);
+    } finally {
+      setStatusUpdating(false);
+      onSendingChange?.(false);
     }
   };
 
@@ -81,7 +121,7 @@ export function TicketThreadView({
   return (
     <section className="bg-[#FFFEFA] rounded-2xl border border-[#E4DFEE] shadow-card-soft overflow-hidden flex flex-col h-[640px]">
       {/* Header */}
-      <header className="px-6 py-4 border-b border-[#E4DFEE] bg-[#FAF9F6] flex items-center justify-between gap-3">
+      <header className="px-6 py-4 border-b border-[#E4DFEE] bg-[#FAF9F6] flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-base font-serif font-bold text-[#29213F]">
@@ -98,12 +138,39 @@ export function TicketThreadView({
             })}
           </span>
         </div>
+
+        {/* Admin Quick Action Controls */}
+        {userRole === "ADMIN" && (
+          <div className="flex items-center gap-2">
+            {ticket.status !== "RESOLVED" ? (
+              <button
+                type="button"
+                disabled={statusUpdating}
+                onClick={() => handleAdminStatusToggle("RESOLVED")}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-100 hover:bg-emerald-200 text-emerald-800 transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50"
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span>Mark Resolved</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled={statusUpdating}
+                onClick={() => handleAdminStatusToggle("OPEN")}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-800 transition-colors flex items-center gap-1 cursor-pointer disabled:opacity-50"
+              >
+                <RotateCw className="w-3.5 h-3.5" />
+                <span>Reopen</span>
+              </button>
+            )}
+          </div>
+        )}
       </header>
 
       {/* Message History Thread */}
       <div className="flex-1 p-6 overflow-y-auto space-y-4 bg-white">
-        {ticket.messages && ticket.messages.length > 0 ? (
-          ticket.messages.map((msg: any) => {
+        {messagesList.length > 0 ? (
+          messagesList.map((msg: any) => {
             const isMe =
               (userRole === "CUSTOMER" && msg.senderRole === "CUSTOMER") ||
               (userRole === "ADMIN" && msg.senderRole === "ADMIN");
@@ -116,7 +183,11 @@ export function TicketThreadView({
                 }`}
               >
                 <span className="text-[11px] text-gray-400 mb-1 px-1">
-                  {isMe ? "You" : `${msg.senderName || "OWA Legal Team"} (Court Specialist)`} ·{" "}
+                  {isMe
+                    ? "You"
+                    : userRole === "CUSTOMER"
+                    ? `${msg.senderName || "OWA Legal Specialist"} (Court Desk)`
+                    : `${msg.senderName || "Client"} (Testator)`} ·{" "}
                   {new Date(msg.createdAt).toLocaleTimeString([], {
                     hour: "2-digit",
                     minute: "2-digit",
@@ -127,7 +198,7 @@ export function TicketThreadView({
                   className={`p-3.5 rounded-2xl text-xs sm:text-sm leading-relaxed whitespace-pre-wrap ${
                     isMe
                       ? "bg-[#F0EBF9] text-[#29213F] rounded-br-xs border border-[#DFD2EF]"
-                      : "bg-[#29213F] text-white rounded-bl-xs shadow-2xs"
+                      : "bg-[#0B1528] text-white rounded-bl-xs shadow-2xs"
                   }`}
                 >
                   {msg.message}
@@ -140,6 +211,7 @@ export function TicketThreadView({
             No messages in this conversation yet. Send a reply below.
           </div>
         )}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Reply Form */}
@@ -190,10 +262,19 @@ export function TicketThreadView({
           <button
             type="submit"
             disabled={loading || !message.trim()}
-            className="px-5 py-2 bg-[#6243AD] hover:bg-[#443074] disabled:opacity-50 text-white text-xs font-bold rounded-lg shadow-sm transition-all flex items-center gap-1.5"
+            className="px-5 py-2 bg-[#6243AD] hover:bg-[#443074] disabled:opacity-50 text-white text-xs font-bold rounded-lg shadow-sm transition-all flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
           >
-            <span>{loading ? "Sending..." : "Send reply"}</span>
-            <Send className="w-3.5 h-3.5" />
+            {loading ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>Sending...</span>
+              </>
+            ) : (
+              <>
+                <span>Send reply</span>
+                <Send className="w-3.5 h-3.5" />
+              </>
+            )}
           </button>
         </div>
       </form>

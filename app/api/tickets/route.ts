@@ -22,13 +22,15 @@ export async function GET(req: NextRequest) {
 
     if (isAdmin) {
       // Admin sees all tickets
-      if (appId) whereClause.applicationId = appId;
-    } else {
-      // Customer sees only their tickets
-      if (appId) {
+      if (appId && !appId.startsWith("draft-")) {
         whereClause.applicationId = appId;
-      } else if (session) {
+      }
+    } else {
+      // Customer sees their tickets
+      if (session) {
         whereClause.application = { accountId: session.accountId };
+      } else if (appId && !appId.startsWith("draft-")) {
+        whereClause.applicationId = appId;
       }
     }
 
@@ -47,7 +49,12 @@ export async function GET(req: NextRequest) {
       orderBy: { updatedAt: "desc" },
     });
 
-    return NextResponse.json({ success: true, tickets });
+    const formattedTickets = tickets.map((t) => ({
+      ...t,
+      messages: t.replies,
+    }));
+
+    return NextResponse.json({ success: true, tickets: formattedTickets });
   } catch (err: any) {
     console.error("[GET /api/tickets error]:", err);
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
@@ -107,10 +114,10 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Audit event
+    // Audit event (non-blocking)
     await prisma.auditEvent.create({
       data: {
-        applicationId,
+        applicationId: targetAppId,
         actor: session?.email || name,
         action: "TICKET_OPENED",
         details: {
@@ -119,9 +126,14 @@ export async function POST(req: NextRequest) {
           subject,
         },
       },
-    });
+    }).catch(() => {});
 
-    return NextResponse.json({ success: true, ticket });
+    const formattedTicket = {
+      ...ticket,
+      messages: ticket.replies,
+    };
+
+    return NextResponse.json({ success: true, ticket: formattedTicket });
   } catch (err: any) {
     console.error("[POST /api/tickets error]:", err);
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });

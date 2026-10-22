@@ -17,37 +17,19 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 bg-obsidian text-white border-b border-obsidian-light/60 shadow-md">
-      {/* Top micro-bar with court compliance indicator */}
-      <div className="bg-obsidian-dark border-b border-white/5 py-1 px-4 text-xs text-court-tan/90 flex justify-between items-center font-sans tracking-wide">
-        <div className="container mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>Abu Dhabi Judicial Department (ADJD) Civil Family Court Compliant</span>
-          </div>
-          <div className="hidden sm:flex items-center gap-4 text-white/70">
-            <span className="hover:text-court-tan cursor-pointer transition-colors">ADJD Form ADJD-NM0723-07-03</span>
-            <span className="text-white/20">|</span>
-            <span className="font-arabic text-sm hover:text-court-tan cursor-pointer transition-colors" dir="rtl">
-              العربية
-            </span>
-          </div>
-        </div>
-      </div>
-
       {/* Main navigation bar */}
       <div className="container mx-auto px-4 sm:px-6 h-16 sm:h-18 flex items-center justify-between">
-        {/* Brand & Crest */}
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-lg bg-court-bronze/15 border border-court-bronze/30 flex items-center justify-center text-court-bronze group-hover:bg-court-bronze/25 transition-colors">
-            <Scale className="w-5 h-5 text-court-bronze" />
-          </div>
-          <div>
-            <div className="font-serif font-bold text-base sm:text-lg tracking-tight text-white group-hover:text-court-tan transition-colors">
-              UAE Non-Muslim Will
-            </div>
-            <div className="text-[11px] text-white/60 tracking-wider uppercase font-sans">
-              Civil Family Court Preparation
-            </div>
+        {/* Brand: owa · Online Wills Advisor */}
+        <Link href="/" className="flex items-center gap-3 group select-none">
+          <div className="flex items-center gap-3">
+            <span className="font-serif text-[30px] sm:text-[33px] tracking-[-1.8px] leading-none text-white group-hover:text-court-tan transition-colors lowercase font-normal">
+              owa
+            </span>
+            <span className="text-[9px] sm:text-[9.5px] leading-[1.35] tracking-[1.4px] border-l border-white/20 pl-3 uppercase text-white/75 group-hover:text-white transition-colors font-sans font-medium">
+              Online Wills
+              <br />
+              Advisor
+            </span>
           </div>
         </Link>
 

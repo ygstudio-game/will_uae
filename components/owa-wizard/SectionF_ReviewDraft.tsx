@@ -34,6 +34,7 @@ export function SectionF_ReviewDraft() {
   // Section Checks
   const isSectionAOk = Boolean(testator?.fullName && testator?.passportNumber && testator?.dob && testator?.address);
 
+  const childrenAssignments = activeWill?.roleAssignments.filter((ra) => ra.role === "CHILD") || [];
   const isChildrenAnswered = Boolean(activeWill?.childrenAnswered || childrenAssignments.length > 0);
   const isSectionBOk = isChildrenAnswered && (
     !activeWill?.hasChildrenUnder18 ||
@@ -330,13 +331,17 @@ export function SectionF_ReviewDraft() {
                 className="p-3 rounded-xl bg-white border border-[#e4dfe9] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
               >
                 <div>
-                  <b className="text-xs text-[#231a30] block">{person.fullName || "Unnamed"}</b>
-                  <span className="text-[11px] text-[#6c6478]">{roles.join(", ")}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-[1.2px] text-[#C73A30] block">
+                    {roles.join(" · ").toUpperCase()}
+                  </span>
+                  <h3 className="text-base font-serif font-bold text-[#0B1528]">
+                    {person.fullName || "Unnamed"}
+                  </h3>
                 </div>
 
                 <div className="flex items-center gap-3 self-end sm:self-auto">
                   {isApproved && !isEditing ? (
-                    <span className="text-base font-arabic text-[#231a30]" dir="rtl">
+                    <span className="text-base font-arabic text-[#231a30] font-normal" dir="rtl">
                       {person.arabicName}
                     </span>
                   ) : (
@@ -348,7 +353,7 @@ export function SectionF_ReviewDraft() {
                       onBlur={async (e) => {
                         await addOrUpdatePerson({ id: person.id, arabicName: e.target.value });
                       }}
-                      className="px-3 py-1.5 rounded-lg border border-[#cfc6da] text-sm font-arabic bg-white text-right focus:outline-none focus:border-[#5b3fb0] w-48"
+                      className="px-3 py-1.5 rounded-lg border border-[#cfc6da] text-sm font-arabic text-[#8A6233] font-medium bg-white text-right focus:outline-none focus:border-[#5b3fb0] w-48"
                     />
                   )}
 

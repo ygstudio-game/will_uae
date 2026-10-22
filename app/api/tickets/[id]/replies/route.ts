@@ -72,10 +72,15 @@ export async function POST(
       },
     });
 
+    const formattedTicket = {
+      ...updatedTicket,
+      messages: updatedTicket.replies,
+    };
+
     return NextResponse.json({
       success: true,
       reply,
-      ticket: updatedTicket,
+      ticket: formattedTicket,
     });
   } catch (err: any) {
     console.error("[POST /api/tickets/[id]/replies error]:", err);

@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { Plus, Trash2, UserCheck, FileText, Upload, CheckCircle2, RotateCw } from "lucide-react";
+import { Plus, Trash2, HeartHandshake, CheckCircle2, RotateCw, Edit2 } from "lucide-react";
 import { useOwaStore } from "@/store/useOwaStore";
-import { transliterateToName } from "@/lib/transliterate";
-import { RoleType } from "@/types/owa";
+import { RoleType, PersonData } from "@/types/owa";
+import { UniversalPersonModal } from "@/components/owa-wizard/UniversalPersonModal";
 
 interface SlotDef {
   role: RoleType;
@@ -50,15 +50,18 @@ export function SectionC_Executors() {
   const {
     application,
     activeWillIndex,
-    addOrUpdatePerson,
     assignPersonToRole,
     removeRoleAssignment,
   } = useOwaStore();
 
   const activeWill = application?.wills.find((w) => w.willIndex === activeWillIndex);
   const existingPersons = application?.persons || [];
-  const [editingSlotRole, setEditingSlotRole] = useState<RoleType | null>(null);
-  const [replacingDocPersonId, setReplacingDocPersonId] = useState<string | null>(null);
+
+  // Modal State for UniversalPersonModal
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalPersonToEdit, setModalPersonToEdit] = useState<PersonData | null>(null);
+  const [modalDefaultRelationship, setModalDefaultRelationship] = useState("Spouse");
+  const [modalAssignSlot, setModalAssignSlot] = useState<SlotDef | null>(null);
 
   const getAssignment = (role: RoleType, order: number) => {
     return activeWill?.roleAssignments.find(
@@ -66,80 +69,61 @@ export function SectionC_Executors() {
     );
   };
 
-  const handleSelectExistingPerson = (role: RoleType, order: number, personId: string) => {
-    if (!personId) return;
-    assignPersonToRole(personId, role, order);
-    setEditingSlotRole(null);
-  };
+  const potentialSpouse = existingPersons.find(
+    (p) =>
+      p.id !== activeWill?.testatorPersonId &&
+      (p.relationship?.toLowerCase() === "spouse" ||
+        p.relationship?.toLowerCase() === "wife" ||
+        p.relationship?.toLowerCase() === "husband")
+  );
 
-  const handleAddNewPerson = async (slot: SlotDef) => {
-    const newPerson = await addOrUpdatePerson({
-      fullName: "",
-      relationship: slot.order === 1 ? "Spouse" : "Relative",
-      nationality: "British",
-      isUaeResident: true,
-    });
+  const primaryAssignment = getAssignment("EXECUTOR_PRIMARY", 1);
+  const primaryPerson =
+    primaryAssignment?.person ||
+    existingPersons.find((ep) => ep.id === primaryAssignment?.personId);
 
-    if (newPerson) {
-      assignPersonToRole(newPerson.id, slot.role, slot.order);
-      setEditingSlotRole(slot.role);
+  const isSpouseAlreadyPrimary = Boolean(
+    primaryPerson &&
+      (primaryPerson.relationship?.toLowerCase() === "spouse" ||
+        primaryPerson.relationship?.toLowerCase() === "wife" ||
+        primaryPerson.relationship?.toLowerCase() === "husband" ||
+        (potentialSpouse && primaryPerson.id === potentialSpouse.id))
+  );
+
+  // Appoint Spouse action (opens modal if spouse not created yet, or assigns immediately if exists)
+  const handleAppointSpouseExecutor = () => {
+    if (potentialSpouse) {
+      assignPersonToRole(potentialSpouse.id, "EXECUTOR_PRIMARY", 1);
+    } else {
+      setModalPersonToEdit(null);
+      setModalDefaultRelationship("Spouse");
+      setModalAssignSlot(SLOTS[0]);
+      setModalOpen(true);
     }
   };
 
-  const handleUpdateExecutor = async (
-    personId: string,
-    updates: Record<string, any>
-  ) => {
-    await addOrUpdatePerson({
-      id: personId,
-      ...updates,
-    });
+  // Add new person to slot
+  const handleAddNewPersonToSlot = (slot: SlotDef) => {
+    setModalPersonToEdit(null);
+    setModalDefaultRelationship(slot.order === 1 ? "Spouse" : "Relative");
+    setModalAssignSlot(slot);
+    setModalOpen(true);
   };
 
-  const handleExecutorNameBlur = async (
-    personId: string,
-    fullNameValue: string,
-    currentArabic?: string | null
-  ) => {
-    await handleUpdateExecutor(personId, { fullName: fullNameValue });
-    if (fullNameValue.trim() && !currentArabic?.trim()) {
-      const transliterated = await transliterateToName(fullNameValue);
-      if (transliterated) {
-        await handleUpdateExecutor(personId, {
-          fullName: fullNameValue,
-          arabicName: transliterated,
-        });
-      }
-    }
+  // Edit existing person details
+  const handleEditPerson = (person: PersonData) => {
+    setModalPersonToEdit(person);
+    setModalAssignSlot(null);
+    setModalOpen(true);
   };
 
-  const handleReplaceExecutorDoc = async (personId: string, file?: File) => {
-    if (!file) return;
-
-    setReplacingDocPersonId(personId);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("documentType", "PASSPORT");
-
-      const res = await fetch("/api/ocr", {
-        method: "POST",
-        body: formData,
-      });
-      const json = await res.json();
-      if (res.ok && json.success && json.data) {
-        const ocr = json.data;
-        const updates: Record<string, any> = {};
-        if (ocr.fullName) updates.fullName = ocr.fullName;
-        if (ocr.arabicName) updates.arabicName = ocr.arabicName;
-        if (ocr.passportNumber) updates.passportNumber = ocr.passportNumber;
-        if (ocr.nationality) updates.nationality = ocr.nationality;
-        await handleUpdateExecutor(personId, updates);
-      }
-    } catch (err) {
-      console.error("Error replacing document:", err);
-    } finally {
-      setReplacingDocPersonId(null);
+  // Select existing person or "+ Add a new person..." from dropdown
+  const handleDropdownChange = (slot: SlotDef, value: string) => {
+    if (!value) return;
+    if (value === "__ADD_NEW__") {
+      handleAddNewPersonToSlot(slot);
+    } else {
+      assignPersonToRole(value, slot.role, slot.order);
     }
   };
 
@@ -156,23 +140,65 @@ export function SectionC_Executors() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {/* Left Column: 3 Executor Slots */}
         <div className="lg:col-span-2 space-y-4">
+          {/* Quick Spouse Executor Banner: stays visible unless spouse is already 1st executor */}
+          {!isSpouseAlreadyPrimary && (
+            <div className="bg-[#382852] text-white p-4 sm:p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+              <div className="flex items-center gap-3">
+                <HeartHandshake className="w-5 h-5 text-[#d7b48b] shrink-0" />
+                <div>
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-[#d7b48b]">
+                    Appoint Spouse as 1st Executor
+                  </h4>
+                  <p className="text-xs text-[#d9d0e6] mt-0.5">
+                    {potentialSpouse ? (
+                      <>
+                        Set <strong>{potentialSpouse.fullName || "your spouse"}</strong> as your primary executor and trustee.
+                        {primaryPerson && ` (Currently: ${primaryPerson.fullName})`}
+                      </>
+                    ) : (
+                      <>
+                        Most testators appoint their spouse as their primary executor and trustee.
+                        {primaryPerson && ` (Currently: ${primaryPerson.fullName})`}
+                      </>
+                    )}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleAppointSpouseExecutor}
+                className="px-4 py-2 bg-[#d7b48b] hover:bg-[#c5a37a] text-[#281b40] text-xs font-semibold rounded-full shadow-sm transition-all whitespace-nowrap shrink-0 cursor-pointer"
+              >
+                {primaryPerson
+                  ? "Switch 1st Executor to Spouse"
+                  : potentialSpouse
+                  ? `Appoint ${potentialSpouse.fullName ? potentialSpouse.fullName.split(" ")[0] : "Spouse"} as Executor`
+                  : "+ Appoint Spouse as Executor"}
+              </button>
+            </div>
+          )}
+
           {SLOTS.map((slot) => {
             const assignment = getAssignment(slot.role, slot.order);
             const executorPerson =
               assignment?.person ||
               existingPersons.find((p) => p.id === assignment?.personId);
             const isAssigned = !!assignment && !!executorPerson;
-            const isEditing = editingSlotRole === slot.role;
 
-            // Slot assigned view (collapsed or editable)
-            if (isAssigned && !isEditing) {
+            // Slot Assigned View
+            if (isAssigned) {
+              const hasPassport = Boolean(
+                executorPerson.passportNumber ||
+                executorPerson.documents?.some((d) => d.documentType === "PASSPORT")
+              );
               const details = [
                 executorPerson.relationship || "Relative",
                 executorPerson.nationality || "British",
                 executorPerson.isUaeResident ? "lives in the UAE" : "lives outside the UAE",
-                executorPerson.passportNumber
-                  ? `passport ${executorPerson.passportNumber}`
-                  : "passport uploaded",
+                hasPassport ? "passport uploaded" : null,
+                executorPerson.emiratesId
+                  ? `ID ${executorPerson.emiratesId}`
+                  : null,
               ].filter(Boolean);
 
               return (
@@ -182,21 +208,21 @@ export function SectionC_Executors() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
-                      <span className="text-xs font-bold uppercase tracking-wider text-[#382852]">
-                        {slot.label} · {slot.tag}
+                      <span className="text-[11px] font-bold uppercase tracking-[1.2px] text-[#C73A30] block">
+                        {slot.label.toUpperCase()}
                       </span>
-                      <h2 className="text-lg font-serif font-bold text-[#231a30]">
+                      <h2 className="text-xl sm:text-[22px] font-serif font-bold text-[#0B1528] leading-tight tracking-tight">
                         {executorPerson.fullName || "Named Executor"}
                       </h2>
                       {executorPerson.arabicName && (
-                        <span className="text-base font-arabic text-[#231a30] block" dir="rtl">
+                        <span className="text-[15px] sm:text-[16px] font-arabic text-[#231a30] font-normal block w-fit text-left leading-relaxed" dir="rtl">
                           {executorPerson.arabicName}
                         </span>
                       )}
-                      <p className="text-xs text-[#6c6478]">
+                      <p className="text-[13px] text-[#6c6478] leading-relaxed pt-0.5">
                         {details.join(" · ")}
                       </p>
-                      <p className="text-xs text-[#8a6233] pt-1">
+                      <p className="text-xs text-[#797287] pt-1">
                         {slot.desc}
                       </p>
                     </div>
@@ -204,27 +230,25 @@ export function SectionC_Executors() {
                     <div className="flex items-center gap-2 shrink-0">
                       <button
                         type="button"
-                        onClick={() => setEditingSlotRole(slot.role)}
-                        className="px-3.5 py-1.5 rounded-full border border-[#cfc6da] hover:border-[#382852] text-xs font-semibold text-[#231a30] transition-colors cursor-pointer"
+                        onClick={() => handleEditPerson(executorPerson)}
+                        className="px-3.5 py-1.5 rounded-full border border-[#cfc6da] hover:border-[#382852] text-xs font-semibold text-[#231a30] transition-colors cursor-pointer inline-flex items-center gap-1"
                       >
-                        Edit
+                        <Edit2 className="w-3 h-3" /> Edit details
                       </button>
-                      {!slot.isRequired && (
-                        <button
-                          type="button"
-                          onClick={() => removeRoleAssignment(assignment.id)}
-                          className="text-xs text-[#b42318] hover:underline font-semibold cursor-pointer px-1"
-                        >
-                          Remove
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => removeRoleAssignment(assignment.id)}
+                        className="text-xs text-[#b42318] hover:underline font-semibold cursor-pointer px-1"
+                      >
+                        Change person
+                      </button>
                     </div>
                   </div>
                 </section>
               );
             }
 
-            // Editable or Empty Slot Form
+            // Slot Empty Picker View
             return (
               <section
                 key={slot.role}
@@ -235,225 +259,65 @@ export function SectionC_Executors() {
                 }`}
               >
                 <div className="space-y-1 mb-4">
-                  <span className={`text-xs font-bold uppercase tracking-wider ${
-                    slot.isRequired ? "text-[#b42318]" : "text-[#6c6478]"
-                  }`}>
-                    {slot.label} · {slot.tag}
+                  <span className="text-[11px] font-bold uppercase tracking-[1.2px] text-[#C73A30] block">
+                    {slot.label.toUpperCase()} · {slot.tag.toUpperCase()}
                   </span>
-                  <h2 className="text-base sm:text-lg font-serif font-bold text-[#231a30]">
-                    {slot.order === 1 ? "Choose your executor" : slot.order === 2 ? "Add a backup" : "Add a second backup"}
+                  <h2 className="text-lg font-serif font-bold text-[#0B1528]">
+                    {slot.order === 1 ? "Primary executor required" : slot.order === 2 ? "Appoint first backup executor" : "Appoint second backup executor"}
                   </h2>
                   <p className="text-xs text-[#6c6478]">
                     {slot.desc}
                   </p>
                 </div>
 
-                {!isAssigned ? (
-                  /* Picker row */
-                  <div className="space-y-3">
-                    <div className="flex flex-col sm:flex-row sm:items-end gap-3">
-                      <div className="flex-1">
-                        <label className="block text-xs font-semibold text-[#231a30] mb-1">
-                          Choose someone already in your Will
-                        </label>
-                        <select
-                          defaultValue=""
-                          onChange={(e) => handleSelectExistingPerson(slot.role, slot.order, e.target.value)}
-                          className="w-full px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-xs font-medium text-[#231a30] bg-white focus:outline-none focus:border-[#5b3fb0]"
-                        >
-                          <option value="" disabled>
-                            Select a person
-                          </option>
-                          {existingPersons.map((p) => (
+                <div className="space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+                    <div className="flex-1">
+                      <label className="block text-xs font-semibold text-[#231a30] mb-1">
+                        Choose someone already in your Will
+                      </label>
+                      <select
+                        defaultValue=""
+                        onChange={(e) => handleDropdownChange(slot, e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-xs font-medium text-[#231a30] bg-white focus:outline-none focus:border-[#5b3fb0] cursor-pointer"
+                      >
+                        <option value="" disabled>
+                          Select a person
+                        </option>
+                        {existingPersons
+                          .filter((p) => Boolean(p.fullName?.trim()) && p.id !== activeWill?.testatorPersonId)
+                          .map((p) => (
                             <option key={p.id} value={p.id}>
-                              {p.fullName || "Unnamed"} ({p.relationship || "Person"})
+                              {p.fullName} ({p.relationship || "Person"})
                             </option>
                           ))}
-                        </select>
-                      </div>
+                        <option value="__ADD_NEW__" className="font-semibold text-[#5b3fb0]">
+                          + Add a new person...
+                        </option>
+                      </select>
+                    </div>
 
+                    <button
+                      type="button"
+                      onClick={() => handleAddNewPersonToSlot(slot)}
+                      className="px-4 py-2.5 bg-[#382852] hover:bg-[#281b40] text-white text-xs font-semibold rounded-lg shadow-sm flex items-center justify-center gap-1.5 transition-all shrink-0 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Add a new person
+                    </button>
+
+                    {slot.order === 1 && !potentialSpouse && (
                       <button
                         type="button"
-                        onClick={() => handleAddNewPerson(slot)}
-                        className="px-4 py-2.5 bg-[#382852] hover:bg-[#281b40] text-white text-xs font-semibold rounded-lg shadow-sm flex items-center justify-center gap-1.5 transition-all shrink-0 cursor-pointer"
+                        onClick={handleAppointSpouseExecutor}
+                        className="px-3.5 py-2.5 border border-[#382852] text-[#382852] hover:bg-[#382852] hover:text-white text-xs font-semibold rounded-lg shadow-2xs flex items-center justify-center gap-1.5 transition-all shrink-0 cursor-pointer"
                       >
-                        <Plus className="w-3.5 h-3.5" />
-                        Add a new person
+                        <HeartHandshake className="w-3.5 h-3.5" />
+                        + Appoint Spouse
                       </button>
-                    </div>
-                  </div>
-                ) : (
-                  /* Full editing fields */
-                  <div className="space-y-4 pt-2">
-                    {/* Switch existing person link */}
-                    {existingPersons.length > 1 && (
-                      <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#f7f5fb] text-xs">
-                        <span className="text-[#6c6478]">Switch to someone else:</span>
-                        <select
-                          value={executorPerson.id}
-                          onChange={(e) => handleSelectExistingPerson(slot.role, slot.order, e.target.value)}
-                          className="px-2 py-1 rounded border border-[#cfc6da] bg-white text-xs"
-                        >
-                          {existingPersons.map((p) => (
-                            <option key={p.id} value={p.id}>
-                              {p.fullName || "Unnamed"} ({p.relationship || "Person"})
-                            </option>
-                          ))}
-                        </select>
-                      </div>
                     )}
-
-                    {/* UAE Residency Segment */}
-                    <div className="bg-[#f7f5fb] p-3 rounded-xl flex items-center justify-between gap-3">
-                      <div>
-                        <span className="text-xs font-semibold text-[#231a30] block">
-                          Lives in the UAE?
-                        </span>
-                        <span className="text-[11px] text-[#6c6478]">
-                          If yes, add Emirates ID if available.
-                        </span>
-                      </div>
-                      <div className="inline-flex p-1 bg-white rounded-full border border-[#cfc6da] shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => handleUpdateExecutor(executorPerson.id, { isUaeResident: true })}
-                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                            executorPerson.isUaeResident ? "bg-[#382852] text-white" : "text-[#3b3346]"
-                          }`}
-                        >
-                          In UAE
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleUpdateExecutor(executorPerson.id, { isUaeResident: false })}
-                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                            !executorPerson.isUaeResident ? "bg-[#382852] text-white" : "text-[#3b3346]"
-                          }`}
-                        >
-                          Outside
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                      <div>
-                        <label className="block text-xs font-semibold text-[#231a30] mb-1">
-                          Full Legal Name (English) *
-                        </label>
-                        <input
-                          type="text"
-                          defaultValue={executorPerson.fullName || ""}
-                          key={`exec-name-${executorPerson.fullName}`}
-                          onBlur={(e) =>
-                            handleExecutorNameBlur(executorPerson.id, e.target.value, executorPerson.arabicName)
-                          }
-                          placeholder="e.g. David Alan Whitfield"
-                          className="w-full px-3 py-2 rounded-lg border border-[#cfc6da] text-xs bg-white focus:outline-none focus:border-[#5b3fb0]"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-[#231a30] mb-1">
-                          Phonetic Arabic Name <span className="font-normal text-[#6c6478]">(optional)</span>
-                        </label>
-                        <input
-                          type="text"
-                          dir="rtl"
-                          defaultValue={executorPerson.arabicName || ""}
-                          key={`exec-arabic-${executorPerson.arabicName}`}
-                          onBlur={(e) => handleUpdateExecutor(executorPerson.id, { arabicName: e.target.value })}
-                          placeholder="ديفيد ألان ويتفيلد"
-                          className="w-full px-3 py-2 rounded-lg border border-[#cfc6da] text-xs font-arabic bg-white focus:outline-none focus:border-[#5b3fb0]"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-[#231a30] mb-1">
-                          Relationship to you *
-                        </label>
-                        <select
-                          value={executorPerson.relationship || "Spouse"}
-                          onChange={(e) => handleUpdateExecutor(executorPerson.id, { relationship: e.target.value })}
-                          className="w-full px-3 py-2 rounded-lg border border-[#cfc6da] text-xs bg-white focus:outline-none focus:border-[#5b3fb0]"
-                        >
-                          <option value="Spouse">Spouse</option>
-                          <option value="Brother">Brother</option>
-                          <option value="Sister">Sister</option>
-                          <option value="Parent">Parent</option>
-                          <option value="Adult Child">Adult Child</option>
-                          <option value="Trusted Friend">Trusted Friend</option>
-                          <option value="Professional Trustee">Professional Trustee</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-[#231a30] mb-1">
-                          Nationality *
-                        </label>
-                        <input
-                          type="text"
-                          defaultValue={executorPerson.nationality || ""}
-                          key={`exec-nat-${executorPerson.nationality}`}
-                          onBlur={(e) => handleUpdateExecutor(executorPerson.id, { nationality: e.target.value })}
-                          placeholder="e.g. British"
-                          className="w-full px-3 py-2 rounded-lg border border-[#cfc6da] text-xs bg-white focus:outline-none focus:border-[#5b3fb0]"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-[#231a30] mb-1">
-                          Passport Number *
-                        </label>
-                        <input
-                          type="text"
-                          defaultValue={executorPerson.passportNumber || ""}
-                          key={`exec-pass-${executorPerson.passportNumber}`}
-                          onBlur={(e) => handleUpdateExecutor(executorPerson.id, { passportNumber: e.target.value })}
-                          placeholder="e.g. 509876543"
-                          className="w-full px-3 py-2 rounded-lg border border-[#cfc6da] text-xs font-mono bg-white focus:outline-none focus:border-[#5b3fb0]"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-[#231a30] mb-1">
-                          Emirates ID <span className="font-normal text-[#6c6478]">(if UAE resident)</span>
-                        </label>
-                        <input
-                          type="text"
-                          defaultValue={executorPerson.emiratesId || ""}
-                          key={`exec-eid-${executorPerson.emiratesId}`}
-                          onBlur={(e) => handleUpdateExecutor(executorPerson.id, { emiratesId: e.target.value })}
-                          placeholder="784-XXXX-XXXXXXX-X"
-                          className="w-full px-3 py-2 rounded-lg border border-[#cfc6da] text-xs font-mono bg-white focus:outline-none focus:border-[#5b3fb0]"
-                        />
-                      </div>
-
-                      <div className="sm:col-span-2">
-                        <label className="block text-xs font-semibold text-[#231a30] mb-1">
-                          Current Residential Address *
-                        </label>
-                        <input
-                          type="text"
-                          defaultValue={executorPerson.address || ""}
-                          key={`exec-addr-${executorPerson.address}`}
-                          onBlur={(e) => handleUpdateExecutor(executorPerson.id, { address: e.target.value })}
-                          placeholder="e.g. Apartment 14B, Al Bateen Tower, Abu Dhabi"
-                          className="w-full px-3 py-2 rounded-lg border border-[#cfc6da] text-xs bg-white focus:outline-none focus:border-[#5b3fb0]"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-end pt-2 border-t border-[#f0ebf5]">
-                      <button
-                        type="button"
-                        onClick={() => setEditingSlotRole(null)}
-                        className="px-4 py-1.5 rounded-full bg-[#382852] hover:bg-[#281b40] text-white text-xs font-semibold transition-all cursor-pointer"
-                      >
-                        Done Editing
-                      </button>
-                    </div>
                   </div>
-                )}
+                </div>
               </section>
             );
           })}
@@ -530,6 +394,28 @@ export function SectionC_Executors() {
           </p>
         </aside>
       </div>
+
+      {/* Universal Person Modal */}
+      <UniversalPersonModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        personToEdit={modalPersonToEdit}
+        defaultRelationship={modalDefaultRelationship}
+        title={
+          modalPersonToEdit
+            ? `Edit ${modalPersonToEdit.fullName || "person"}`
+            : modalDefaultRelationship.toLowerCase() === "spouse"
+            ? "Add your spouse"
+            : modalAssignSlot
+            ? `Add person for ${modalAssignSlot.label}`
+            : "Add a person"
+        }
+        onSave={(savedPerson) => {
+          if (modalAssignSlot) {
+            assignPersonToRole(savedPerson.id, modalAssignSlot.role, modalAssignSlot.order);
+          }
+        }}
+      />
     </div>
   );
 }

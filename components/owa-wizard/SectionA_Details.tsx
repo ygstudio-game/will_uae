@@ -19,7 +19,7 @@ import { transliterateToName } from "@/lib/transliterate";
 import { UploadedDocumentData, DocumentType } from "@/types/owa";
 
 export function SectionA_Details() {
-  const { application, activeWillIndex, addOrUpdatePerson } = useOwaStore();
+  const { application, activeWillIndex, addOrUpdatePerson, updateActiveWill } = useOwaStore();
 
   const activeWill = application?.wills.find((w) => w.willIndex === activeWillIndex);
   const testator = activeWill?.testatorPerson;
@@ -135,7 +135,10 @@ export function SectionA_Details() {
   }, [testator, activeWill]);
 
   // Save changes to store
-  const syncToStore = async (overrides?: Partial<typeof testator>) => {
+  const syncToStore = async (
+    overrides?: Partial<typeof testator> & { domicileCountry?: string },
+    willCountryOverride?: string
+  ) => {
     if (!testator?.id && !fullName && !overrides?.fullName) return;
 
     await addOrUpdatePerson({
@@ -151,6 +154,11 @@ export function SectionA_Details() {
       email: (overrides?.email ?? email).trim() || null,
       phone: (overrides?.phone ?? phone).trim() || null,
     });
+
+    const targetDomicile = (willCountryOverride ?? overrides?.domicileCountry ?? domicileCountry).trim();
+    if (targetDomicile) {
+      updateActiveWill({ domicileCountry: targetDomicile });
+    }
   };
 
   const handleBlur = () => {
@@ -214,6 +222,7 @@ export function SectionA_Details() {
         if (!domicileCountry) {
           setDomicileCountry(ocr.nationality);
           extractedData.domicileCountry = ocr.nationality;
+          updateActiveWill({ domicileCountry: ocr.nationality });
         }
       }
       if (ocr.passportNumber) {
@@ -354,12 +363,12 @@ export function SectionA_Details() {
       )}
 
       {/* SECTION 1: Document Upload Tiles */}
-      <div className="bg-[#FFFEFA] p-6 sm:p-7 rounded-2xl border border-[#e4dfe9] shadow-sm space-y-4">
-        <div className="border-b border-[#f0ebf5] pb-3">
-          <h2 className="text-base font-serif font-bold text-[#231a30]">
+      <div className="bg-white p-6 sm:p-7 rounded-xl border border-[#e4dfe9] shadow-xs space-y-5">
+        <div className="border-b border-[#f0ebf5] pb-3.5">
+          <h2 className="text-[19px] font-serif font-bold text-[#231a30] leading-snug">
             1. Upload documents
           </h2>
-          <p className="text-xs text-[#6c6478] mt-0.5">
+          <p className="text-[14px] text-[#6c6478] mt-1">
             PDF, JPG or PNG, up to 10 MB each.
           </p>
         </div>
@@ -367,35 +376,35 @@ export function SectionA_Details() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Tile 1: Passport */}
           <div
-            className={`p-4 rounded-xl border flex flex-col justify-between transition-all ${
+            className={`p-5 rounded-xl border flex flex-col justify-between transition-all min-h-[165px] ${
               passportUploaded
                 ? "border-[#b9dcc9] bg-[#f3faf6]"
-                : "border-2 border-dashed border-[#cfc6da] bg-white hover:border-[#5b3fb0]/40"
+                : "border-2 border-dashed border-[#cfc6da] bg-white hover:border-[#382852]/60"
             }`}
           >
             <div>
-              <div className="flex items-center justify-between gap-2 mb-1.5">
-                <span className="text-sm font-semibold text-[#231a30] flex items-center gap-1.5">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <span className="text-[15px] font-bold text-[#231a30] flex items-center gap-1.5">
                   <FileText className="w-4 h-4 text-[#8a6233]" />
                   <span>Passport</span>
                 </span>
                 {passportUploaded ? (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#1f5a3d] bg-[#e8f4ee] px-2 py-0.5 rounded-full">
-                    <CheckCircle2 className="w-3 h-3" /> Read
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#1f5a3d] bg-[#e8f4ee] px-2.5 py-0.5 rounded-full">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Read
                   </span>
                 ) : (
-                  <span className="text-[11px] font-semibold text-[#6c6478] bg-[#f1eef5] px-2 py-0.5 rounded-full">
+                  <span className="text-[11px] font-semibold text-[#6c6478] bg-[#f1eef5] px-2.5 py-0.5 rounded-full">
                     Required
                   </span>
                 )}
               </div>
-              <p className="text-xs text-[#6c6478] leading-relaxed mb-3">
+              <p className="text-[13px] text-[#6c6478] leading-relaxed mb-3">
                 {passportUploaded
                   ? "Read: name, date of birth, nationality, passport number."
                   : "The photo page. Fills the name, date of birth, nationality and passport number."}
               </p>
               {passportUploaded && (
-                <div className="text-[11px] font-mono text-[#6c6478] truncate mb-3 bg-white px-2.5 py-1.5 rounded border border-[#e4dfe9]">
+                <div className="text-[12px] font-mono text-[#6c6478] truncate mb-3 bg-white px-2.5 py-1.5 rounded-md border border-[#e4dfe9]">
                   📄 {passportFileName || "Passport_Identity.pdf"}
                 </div>
               )}
@@ -403,12 +412,12 @@ export function SectionA_Details() {
 
             <div className="pt-2 flex flex-col gap-1.5">
               <label
-                className={`cursor-pointer inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold shadow-sm transition-all text-center ${
+                className={`cursor-pointer inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-[13.5px] font-semibold transition-all text-center min-h-[42px] ${
                   analyzingType === "Passport"
                     ? "bg-[#5b3fb0] text-white animate-pulse"
                     : passportUploaded
                     ? "bg-white border border-[#cfc6da] text-[#231a30] hover:border-[#382852]"
-                    : "bg-[#382852] text-white hover:bg-[#281b40]"
+                    : "bg-[#382852] text-white hover:bg-[#281b40] shadow-sm"
                 }`}
               >
                 {analyzingType === "Passport" ? (
@@ -439,35 +448,35 @@ export function SectionA_Details() {
 
           {/* Tile 2: Emirates ID */}
           <div
-            className={`p-4 rounded-xl border flex flex-col justify-between transition-all ${
+            className={`p-5 rounded-xl border flex flex-col justify-between transition-all min-h-[165px] ${
               emiratesIdUploaded
                 ? "border-[#b9dcc9] bg-[#f3faf6]"
-                : "border-2 border-dashed border-[#cfc6da] bg-white hover:border-[#5b3fb0]/40"
+                : "border-2 border-dashed border-[#cfc6da] bg-white hover:border-[#382852]/60"
             }`}
           >
             <div>
-              <div className="flex items-center justify-between gap-2 mb-1.5">
-                <span className="text-sm font-semibold text-[#231a30] flex items-center gap-1.5">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <span className="text-[15px] font-bold text-[#231a30] flex items-center gap-1.5">
                   <CreditCard className="w-4 h-4 text-[#8a6233]" />
                   <span>Emirates ID</span>
                 </span>
                 {emiratesIdUploaded ? (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#1f5a3d] bg-[#e8f4ee] px-2 py-0.5 rounded-full">
-                    <CheckCircle2 className="w-3 h-3" /> Read
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#1f5a3d] bg-[#e8f4ee] px-2.5 py-0.5 rounded-full">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Read
                   </span>
                 ) : (
-                  <span className="text-[11px] font-medium text-[#6c6478]">
+                  <span className="text-[11px] font-semibold text-[#6c6478] bg-[#f1eef5] px-2.5 py-0.5 rounded-full">
                     Optional
                   </span>
                 )}
               </div>
-              <p className="text-xs text-[#6c6478] leading-relaxed mb-3">
+              <p className="text-[13px] text-[#6c6478] leading-relaxed mb-3">
                 {emiratesIdUploaded
                   ? "Read: Emirates ID number and official Arabic name."
                   : "Front and back, if you live in the UAE."}
               </p>
               {emiratesIdUploaded && (
-                <div className="text-[11px] font-mono text-[#6c6478] truncate mb-3 bg-white px-2.5 py-1.5 rounded border border-[#e4dfe9]">
+                <div className="text-[12px] font-mono text-[#6c6478] truncate mb-3 bg-white px-2.5 py-1.5 rounded-md border border-[#e4dfe9]">
                   🪪 {emiratesIdFileName || "Emirates_ID_Front_Back.jpg"}
                 </div>
               )}
@@ -475,12 +484,12 @@ export function SectionA_Details() {
 
             <div className="pt-2 flex flex-col gap-1.5">
               <label
-                className={`cursor-pointer inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold shadow-sm transition-all text-center ${
+                className={`cursor-pointer inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-[13.5px] font-semibold transition-all text-center min-h-[42px] ${
                   analyzingType === "Emirates ID"
                     ? "bg-[#5b3fb0] text-white animate-pulse"
                     : emiratesIdUploaded
                     ? "bg-white border border-[#cfc6da] text-[#231a30] hover:border-[#382852]"
-                    : "bg-[#382852] text-white hover:bg-[#281b40]"
+                    : "bg-[#382852] text-white hover:bg-[#281b40] shadow-sm"
                 }`}
               >
                 {analyzingType === "Emirates ID" ? (
@@ -511,35 +520,35 @@ export function SectionA_Details() {
 
           {/* Tile 3: Proof of Address */}
           <div
-            className={`p-4 rounded-xl border flex flex-col justify-between transition-all ${
+            className={`p-5 rounded-xl border flex flex-col justify-between transition-all min-h-[165px] ${
               addressProofUploaded
                 ? "border-[#b9dcc9] bg-[#f3faf6]"
-                : "border-2 border-dashed border-[#cfc6da] bg-white hover:border-[#5b3fb0]/40"
+                : "border-2 border-dashed border-[#cfc6da] bg-white hover:border-[#382852]/60"
             }`}
           >
             <div>
-              <div className="flex items-center justify-between gap-2 mb-1.5">
-                <span className="text-sm font-semibold text-[#231a30] flex items-center gap-1.5">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <span className="text-[15px] font-bold text-[#231a30] flex items-center gap-1.5">
                   <FileCheck className="w-4 h-4 text-[#8a6233]" />
                   <span>Proof of address</span>
                 </span>
                 {addressProofUploaded ? (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#1f5a3d] bg-[#e8f4ee] px-2 py-0.5 rounded-full">
-                    <CheckCircle2 className="w-3 h-3" /> Attached
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#1f5a3d] bg-[#e8f4ee] px-2.5 py-0.5 rounded-full">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Attached
                   </span>
                 ) : (
-                  <span className="text-[11px] font-semibold text-[#6c6478] bg-[#f1eef5] px-2 py-0.5 rounded-full">
+                  <span className="text-[11px] font-semibold text-[#6c6478] bg-[#f1eef5] px-2.5 py-0.5 rounded-full">
                     Required
                   </span>
                 )}
               </div>
-              <p className="text-xs text-[#6c6478] leading-relaxed mb-3">
+              <p className="text-[13px] text-[#6c6478] leading-relaxed mb-3">
                 {addressProofUploaded
                   ? "Matched to the residential address below."
                   : "A recent utility bill, bank statement or tenancy contract (Ejari or Tawtheeq)."}
               </p>
               {addressProofUploaded && (
-                <div className="text-[11px] font-mono text-[#6c6478] truncate mb-3 bg-white px-2.5 py-1.5 rounded border border-[#e4dfe9]">
+                <div className="text-[12px] font-mono text-[#6c6478] truncate mb-3 bg-white px-2.5 py-1.5 rounded-md border border-[#e4dfe9]">
                   🏠 {addressProofFileName || "Proof_Of_Address.pdf"}
                 </div>
               )}
@@ -547,12 +556,12 @@ export function SectionA_Details() {
 
             <div className="pt-2 flex flex-col gap-1.5">
               <label
-                className={`cursor-pointer inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold shadow-sm transition-all text-center ${
+                className={`cursor-pointer inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-[13.5px] font-semibold transition-all text-center min-h-[42px] ${
                   analyzingType === "Proof of Address"
                     ? "bg-[#5b3fb0] text-white animate-pulse"
                     : addressProofUploaded
                     ? "bg-white border border-[#cfc6da] text-[#231a30] hover:border-[#382852]"
-                    : "bg-[#382852] text-white hover:bg-[#281b40]"
+                    : "bg-[#382852] text-white hover:bg-[#281b40] shadow-sm"
                 }`}
               >
                 {analyzingType === "Proof of Address" ? (
@@ -584,12 +593,12 @@ export function SectionA_Details() {
       </div>
 
       {/* SECTION 2: Personal Details */}
-      <div className="bg-[#FFFEFA] p-6 sm:p-7 rounded-2xl border border-[#e4dfe9] shadow-sm space-y-5">
-        <div className="border-b border-[#f0ebf5] pb-3 flex items-center justify-between gap-2">
-          <h2 className="text-base font-serif font-bold text-[#231a30]">
+      <div className="bg-white p-6 sm:p-7 rounded-xl border border-[#e4dfe9] shadow-xs space-y-5">
+        <div className="border-b border-[#f0ebf5] pb-3.5 flex items-center justify-between gap-2">
+          <h2 className="text-[19px] font-serif font-bold text-[#231a30] leading-snug">
             2. Personal details
           </h2>
-          <span className="text-xs text-[#6c6478]">
+          <span className="text-[13.5px] text-[#6c6478]">
             Every field can be edited.
           </span>
         </div>
@@ -597,137 +606,143 @@ export function SectionA_Details() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Full Name in English */}
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-[#231a30]">
+            <div className="flex items-center justify-between mb-1.5">
+              <label htmlFor="field-fullName" className="block text-[14px] font-semibold text-[#231a30]">
                 Full name in English *
               </label>
               {autofilledFields.fullName && (
-                <span className="text-[10px] text-[#1f5a3d] font-semibold bg-[#e8f4ee] px-1.5 py-0.5 rounded">
+                <span className="text-[11px] text-[#1f5a3d] font-semibold bg-[#e8f4ee] px-2 py-0.5 rounded-md">
                   {autofilledFields.fullName}
                 </span>
               )}
             </div>
             <input
+              id="field-fullName"
               type="text"
               required
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               onBlur={handleFullNameBlur}
               placeholder="e.g. Daniel Michael Carter"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-sm focus:outline-none focus:border-[#5b3fb0] focus:ring-1 focus:ring-[#5b3fb0] bg-white"
+              className="w-full min-h-[48px] px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-[15px] text-[#231a30] focus:outline-none focus:border-[#382852] focus:ring-2 focus:ring-[#d7b48b]/30 bg-white transition-all"
             />
           </div>
 
           {/* Full Name in Arabic */}
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-[#231a30]">
+            <div className="flex items-center justify-between mb-1.5">
+              <label htmlFor="field-arabicName" className="block text-[14px] font-semibold text-[#231a30]">
                 Full name in Arabic <span className="font-normal text-[#6c6478]">(optional)</span>
               </label>
               {autofilledFields.arabicName && (
-                <span className="text-[10px] text-[#1f5a3d] font-semibold bg-[#e8f4ee] px-1.5 py-0.5 rounded">
+                <span className="text-[11px] text-[#1f5a3d] font-semibold bg-[#e8f4ee] px-2 py-0.5 rounded-md">
                   {autofilledFields.arabicName}
                 </span>
               )}
             </div>
             <input
+              id="field-arabicName"
               type="text"
               dir="rtl"
               value={arabicName}
               onChange={(e) => setArabicName(e.target.value)}
               onBlur={handleBlur}
               placeholder="دانيال مايكل كارتر"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-sm font-arabic focus:outline-none focus:border-[#5b3fb0] focus:ring-1 focus:ring-[#5b3fb0] bg-white"
+              className="w-full min-h-[48px] px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-[15px] font-arabic text-[#8A6233] font-medium focus:outline-none focus:border-[#382852] focus:ring-2 focus:ring-[#d7b48b]/30 bg-white transition-all"
             />
-            <p className="text-[11px] text-[#6c6478] mt-1">
+            <p className="text-[13px] text-[#6c6478] mt-1.5">
               Spelled by sound, not translated. You approve it in Section F.
             </p>
           </div>
 
           {/* Date of Birth */}
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-[#231a30]">
+            <div className="flex items-center justify-between mb-1.5">
+              <label htmlFor="field-dob" className="block text-[14px] font-semibold text-[#231a30]">
                 Date of birth *
               </label>
               {autofilledFields.dob && (
-                <span className="text-[10px] text-[#1f5a3d] font-semibold bg-[#e8f4ee] px-1.5 py-0.5 rounded">
+                <span className="text-[11px] text-[#1f5a3d] font-semibold bg-[#e8f4ee] px-2 py-0.5 rounded-md">
                   Autofilled
                 </span>
               )}
             </div>
             <input
+              id="field-dob"
               type="date"
               required
               value={dob}
               onChange={(e) => setDob(e.target.value)}
               onBlur={handleBlur}
-              className="w-full px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-sm focus:outline-none focus:border-[#5b3fb0] focus:ring-1 focus:ring-[#5b3fb0] bg-white"
+              className="w-full min-h-[48px] px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-[15px] text-[#231a30] focus:outline-none focus:border-[#382852] focus:ring-2 focus:ring-[#d7b48b]/30 bg-white transition-all"
             />
-            <p className="text-[11px] text-[#6c6478] mt-1">
+            <p className="text-[13px] text-[#6c6478] mt-1.5">
               You must be over 21 to make an ADJD civil Will.
             </p>
           </div>
 
           {/* Nationality */}
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-[#231a30]">
+            <div className="flex items-center justify-between mb-1.5">
+              <label htmlFor="field-nationality" className="block text-[14px] font-semibold text-[#231a30]">
                 Nationality *
               </label>
               {autofilledFields.nationality && (
-                <span className="text-[10px] text-[#1f5a3d] font-semibold bg-[#e8f4ee] px-1.5 py-0.5 rounded">
+                <span className="text-[11px] text-[#1f5a3d] font-semibold bg-[#e8f4ee] px-2 py-0.5 rounded-md">
                   Autofilled
                 </span>
               )}
             </div>
             <input
+              id="field-nationality"
               type="text"
               required
               value={nationality}
               onChange={(e) => setNationality(e.target.value)}
               onBlur={handleBlur}
               placeholder="e.g. British"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-sm focus:outline-none focus:border-[#5b3fb0] focus:ring-1 focus:ring-[#5b3fb0] bg-white"
+              className="w-full min-h-[48px] px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-[15px] text-[#231a30] focus:outline-none focus:border-[#382852] focus:ring-2 focus:ring-[#d7b48b]/30 bg-white transition-all"
             />
           </div>
 
           {/* Passport Number */}
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-[#231a30]">
+            <div className="flex items-center justify-between mb-1.5">
+              <label htmlFor="field-passportNumber" className="block text-[14px] font-semibold text-[#231a30]">
                 Passport number *
               </label>
               {autofilledFields.passportNumber && (
-                <span className="text-[10px] text-[#1f5a3d] font-semibold bg-[#e8f4ee] px-1.5 py-0.5 rounded">
+                <span className="text-[11px] text-[#1f5a3d] font-semibold bg-[#e8f4ee] px-2 py-0.5 rounded-md">
                   Autofilled
                 </span>
               )}
             </div>
             <input
+              id="field-passportNumber"
               type="text"
               required
               value={passportNumber}
               onChange={(e) => setPassportNumber(e.target.value)}
               onBlur={handleBlur}
               placeholder="GBR12345678"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-sm font-mono focus:outline-none focus:border-[#5b3fb0] focus:ring-1 focus:ring-[#5b3fb0] bg-white"
+              className="w-full min-h-[48px] px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-[15px] font-mono text-[#231a30] focus:outline-none focus:border-[#382852] focus:ring-2 focus:ring-[#d7b48b]/30 bg-white transition-all"
             />
           </div>
 
           {/* Emirates ID Number */}
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-[#231a30]">
+            <div className="flex items-center justify-between mb-1.5">
+              <label htmlFor="field-emiratesId" className="block text-[14px] font-semibold text-[#231a30]">
                 Emirates ID number <span className="font-normal text-[#6c6478]">(optional)</span>
               </label>
               {autofilledFields.emiratesId && (
-                <span className="text-[10px] text-[#1f5a3d] font-semibold bg-[#e8f4ee] px-1.5 py-0.5 rounded">
+                <span className="text-[11px] text-[#1f5a3d] font-semibold bg-[#e8f4ee] px-2 py-0.5 rounded-md">
                   Autofilled
                 </span>
               )}
             </div>
             <input
+              id="field-emiratesId"
               type="text"
               value={emiratesId}
               onChange={(e) => {
@@ -736,9 +751,9 @@ export function SectionA_Details() {
               }}
               onBlur={handleBlur}
               placeholder="784-1982-1234567-1"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-sm font-mono focus:outline-none focus:border-[#5b3fb0] focus:ring-1 focus:ring-[#5b3fb0] bg-white"
+              className="w-full min-h-[48px] px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-[15px] font-mono text-[#231a30] focus:outline-none focus:border-[#382852] focus:ring-2 focus:ring-[#d7b48b]/30 bg-white transition-all"
             />
-            <p className="text-[11px] text-[#6c6478] mt-1">
+            <p className="text-[13px] text-[#6c6478] mt-1.5">
               If you live in the UAE.
             </p>
           </div>
@@ -746,9 +761,9 @@ export function SectionA_Details() {
       </div>
 
       {/* SECTION 3: Address, Domicile and Contact */}
-      <div className="bg-[#FFFEFA] p-6 sm:p-7 rounded-2xl border border-[#e4dfe9] shadow-sm space-y-5">
-        <div className="border-b border-[#f0ebf5] pb-3">
-          <h2 className="text-base font-serif font-bold text-[#231a30]">
+      <div className="bg-white p-6 sm:p-7 rounded-xl border border-[#e4dfe9] shadow-xs space-y-5">
+        <div className="border-b border-[#f0ebf5] pb-3.5">
+          <h2 className="text-[19px] font-serif font-bold text-[#231a30] leading-snug">
             3. Address, domicile and contact
           </h2>
         </div>
@@ -756,76 +771,88 @@ export function SectionA_Details() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Home Address in UAE */}
           <div className="sm:col-span-2">
-            <label className="block text-xs font-semibold text-[#231a30] mb-1">
+            <label htmlFor="field-address" className="block text-[14px] font-semibold text-[#231a30] mb-1.5">
               Current home address in the UAE *
             </label>
             <input
+              id="field-address"
               type="text"
               required
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               onBlur={handleBlur}
               placeholder="e.g. Villa 14, Saadiyat Beach Residences, Abu Dhabi"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-sm focus:outline-none focus:border-[#5b3fb0] focus:ring-1 focus:ring-[#5b3fb0] bg-white"
+              className="w-full min-h-[48px] px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-[15px] text-[#231a30] focus:outline-none focus:border-[#382852] focus:ring-2 focus:ring-[#d7b48b]/30 bg-white transition-all"
             />
-            <p className="text-[11px] text-[#6c6478] mt-1">
+            <p className="text-[13px] text-[#6c6478] mt-1.5">
               Where you live now. The address of a property you own does not count.
             </p>
           </div>
 
           {/* Country of Domicile */}
           <div>
-            <label className="block text-xs font-semibold text-[#231a30] mb-1">
+            <label htmlFor="field-domicileCountry" className="block text-[14px] font-semibold text-[#231a30] mb-1.5">
               Country of domicile *
             </label>
             <input
+              id="field-domicileCountry"
               type="text"
               required
               value={domicileCountry}
-              onChange={(e) => setDomicileCountry(e.target.value)}
-              onBlur={handleBlur}
+              onChange={(e) => {
+                const val = e.target.value;
+                setDomicileCountry(val);
+                updateActiveWill({ domicileCountry: val.trim() });
+              }}
+              onBlur={() => {
+                const val = domicileCountry.trim();
+                updateActiveWill({ domicileCountry: val });
+                syncToStore(undefined, val);
+              }}
               placeholder="e.g. United Kingdom"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-sm focus:outline-none focus:border-[#5b3fb0] focus:ring-1 focus:ring-[#5b3fb0] bg-white"
+              className="w-full min-h-[48px] px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-[15px] text-[#231a30] focus:outline-none focus:border-[#382852] focus:ring-2 focus:ring-[#d7b48b]/30 bg-white transition-all"
             />
-            <p className="text-[11px] text-[#6c6478] mt-1">
+            <p className="text-[13px] text-[#6c6478] mt-1.5">
               Section Ten of your Will records it.
             </p>
           </div>
 
           {/* Mobile Number */}
           <div>
-            <label className="block text-xs font-semibold text-[#231a30] mb-1">
+            <label htmlFor="field-phone" className="block text-[14px] font-semibold text-[#231a30] mb-1.5">
               Mobile number *
             </label>
             <input
+              id="field-phone"
               type="tel"
               required
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               onBlur={handleBlur}
               placeholder="+971 50 000 0000"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-sm focus:outline-none focus:border-[#5b3fb0] focus:ring-1 focus:ring-[#5b3fb0] bg-white"
+              className="w-full min-h-[48px] px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-[15px] text-[#231a30] focus:outline-none focus:border-[#382852] focus:ring-2 focus:ring-[#d7b48b]/30 bg-white transition-all"
             />
-            <p className="text-[11px] text-[#6c6478] mt-1">
+            <p className="text-[13px] text-[#6c6478] mt-1.5">
               Include country code, for example +971 50 000 0000.
             </p>
           </div>
 
           {/* Email Address */}
           <div className="sm:col-span-2">
-            <label className="block text-xs font-semibold text-[#231a30] mb-1">
+            <label htmlFor="field-email" className="block text-[14px] font-semibold text-[#231a30] mb-1.5">
               Email address *
             </label>
             <input
+              id="field-email"
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               onBlur={handleBlur}
               placeholder="name@example.com"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-sm focus:outline-none focus:border-[#5b3fb0] focus:ring-1 focus:ring-[#5b3fb0] bg-white"
+              className="w-full min-h-[48px] px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-[15px] text-[#231a30] focus:outline-none focus:border-[#382852] focus:ring-2 focus:ring-[#d7b48b]/30 bg-white transition-all"
             />
-            <p className="text-[11px] text-[#6c6478] mt-1">
+            <p className="text-[13px] text-[#6c6478] mt-1.5">
               We send updates on your Will here.
             </p>
           </div>
@@ -835,27 +862,29 @@ export function SectionA_Details() {
 
       {/* Right Column: Aside Notes */}
       <div className="aside-notes space-y-4">
-        <div className="owa-callout">
-          <Shield className="w-5 h-5 text-[#6243ad] flex-shrink-0" />
+        <div className="p-5 rounded-xl bg-[#efeaf7] border border-[#e4dfe9] flex items-start gap-3.5 text-[#231a30]">
+          <Shield className="w-5 h-5 text-[#5b3fb0] shrink-0 mt-0.5" />
           <div>
-            <strong className="block text-xs font-bold text-[#29213f] mb-1">
+            <strong className="block text-[14px] font-bold text-[#231a30] mb-1">
               Checked by a person
             </strong>
-            <p className="text-xs text-[#797287] leading-relaxed">
+            <p className="text-[13px] text-[#6c6478] leading-relaxed">
               AI can suggest details and flag issues. OWA manually verifies every application before filing with ADJD.
             </p>
           </div>
         </div>
 
-        <div className="owa-card">
-          <div className="owa-cardbody space-y-3">
-            <h3 className="text-[13px] font-bold text-[#29213f]">Have these ready</h3>
-            <p className="text-xs text-[#797287] leading-relaxed">
+        <div className="bg-white border border-[#e4dfe9] rounded-xl p-6 shadow-xs space-y-4">
+          <div>
+            <h3 className="text-[17px] font-serif font-bold text-[#231a30] mb-1.5">Have these ready</h3>
+            <p className="text-[13.5px] text-[#6c6478] leading-relaxed">
               Your passport, Emirates ID if applicable, and an address document such as a utility bill or tenancy contract.
             </p>
-            <hr className="border-t border-[#e4dfee] my-3" />
-            <h3 className="text-[13px] font-bold text-[#29213f]">Living outside the UAE?</h3>
-            <p className="text-xs text-[#797287] leading-relaxed">
+          </div>
+          <hr className="border-t border-[#f0ebf5]" />
+          <div>
+            <h3 className="text-[17px] font-serif font-bold text-[#231a30] mb-1.5">Living outside the UAE?</h3>
+            <p className="text-[13.5px] text-[#6c6478] leading-relaxed">
               Enter your actual current residential address. OWA will review your documents and court template details.
             </p>
           </div>

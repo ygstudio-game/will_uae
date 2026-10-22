@@ -269,10 +269,18 @@ export function SectionB_Children() {
                       {index + 1}
                     </span>
                     <div>
-                      <h2 className="text-base font-semibold text-[#231a30]">
+                      <span className="text-[10px] font-bold uppercase tracking-[1.2px] text-[#C73A30] block">
+                        CHILD {index + 1}
+                      </span>
+                      <h2 className="text-lg sm:text-xl font-serif font-bold text-[#0B1528] leading-tight">
                         {child?.fullName || `Child ${index + 1}`}
                       </h2>
-                      <span className="text-xs text-[#6c6478]">
+                      {child?.arabicName && (
+                        <span className="text-[14px] font-arabic text-[#231a30] font-normal block w-fit text-left leading-relaxed" dir="rtl">
+                          {child.arabicName}
+                        </span>
+                      )}
+                      <span className="text-xs text-[#6c6478] block pt-0.5">
                         {summaryParts.join(" · ") || "Details needed"}
                       </span>
                     </div>
@@ -312,9 +320,21 @@ export function SectionB_Children() {
                     <span className="w-8 h-8 rounded-full bg-[#382852] text-white font-serif font-bold text-sm flex items-center justify-center shrink-0">
                       {index + 1}
                     </span>
-                    <h2 className="text-base font-serif font-bold text-[#231a30]">
-                      {child?.fullName || `Child ${index + 1}`}
-                    </h2>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-[1.2px] text-[#C73A30] block">
+                        CHILD {index + 1}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-lg sm:text-xl font-serif font-bold text-[#0B1528]">
+                          {child?.fullName || `Child ${index + 1}`}
+                        </h2>
+                        {child?.arabicName && (
+                          <span className="text-[14px] font-arabic text-[#231a30] font-normal" dir="rtl">
+                            {child.arabicName}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-3">
@@ -556,7 +576,7 @@ export function SectionB_Children() {
                       key={`child-arabic-${child?.arabicName}`}
                       onBlur={(e) => handleUpdateChild(personId, { arabicName: e.target.value })}
                       placeholder="ليام دانيال كارتر"
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-sm font-arabic focus:outline-none focus:border-[#5b3fb0] focus:ring-1 focus:ring-[#5b3fb0] bg-white"
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-sm font-arabic text-[#8A6233] font-medium focus:outline-none focus:border-[#5b3fb0] focus:ring-1 focus:ring-[#5b3fb0] bg-white"
                     />
                   </div>
 

@@ -110,29 +110,61 @@ export async function PATCH(
         updateData.confirmedAt = isDraftConfirmed ? new Date() : null;
       }
 
-      await prisma.will.update({
+      // Find the will: check by ID or find the will belonging to this application
+      let targetWill = await prisma.will.findUnique({
         where: { id: willId },
-        data: updateData,
       });
+
+      if (!targetWill) {
+        targetWill = await prisma.will.findFirst({
+          where: { applicationId: params.id },
+        });
+      }
+
+      if (!targetWill) {
+        targetWill = await prisma.will.create({
+          data: {
+            applicationId: params.id,
+            willIndex: 1,
+            versionTag: "ADJD-NM0723-07-03",
+            domicileCountry: domicileCountry || "United Kingdom",
+            isDraftConfirmed: isDraftConfirmed || false,
+          },
+        });
+      } else {
+        await prisma.will.update({
+          where: { id: targetWill.id },
+          data: updateData,
+        });
+      }
+
+      const effectiveWillId = targetWill.id;
 
       // Update role assignments if provided
       if (Array.isArray(roleAssignments)) {
-        // Remove existing role assignments for this will and recreate
         await prisma.roleAssignment.deleteMany({
-          where: { willId },
+          where: { willId: effectiveWillId },
         });
 
         for (const ra of roleAssignments) {
           if (ra.personId && ra.role) {
-            await prisma.roleAssignment.create({
-              data: {
-                willId,
-                personId: ra.personId,
-                role: ra.role,
-                appointmentOrder: ra.appointmentOrder || 1,
-                sharePercentage: ra.sharePercentage || null,
-              },
+            const personExists = await prisma.person.findUnique({
+              where: { id: ra.personId },
             });
+            if (personExists) {
+              await prisma.roleAssignment.create({
+                data: {
+                  willId: effectiveWillId,
+                  personId: ra.personId,
+                  role: ra.role,
+                  appointmentOrder: ra.appointmentOrder || 1,
+                  sharePercentage:
+                    ra.sharePercentage !== null && ra.sharePercentage !== undefined
+                      ? Number(ra.sharePercentage)
+                      : null,
+                },
+              });
+            }
           }
         }
       }
