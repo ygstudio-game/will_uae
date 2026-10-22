@@ -127,7 +127,8 @@ function DashboardContent() {
   const [appData, setAppData] = useState<any>(null);
 
   useEffect(() => {
-    const appIdToLoad = searchParams.get("applicationId") || applicationId;
+    const rawAppId = searchParams.get("applicationId") || applicationId;
+    const appIdToLoad = rawAppId && !rawAppId.startsWith("draft-") ? rawAppId : null;
     if (appIdToLoad) {
       fetch(`/api/applications/${appIdToLoad}`)
         .then((res) => res.json())
@@ -139,7 +140,15 @@ function DashboardContent() {
         .catch((err) => console.error("Failed to load application:", err))
         .finally(() => setLoading(false));
     } else {
-      setLoading(false);
+      fetch("/api/applications/current")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.application) {
+            setAppData(data.application);
+          }
+        })
+        .catch((err) => console.error("Failed to load current application:", err))
+        .finally(() => setLoading(false));
     }
   }, [applicationId, searchParams]);
 

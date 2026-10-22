@@ -280,7 +280,7 @@ export async function PATCH(
     const effectiveWillId = targetWill.id;
 
     // 4. Update Role Assignments
-    if (Array.isArray(roleAssignments)) {
+    if (Array.isArray(roleAssignments) && roleAssignments.length > 0) {
       await prisma.roleAssignment.deleteMany({
         where: { willId: effectiveWillId },
       });
@@ -308,6 +308,10 @@ export async function PATCH(
           }
         }
       }
+    } else if (body.clearRoleAssignments === true) {
+      await prisma.roleAssignment.deleteMany({
+        where: { willId: effectiveWillId },
+      });
     }
 
     // 5. Update application status if provided

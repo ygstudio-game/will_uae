@@ -84,7 +84,8 @@ function WizardStepContent() {
     setNavigatingSection,
   } = useOwaStore();
 
-  const appIdQuery = searchParams.get("applicationId");
+  const rawAppIdQuery = searchParams.get("applicationId");
+  const appIdQuery = rawAppIdQuery && !rawAppIdQuery.startsWith("draft-") ? rawAppIdQuery : null;
 
   const syncedRef = React.useRef(false);
 
@@ -166,7 +167,10 @@ function WizardStepContent() {
     setNavigatingSection(true, targetSection, `Saving & opening ${targetTitle}... Please wait a moment`);
     try {
       await saveCurrentSectionToDb();
-      const queryStr = application?.id ? `?applicationId=${application.id}` : "";
+      const queryStr =
+        application?.id && !application.id.startsWith("draft-")
+          ? `?applicationId=${application.id}`
+          : "";
       router.push(`/wizard/${targetSection}${queryStr}`);
     } catch (err) {
       console.error("Navigation error:", err);
@@ -187,7 +191,10 @@ function WizardStepContent() {
     try {
       await saveCurrentSectionToDb();
       if (targetSection) {
-        const queryStr = application?.id ? `?applicationId=${application.id}` : "";
+        const queryStr =
+          application?.id && !application.id.startsWith("draft-")
+            ? `?applicationId=${application.id}`
+            : "";
         router.push(`/wizard/${targetSection}${queryStr}`);
       } else {
         router.push("/dashboard");
