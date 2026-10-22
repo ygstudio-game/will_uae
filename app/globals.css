@@ -352,12 +352,6 @@ p {
   gap: 5px;
 }
 
-.owa-savehint::before {
-  content: '✓';
-  color: #366d58;
-  font-weight: 700;
-}
-
 .owa-segmented {
   display: flex;
   background: #f7f4fc;

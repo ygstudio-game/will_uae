@@ -34,8 +34,15 @@ export function SectionF_ReviewDraft() {
   // Section Checks
   const isSectionAOk = Boolean(testator?.fullName && testator?.passportNumber && testator?.dob && testator?.address);
 
-  const childrenAssignments = activeWill?.roleAssignments.filter((ra) => ra.role === "CHILD") || [];
-  const isSectionBOk = true; // Section B is valid if user answered hasChildren or added children
+  const isChildrenAnswered = Boolean(activeWill?.childrenAnswered || childrenAssignments.length > 0);
+  const isSectionBOk = isChildrenAnswered && (
+    !activeWill?.hasChildrenUnder18 ||
+    (childrenAssignments.length > 0 &&
+      childrenAssignments.every((ca) => {
+        const p = ca.person || existingPersons.find((ep) => ep.id === ca.personId);
+        return !!(p?.fullName && p?.passportNumber);
+      }))
+  );
 
   const executors = activeWill?.roleAssignments.filter((ra) => ra.role.startsWith("EXECUTOR_")) || [];
   const isSectionCOk = executors.some((ra) => ra.role === "EXECUTOR_PRIMARY");
@@ -51,7 +58,7 @@ export function SectionF_ReviewDraft() {
     if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
     return age < 18;
   });
-  const isSectionDOk = minorChildren.length === 0 || guardians.some((ra) => ra.role === "GUARDIAN_PERMANENT");
+  const isSectionDOk = isSectionBOk && (minorChildren.length === 0 || guardians.some((ra) => ra.role === "GUARDIAN_PERMANENT"));
 
   const primaries = activeWill?.roleAssignments.filter(
     (ra) => ra.role === "BENEFICIARY_PRIMARY" || ra.role === "BENEFICIARY"

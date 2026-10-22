@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useOwaStore } from "@/store/useOwaStore";
+import { useAuth } from "@/context/AuthContext";
 import { MessageSquare } from "lucide-react";
 
 interface OwaHeaderProps {
@@ -13,18 +14,24 @@ interface OwaHeaderProps {
 export function OwaHeader({ activeTab }: OwaHeaderProps) {
   const pathname = usePathname();
   const { application, activeWillIndex } = useOwaStore();
+  const { user } = useAuth();
 
   const currentWill = application?.wills?.[activeWillIndex];
   const testator = currentWill?.testatorPerson;
-  const firstName = testator?.fullName?.split(" ")?.[0] || "Daniel";
-  const initials = testator?.fullName
-    ? testator.fullName
-        .split(" ")
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((n) => n[0].toUpperCase())
-        .join("")
-    : "DR";
+  const displayName =
+    testator?.fullName?.trim() ||
+    application?.account?.fullName?.trim() ||
+    user?.name?.trim() ||
+    user?.email?.split("@")[0] ||
+    "Your Account";
+  const firstName = displayName.split(" ")[0];
+  const initials =
+    displayName
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((n) => n[0].toUpperCase())
+      .join("") || "U";
 
   const isLanding = pathname === "/";
   const isDashboard = pathname === "/dashboard" || activeTab === "dashboard";

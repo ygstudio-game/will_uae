@@ -20,13 +20,21 @@ export function SectionB_Children() {
     addOrUpdatePerson,
     assignPersonToRole,
     removeRoleAssignment,
+    updateActiveWill,
   } = useOwaStore();
 
   const activeWill = application?.wills.find((w) => w.willIndex === activeWillIndex);
   const childAssignments =
     activeWill?.roleAssignments.filter((ra) => ra.role === "CHILD") || [];
 
-  const [hasChildren, setHasChildren] = useState(childAssignments.length > 0);
+  const initialHasChildren: boolean | null =
+    childAssignments.length > 0
+      ? true
+      : activeWill?.childrenAnswered
+      ? Boolean(activeWill?.hasChildrenUnder18)
+      : null;
+
+  const [hasChildren, setHasChildren] = useState<boolean | null>(initialHasChildren);
   const [openChildIndex, setOpenChildIndex] = useState<number>(
     childAssignments.length > 0 ? childAssignments.length - 1 : 0
   );
@@ -95,25 +103,7 @@ export function SectionB_Children() {
     file: File | undefined,
     type: "PASSPORT" | "EMIRATES_ID"
   ) => {
-    if (!file) {
-      // Simulation test fixture
-      if (type === "PASSPORT") {
-        await handleUpdateChild(personId, {
-          fullName: "Liam Daniel Carter",
-          arabicName: "ليام دانيال كارتر",
-          dob: "2015-08-22",
-          nationality: activeWill?.testatorPerson?.nationality || "British",
-          passportNumber: "GBR99887766",
-        });
-      } else {
-        await handleUpdateChild(personId, {
-          emiratesId: "784-2015-9988776-1",
-          arabicName: "ليام دانيال كارتر",
-          isUaeResident: true,
-        });
-      }
-      return;
-    }
+    if (!file) return;
 
     setAnalyzingChildId(personId);
     setAnalyzingType(type);
@@ -176,7 +166,7 @@ export function SectionB_Children() {
     <div className="space-y-6">
 
       {/* Children Existence Segment Question */}
-      <div className="bg-[#FFFEFA] p-6 rounded-2xl border border-[#e4dfe9] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div id="children-question" className="bg-[#FFFEFA] p-6 rounded-2xl border border-[#e4dfe9] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-sm sm:text-base font-semibold text-[#231a30]">
             Do you have children, by birth or legal adoption?
@@ -191,12 +181,16 @@ export function SectionB_Children() {
             type="button"
             onClick={() => {
               setHasChildren(true);
+              updateActiveWill({
+                hasChildrenUnder18: true,
+                childrenAnswered: true,
+              });
               if (childAssignments.length === 0) {
                 handleAddChild();
               }
             }}
             className={`px-5 py-2 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-              hasChildren
+              hasChildren === true
                 ? "bg-[#382852] text-white shadow-sm"
                 : "text-[#3b3346] hover:text-[#231a30]"
             }`}
@@ -207,9 +201,16 @@ export function SectionB_Children() {
             type="button"
             onClick={() => {
               setHasChildren(false);
+              updateActiveWill({
+                hasChildrenUnder18: false,
+                childrenAnswered: true,
+                roleAssignments: (activeWill?.roleAssignments || []).filter(
+                  (ra) => ra.role !== "CHILD" && !ra.role.startsWith("GUARDIAN_")
+                ),
+              });
             }}
             className={`px-5 py-2 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-              !hasChildren
+              hasChildren === false
                 ? "bg-[#382852] text-white shadow-sm"
                 : "text-[#3b3346] hover:text-[#231a30]"
             }`}
@@ -219,7 +220,13 @@ export function SectionB_Children() {
         </div>
       </div>
 
-      {!hasChildren && (
+      {hasChildren === null && (
+        <div className="p-4 rounded-xl bg-[#FAF9FC] border border-dashed border-[#cfc6da] text-xs sm:text-sm text-[#6c6478]">
+          Please select <strong className="text-[#231a30]">Yes</strong> or <strong className="text-[#231a30]">No</strong> above to confirm whether you have children under 18.
+        </div>
+      )}
+
+      {hasChildren === false && (
         <div className="p-4 rounded-xl bg-[#efeaf7] text-xs sm:text-sm text-[#231a30] space-y-1">
           <span className="font-semibold block">You indicated that you do not have children.</span>
           <p className="text-[#6c6478]">
@@ -229,7 +236,7 @@ export function SectionB_Children() {
       )}
 
       {/* Children List */}
-      {hasChildren && (
+      {hasChildren === true && (
         <div className="space-y-4">
           {childAssignments.map((assignment, index) => {
             const child =
@@ -438,16 +445,6 @@ export function SectionB_Children() {
                           }}
                         />
                       </label>
-
-                      {!child?.passportNumber && !isAnalyzingThisPassport && (
-                        <button
-                          type="button"
-                          onClick={() => handleChildFileUpload(personId, undefined, "PASSPORT")}
-                          className="text-[11px] text-[#5b3fb0] hover:underline font-medium text-center pt-1"
-                        >
-                          ⚡ Simulate OCR read
-                        </button>
-                      )}
                     </div>
                   </div>
 
@@ -521,16 +518,6 @@ export function SectionB_Children() {
                             }}
                           />
                         </label>
-
-                        {!child?.emiratesId && !isAnalyzingThisEmiratesId && (
-                          <button
-                            type="button"
-                            onClick={() => handleChildFileUpload(personId, undefined, "EMIRATES_ID")}
-                            className="text-[11px] text-[#5b3fb0] hover:underline font-medium text-center pt-1"
-                          >
-                            ⚡ Simulate OCR read
-                          </button>
-                        )}
                       </div>
                     </div>
                   ) : (

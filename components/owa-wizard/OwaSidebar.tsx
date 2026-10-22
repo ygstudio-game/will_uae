@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useOwaStore } from "@/store/useOwaStore";
+import { useAuth } from "@/context/AuthContext";
 import { OwaSectionId } from "@/types/owa";
 import { MessageSquare, FileText, Shield, Check } from "lucide-react";
 
@@ -22,6 +23,13 @@ const STEPS: { id: OwaSectionId; num: string; label: string }[] = [
 
 export function OwaSidebar({ currentSection }: OwaSidebarProps) {
   const router = useRouter();
+  const [mounted, setMounted] = React.useState(false);
+  const { user } = useAuth();
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const {
     application,
     activeWillIndex,
@@ -30,9 +38,14 @@ export function OwaSidebar({ currentSection }: OwaSidebarProps) {
     saveCurrentSectionToDb,
   } = useOwaStore();
 
-  const isCouples = application?.packageType === "COUPLES" || (application?.wills?.length || 0) > 1;
+  const isCouples = mounted && (application?.packageType === "COUPLES" || (application?.wills?.length || 0) > 1);
   const currentWill = application?.wills?.[activeWillIndex];
-  const testatorName = currentWill?.testatorPerson?.fullName || "Daniel Reyes";
+  const testatorName =
+    (mounted && currentWill?.testatorPerson?.fullName?.trim()) ||
+    application?.account?.fullName?.trim() ||
+    user?.name?.trim() ||
+    user?.email?.split("@")[0] ||
+    "Your Name";
 
   const handleStepClick = async (targetSection: OwaSectionId) => {
     if (targetSection === currentSection) return;
@@ -64,11 +77,15 @@ export function OwaSidebar({ currentSection }: OwaSidebarProps) {
           <div className="text-[10px] tracking-[1.5px] uppercase font-semibold text-[#6243ad] mb-1">
             Your individual Will
           </div>
-          <strong className="block text-[13.5px] text-[#29213f] font-semibold truncate">
+          <strong suppressHydrationWarning className="block text-[13.5px] text-[#29213f] font-semibold truncate">
             {testatorName}
           </strong>
-          <p className="text-[11px] text-[#797287] mt-0.5">
-            {application?.id ? `OWA-${application.id.slice(-6).toUpperCase()}` : "OWA-DEMO-001"}
+          <p suppressHydrationWarning className="text-[11px] text-[#797287] mt-0.5">
+            {application?.id
+              ? application.id.startsWith("draft-")
+                ? "OWA-DRAFT-001"
+                : `OWA-${application.id.replace(/[^a-zA-Z0-9]/g, "").slice(-6).toUpperCase()}`
+              : "OWA-DRAFT-001"}
           </p>
         </div>
       )}
@@ -81,9 +98,9 @@ export function OwaSidebar({ currentSection }: OwaSidebarProps) {
 
         {/* 6 Steps List */}
         <div className="flex flex-col gap-1">
-          {STEPS.map((step, idx) => {
+          {STEPS.map((step) => {
             const isActive = step.id === currentSection;
-            const isDone = isSectionComplete(step.id);
+            const isDone = mounted && isSectionComplete(step.id);
 
             return (
               <button
@@ -98,6 +115,7 @@ export function OwaSidebar({ currentSection }: OwaSidebarProps) {
               >
                 {/* Step number badge / checkmark */}
                 <span
+                  suppressHydrationWarning
                   className={`w-[22px] height-[22px] h-[22px] rounded-full flex items-center justify-center text-[11px] flex-shrink-0 border font-medium ${
                     isDone
                       ? "bg-[#e7f0eb] border-transparent text-[#366d58]"

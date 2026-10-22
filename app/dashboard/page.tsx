@@ -26,6 +26,7 @@ import { useOwaStore } from "@/store/useOwaStore";
 import { ApplicationStatus } from "@prisma/client";
 import { OwaSectionId } from "@/types/owa";
 import { OwaFooter } from "@/components/common/OwaFooter";
+import { CustomerSubNav } from "@/components/navigation/CustomerSubNav";
 
 const CHECKLIST_SECTIONS: { id: OwaSectionId; title: string; subtitle: string }[] = [
   {
@@ -204,6 +205,7 @@ function DashboardContent() {
 
   return (
     <div className="min-h-screen bg-[#FAF9F6] text-[#29213F]">
+      <CustomerSubNav />
       {/* Main Container */}
       <main className="max-w-6xl mx-auto px-4 sm:px-8 py-8 space-y-6">
         {/* Breadcrumb, Welcome Title & Couples Switcher */}
@@ -423,7 +425,7 @@ function DashboardContent() {
             <div className="bg-[#FFFEFA] border border-[#E4DFEE] rounded-2xl p-6 shadow-card-soft flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1">
                 <div className="text-[10px] tracking-wider uppercase font-bold text-[#6243AD] font-mono">
-                  LATEST DRAFT · VERSION {currentWill?.version || 1}
+                  LATEST DRAFT · VERSION {currentWill?.version || 1} · View-Only
                 </div>
                 <h3 className="font-serif text-lg font-bold text-[#29213F]">
                   Your bilingual court draft is ready

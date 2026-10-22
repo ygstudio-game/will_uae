@@ -96,6 +96,7 @@ export interface WillData {
   domicileCountry: string;
   declarationConfirmed: boolean;
   hasChildrenUnder18: boolean;
+  childrenAnswered?: boolean;
   isDraftConfirmed: boolean;
   confirmedAt?: string | null;
   roleAssignments: RoleAssignmentData[];

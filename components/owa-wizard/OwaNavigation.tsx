@@ -34,6 +34,12 @@ export function OwaNavigation({
   canContinue = true,
   saveError,
 }: OwaNavigationProps = {}) {
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const {
     currentSection: storeSection,
     application,
@@ -45,12 +51,12 @@ export function OwaNavigation({
 
   const currentSection = propSection || storeSection;
   const isSaving = propSaving ?? storeSaving;
-  const isCouples = application?.packageType === "COUPLES";
+  const isCouples = mounted && application?.packageType === "COUPLES";
   const activeWill = application?.wills?.find((w) => w.willIndex === activeWillIndex) || application?.wills?.[0];
   const partnerWill = application?.wills?.find((w) => w.willIndex !== activeWillIndex);
 
-  const testatorName = activeWill?.testatorPerson?.fullName?.split(" ")[0] || "You";
-  const partnerName = partnerWill?.testatorPerson?.fullName?.split(" ")[0] || "Partner";
+  const testatorName = (mounted && activeWill?.testatorPerson?.fullName?.split(" ")[0]) || "You";
+  const partnerName = (mounted && partnerWill?.testatorPerson?.fullName?.split(" ")[0]) || "Partner";
 
   const queryStr = application?.id ? `?applicationId=${application.id}` : "";
 
@@ -123,7 +129,7 @@ export function OwaNavigation({
           <ol className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-1">
             {STEP_DEFINITIONS.map((s) => {
               const isCur = s.id === currentSection;
-              const isDone = isSectionComplete(s.id);
+              const isDone = mounted && isSectionComplete(s.id);
 
               return (
                 <li key={s.id} className="shrink-0">
@@ -137,19 +143,21 @@ export function OwaNavigation({
                         : "bg-white text-gray-400 border-dashed border-[#DCD4E7] hover:text-gray-600"
                     }`}
                   >
-                    {isDone && !isCur ? (
-                      <span className="w-4 h-4 rounded-full bg-[#E7F0EB] text-[#366D58] flex items-center justify-center text-[10px]">
-                        ✓
-                      </span>
-                    ) : (
-                      <span
-                        className={`text-[11px] font-bold ${
-                          isCur ? "text-[#D7B48B]" : "text-gray-400"
-                        }`}
-                      >
-                        {s.code}
-                      </span>
-                    )}
+                    <span suppressHydrationWarning className="inline-flex items-center justify-center">
+                      {isDone && !isCur ? (
+                        <span className="w-4 h-4 rounded-full bg-[#E7F0EB] text-[#366D58] flex items-center justify-center text-[10px]">
+                          ✓
+                        </span>
+                      ) : (
+                        <span
+                          className={`text-[11px] font-bold ${
+                            isCur ? "text-[#D7B48B]" : "text-gray-400"
+                          }`}
+                        >
+                          {s.code}
+                        </span>
+                      )}
+                    </span>
                     <span>{s.title}</span>
                   </Link>
                 </li>

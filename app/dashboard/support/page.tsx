@@ -19,6 +19,7 @@ import {
 import { TicketThreadView } from "@/components/tickets/TicketThreadView";
 import { useOwaStore } from "@/store/useOwaStore";
 import { OwaFooter } from "@/components/common/OwaFooter";
+import { CustomerSubNav } from "@/components/navigation/CustomerSubNav";
 
 const TOPIC_PRESETS: Record<string, { subject: string; message: string }> = {
   child_passport: {
@@ -140,6 +141,7 @@ function CustomerSupportContent() {
 
   return (
     <div className="min-h-screen bg-[#FAF9F6] text-[#29213F]">
+      <CustomerSubNav />
       <main className="max-w-6xl mx-auto px-4 sm:px-8 py-8 space-y-6">
         {/* Header Breadcrumbs */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">

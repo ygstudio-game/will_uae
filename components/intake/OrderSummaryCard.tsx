@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { CheckCircle2, ShieldCheck, ArrowLeft, ArrowRight, Loader2, Lock } from "lucide-react";
 import { QualificationData } from "./QualificationForm";
 
@@ -163,12 +164,37 @@ export function OrderSummaryCard({ qualifications, onBack, onSuccess }: OrderSum
         </div>
       </div>
 
-      {/* Checkout Form */}
-      <form onSubmit={handlePay} className="space-y-4 pt-2">
+      {/* Account Setup & Sign In Link */}
+      <div className="pt-2 border-t border-[#E5E0D8]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-3">
+          <div>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-[#0B1528]">
+              Account & Sign-Up
+            </h4>
+            <p className="text-xs text-gray-500">
+              Your account will be created automatically to securely save your Will and documents.
+            </p>
+          </div>
+          <Link
+            href="/auth/signin"
+            className="text-xs font-semibold text-[#6243AD] hover:underline whitespace-nowrap"
+          >
+            Already have an account? Sign in →
+          </Link>
+        </div>
+      </div>
+
+      {/* Checkout & Account Creation Form
+          DEVELOPER NOTE FOR PAYMENT GATEWAY INTEGRATION:
+          1. Mount Stripe Elements (<PaymentElement />) or Checkout.com card widget here.
+          2. Customer payload (fullName, email, phone, packageType, amountAed) is already gathered and validated.
+          3. Endpoint /api/checkout/initial handles account provisioning, application creation, and session token.
+      */}
+      <form onSubmit={handlePay} className="space-y-4 pt-1">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
-              Contact Email
+              Contact Email *
             </label>
             <input
               type="email"
@@ -182,7 +208,7 @@ export function OrderSummaryCard({ qualifications, onBack, onSuccess }: OrderSum
 
           <div>
             <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
-              Mobile Phone
+              Mobile Phone *
             </label>
             <input
               type="text"
@@ -211,21 +237,21 @@ export function OrderSummaryCard({ qualifications, onBack, onSuccess }: OrderSum
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-4 rounded-xl bg-[#0B1528] hover:bg-[#111C33] text-white text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-md disabled:opacity-50 mt-4"
+          className="w-full py-4 rounded-xl bg-[#0B1528] hover:bg-[#111C33] text-white text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-md disabled:opacity-50 mt-4 cursor-pointer"
         >
           {loading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
             <>
               <Lock className="w-4 h-4 text-[#A37E44]" />
-              <span>Pay AED {initialFee.toLocaleString()} (Instant Simulator)</span>
+              <span>Create Account & Pay AED {initialFee.toLocaleString()}</span>
               <ArrowRight className="w-4 h-4" />
             </>
           )}
         </button>
 
         <p className="text-[11px] text-center text-gray-400 mt-2">
-          🔒 Secure 256-bit encrypted simulated checkout for staging evaluation.
+          🔒 Secure 256-bit encrypted checkout.
         </p>
       </form>
     </div>

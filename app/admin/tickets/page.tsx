@@ -13,15 +13,33 @@ import {
   Building,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { TicketThreadView } from "@/components/tickets/TicketThreadView";
 import { TicketStatus } from "@prisma/client";
 
 export default function AdminTicketsPage() {
+  const router = useRouter();
+  const [authChecking, setAuthChecking] = useState(true);
   const [tickets, setTickets] = useState<any[]>([]);
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<TicketStatus | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/admin/auth")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.authenticated) {
+          router.replace("/admin/login");
+        } else {
+          setAuthChecking(false);
+        }
+      })
+      .catch(() => {
+        router.replace("/admin/login");
+      });
+  }, [router]);
 
   const fetchTickets = async () => {
     setLoading(true);
@@ -45,8 +63,10 @@ export default function AdminTicketsPage() {
   };
 
   useEffect(() => {
-    fetchTickets();
-  }, [statusFilter]);
+    if (!authChecking) {
+      fetchTickets();
+    }
+  }, [authChecking, statusFilter]);
 
   const filteredTickets = tickets.filter((t) => {
     if (!searchTerm.trim()) return true;
@@ -60,6 +80,14 @@ export default function AdminTicketsPage() {
   });
 
   const selectedTicket = tickets.find((t) => t.id === selectedTicketId);
+
+  if (authChecking) {
+    return (
+      <div className="min-h-screen bg-[#FBF9F5] flex items-center justify-center p-8 text-gray-500">
+        <span className="text-sm">Verifying administrator session...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#FBF9F5] py-8 px-4 sm:px-8">

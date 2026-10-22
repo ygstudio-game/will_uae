@@ -270,15 +270,6 @@ function CourtFeeCheckoutContent() {
                               >
                                 {loading ? "Updating..." : "I have paid: notify OWA"}
                               </button>
-
-                              <button
-                                type="button"
-                                onClick={() => handlePayCourtFee("TEST_CARD_SIMULATION")}
-                                disabled={loading}
-                                className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-lg"
-                              >
-                                [Demo: Simulate Card Payment]
-                              </button>
                             </div>
 
                             <p className="text-[11px] text-gray-500">

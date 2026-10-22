@@ -166,7 +166,29 @@ export function SectionD_Guardians() {
     }
   };
 
-  // If no minor children exist
+  // If user has not yet answered Section B (Children)
+  if (!activeWill?.childrenAnswered && childAssignments.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-[#FAF9FC] p-6 sm:p-7 rounded-2xl border border-[#cfc6da] space-y-3">
+          <h2 className="text-lg font-serif font-bold text-[#231a30]">
+            Answer the children question first
+          </h2>
+          <p className="text-sm text-[#6c6478] leading-relaxed">
+            Please answer Section B (Children) before appointing guardians, to determine whether court guardianship appointments are required for your Will.
+          </p>
+          <Link
+            href="/wizard/children"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#382852] text-white text-xs font-semibold hover:bg-[#231a30] transition-colors"
+          >
+            Go to Section B (Children) →
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // If user answered but has no minor children (or no children at all)
   if (childAssignments.length === 0 || minorChildren.length === 0) {
     return (
       <div className="space-y-6">
@@ -177,7 +199,7 @@ export function SectionD_Guardians() {
           <p className="text-sm text-[#6c6478] leading-relaxed">
             {childAssignments.length > 0
               ? "None of the children you listed is under 18."
-              : "You told us you have no children."}{" "}
+              : "You indicated that you do not have minor children."}{" "}
             Section Nine of your Will stays empty.{" "}
             <Link href="/wizard/children" className="text-[#5b3fb0] font-semibold underline">
               Change your answer in Section B
@@ -464,20 +486,7 @@ export function SectionD_Guardians() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-2 border-t border-[#f0ebf5]">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleUpdateGuardian(guardianPerson.id, {
-                          passportNumber: "GBR77665544",
-                          arabicName: "ديفيد ألان ويتفيلد",
-                        })
-                      }
-                      className="text-xs text-[#5b3fb0] hover:underline font-medium"
-                    >
-                      ⚡ Simulate passport
-                    </button>
-
+                  <div className="flex items-center justify-end pt-2 border-t border-[#f0ebf5]">
                     <button
                       type="button"
                       onClick={() => setEditingSlotKey(null)}

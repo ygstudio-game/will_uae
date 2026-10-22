@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getAdminSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -8,6 +9,13 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const adminSession = await getAdminSession(req);
+    if (!adminSession) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized. Administrator credentials required." },
+        { status: 401 }
+      );
+    }
     const application = await prisma.application.findUnique({
       where: { id: params.id },
       include: {
@@ -55,6 +63,14 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
+    const adminSession = await getAdminSession(req);
+    if (!adminSession) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized. Administrator credentials required." },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json();
     const {
       status,

@@ -37,6 +37,9 @@ interface OwaState {
   ) => void;
   removeRoleAssignment: (roleAssignmentId: string) => void;
 
+  // Active Will Updates
+  updateActiveWill: (updates: Partial<WillData>) => void;
+
   // Couples Copy Logic
   copyWillToPartnerWill: () => Promise<boolean>;
 
@@ -78,6 +81,7 @@ export const createDefaultDraftApplication = (): ApplicationData => {
     domicileCountry: "",
     declarationConfirmed: false,
     hasChildrenUnder18: false,
+    childrenAnswered: false,
     isDraftConfirmed: false,
     roleAssignments: [],
   };
@@ -348,6 +352,7 @@ export const useOwaStore = create<OwaState>()(
             ...activeWill,
             roleAssignments: filtered,
             isDraftConfirmed: false,
+            ...(role === "CHILD" ? { hasChildrenUnder18: true, childrenAnswered: true } : {}),
           };
 
           set({
@@ -401,6 +406,28 @@ export const useOwaStore = create<OwaState>()(
             application: {
               ...state.application,
               persons: updatedPersons,
+              wills: updatedWills,
+            },
+          });
+        },
+
+        updateActiveWill: (updates: Partial<WillData>) => {
+          const state = get();
+          if (!state.application) return;
+          const activeWillIdx = state.application.wills.findIndex(
+            (w) => w.willIndex === state.activeWillIndex
+          );
+          if (activeWillIdx < 0) return;
+
+          const updatedWills = [...state.application.wills];
+          updatedWills[activeWillIdx] = {
+            ...updatedWills[activeWillIdx],
+            ...updates,
+          };
+
+          set({
+            application: {
+              ...state.application,
               wills: updatedWills,
             },
           });
@@ -461,18 +488,38 @@ export const useOwaStore = create<OwaState>()(
         switch (section) {
           case "details":
             return !!(will.testatorPerson?.fullName && will.testatorPerson?.passportNumber);
-          case "children":
-            // Complete if no children, or if all listed children have passports
+          case "children": {
             const children = will.roleAssignments.filter((ra) => ra.role === "CHILD");
-            return children.length === 0 || children.every((c) => !!c.person?.passportNumber);
+            // Must be explicitly answered or have children added
+            if (!will.childrenAnswered && children.length === 0) {
+              return false;
+            }
+            if (will.hasChildrenUnder18) {
+              return (
+                children.length > 0 &&
+                children.every((c) => {
+                  const p = c.person || state.application?.persons.find((ep) => ep.id === c.personId);
+                  return !!(p?.fullName?.trim() && p?.passportNumber?.trim());
+                })
+              );
+            }
+            // Explicitly confirmed no children
+            return will.childrenAnswered === true;
+          }
           case "executors":
             return will.roleAssignments.some((ra) => ra.role === "EXECUTOR_PRIMARY");
-          case "guardians":
-            const hasKids = will.roleAssignments.some((ra) => ra.role === "CHILD");
+          case "guardians": {
+            const children = will.roleAssignments.filter((ra) => ra.role === "CHILD");
+            // Guardians requires Children section to be answered first
+            if (!will.childrenAnswered && children.length === 0) {
+              return false;
+            }
+            const hasKids = children.length > 0 || will.hasChildrenUnder18;
             if (!hasKids) return true;
             const hasPerm = will.roleAssignments.some((ra) => ra.role === "GUARDIAN_PERMANENT");
             const hasSubPerm = will.roleAssignments.some((ra) => ra.role === "GUARDIAN_SUBSTITUTE_PERM");
             return hasPerm && hasSubPerm;
+          }
           case "beneficiaries": {
             const primaries = will.roleAssignments.filter(
               (ra) => ra.role === "BENEFICIARY_PRIMARY" || ra.role === "BENEFICIARY"

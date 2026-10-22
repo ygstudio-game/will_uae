@@ -4,9 +4,11 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { QualificationForm, QualificationData } from "@/components/intake/QualificationForm";
 import { OrderSummaryCard } from "@/components/intake/OrderSummaryCard";
+import { useAuth } from "@/context/AuthContext";
 
 export default function StartPage() {
   const router = useRouter();
+  const { refreshUser } = useAuth();
   const [step, setStep] = useState<"INTAKE" | "SUMMARY">("INTAKE");
   const [qualifications, setQualifications] = useState<QualificationData | null>(null);
 
@@ -15,7 +17,9 @@ export default function StartPage() {
     setStep("SUMMARY");
   };
 
-  const handleCheckoutSuccess = (resData: any) => {
+  const handleCheckoutSuccess = async (resData: any) => {
+    // Refresh auth state so navbar immediately shows user account
+    await refreshUser();
     // Redirect to dashboard with active application
     router.push(`/dashboard?appId=${resData.applicationId}`);
   };

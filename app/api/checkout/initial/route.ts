@@ -102,6 +102,11 @@ export async function POST(req: NextRequest) {
     }
 
     // 6. Record Initial Payment
+    // NOTE FOR INCOMING PAYMENT GATEWAY DEVELOPER:
+    // When hooking up Stripe / Checkout.com / Network International:
+    // 1. Create a PaymentIntent here: await stripe.paymentIntents.create({ amount: serviceFeeAed * 100, currency: 'aed' })
+    // 2. Return clientSecret to the frontend OrderSummaryCard to finalize 3DS2 card/Apple Pay capture.
+    // 3. Mark payment status as "COMPLETED" upon receiving the verified webhook (payment_intent.succeeded).
     const payment = await prisma.payment.create({
       data: {
         applicationId: application.id,

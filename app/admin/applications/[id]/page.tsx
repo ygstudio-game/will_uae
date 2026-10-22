@@ -31,6 +31,23 @@ export default function AdminApplicationDetailPage() {
   const [editPassport, setEditPassport] = useState("");
   const [correctionSaved, setCorrectionSaved] = useState(false);
 
+  const [authChecking, setAuthChecking] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/admin/auth")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.authenticated) {
+          router.replace("/admin/login");
+        } else {
+          setAuthChecking(false);
+        }
+      })
+      .catch(() => {
+        router.replace("/admin/login");
+      });
+  }, [router]);
+
   const fetchApplication = async () => {
     try {
       const res = await fetch(`/api/admin/applications/${id}`);
@@ -46,10 +63,10 @@ export default function AdminApplicationDetailPage() {
   };
 
   useEffect(() => {
-    if (id) {
+    if (!authChecking && id) {
       fetchApplication();
     }
-  }, [id]);
+  }, [authChecking, id]);
 
   if (loading || !application) {
     return (

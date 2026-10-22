@@ -174,43 +174,7 @@ export function SectionA_Details() {
 
   // --- Document Handlers & Gemini Vision OCR Integration ---
   const handlePassportUpload = async (file?: File) => {
-    if (!file) {
-      // Simulation test fixture
-      const filename = "Daniel_Carter_Passport_Bio.pdf";
-      setPassportUploaded(true);
-      setPassportFileName(filename);
-
-      const extractedData = {
-        fullName: fullName || "Daniel Michael Carter",
-        arabicName: arabicName || "دانيال مايكل كارتر",
-        dob: dob || "1982-05-14",
-        nationality: nationality || "British",
-        passportNumber: passportNumber || "GBR12345678",
-        domicileCountry: domicileCountry || "United Kingdom",
-      };
-
-      setFullName(extractedData.fullName);
-      setArabicName(extractedData.arabicName);
-      setDob(extractedData.dob);
-      setNationality(extractedData.nationality);
-      setPassportNumber(extractedData.passportNumber);
-      setDomicileCountry(extractedData.domicileCountry);
-
-      setAutofilledFields((prev) => ({
-        ...prev,
-        fullName: "Passport (Fixture)",
-        arabicName: "Passport (Transliterated)",
-        dob: "Passport",
-        nationality: "Passport",
-        passportNumber: "Passport",
-        domicileCountry: "Passport",
-      }));
-
-      setJustExtractedBanner("Sample passport parsed! Personal details autofilled below for your review.");
-      await saveDocument("PASSPORT", filename, 98, extractedData);
-      syncToStore(extractedData as any);
-      return;
-    }
+    if (!file) return;
 
     setAnalyzingType("Passport");
     setPassportFileName(file.name);
@@ -280,34 +244,7 @@ export function SectionA_Details() {
   };
 
   const handleEmiratesIdUpload = async (file?: File) => {
-    if (!file) {
-      const filename = "Daniel_Carter_Emirates_ID.jpg";
-      setEmiratesIdUploaded(true);
-      setEmiratesIdFileName(filename);
-      setIsUaeResident(true);
-
-      const extractedData = {
-        arabicName: "دانيال مايكل كارتر",
-        emiratesId: "784-1982-1234567-1",
-        fullName: fullName || "Daniel Michael Carter",
-        isUaeResident: true,
-      };
-
-      setArabicName(extractedData.arabicName);
-      setEmiratesId(extractedData.emiratesId);
-      setIsUaeResident(true);
-
-      setAutofilledFields((prev) => ({
-        ...prev,
-        arabicName: "Emirates ID (Official)",
-        emiratesId: "Emirates ID",
-      }));
-
-      setJustExtractedBanner("Emirates ID parsed! Official Arabic name & Emirates ID populated below.");
-      await saveDocument("EMIRATES_ID", filename, 98, extractedData);
-      syncToStore(extractedData as any);
-      return;
-    }
+    if (!file) return;
 
     setAnalyzingType("Emirates ID");
     setEmiratesIdFileName(file.name);
@@ -363,14 +300,7 @@ export function SectionA_Details() {
   };
 
   const handleAddressProofUpload = async (file?: File) => {
-    if (!file) {
-      const filename = "DEWA_Abu_Dhabi_Tenancy_Contract.pdf";
-      setAddressProofUploaded(true);
-      setAddressProofFileName(filename);
-      await saveDocument("PROOF_OF_ADDRESS", filename, 95);
-      setJustExtractedBanner("Sample proof of address attached! Please enter your residential address manually below.");
-      return;
-    }
+    if (!file) return;
 
     setAnalyzingType("Proof of Address");
     setAddressProofFileName(file.name);
@@ -504,16 +434,6 @@ export function SectionA_Details() {
                   }}
                 />
               </label>
-
-              {!passportUploaded && !analyzingType && (
-                <button
-                  type="button"
-                  onClick={() => handlePassportUpload()}
-                  className="text-[11px] text-[#5b3fb0] hover:underline font-medium text-center pt-1"
-                >
-                  ⚡ Simulate OCR read
-                </button>
-              )}
             </div>
           </div>
 
@@ -586,16 +506,6 @@ export function SectionA_Details() {
                   }}
                 />
               </label>
-
-              {!emiratesIdUploaded && !analyzingType && (
-                <button
-                  type="button"
-                  onClick={() => handleEmiratesIdUpload()}
-                  className="text-[11px] text-[#5b3fb0] hover:underline font-medium text-center pt-1"
-                >
-                  ⚡ Simulate OCR read
-                </button>
-              )}
             </div>
           </div>
 
@@ -668,16 +578,6 @@ export function SectionA_Details() {
                   }}
                 />
               </label>
-
-              {!addressProofUploaded && !analyzingType && (
-                <button
-                  type="button"
-                  onClick={() => handleAddressProofUpload()}
-                  className="text-[11px] text-[#5b3fb0] hover:underline font-medium text-center pt-1"
-                >
-                  ⚡ Simulate proof upload
-                </button>
-              )}
             </div>
           </div>
         </div>

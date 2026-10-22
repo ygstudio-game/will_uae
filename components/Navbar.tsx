@@ -1,39 +1,18 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Scale, Menu, X, Shield, FileText, User, LogOut } from "lucide-react";
-
-interface CurrentUser {
-  id: string;
-  email: string;
-  name: string;
-}
+import { Scale, Menu, X, FileText, User, LogOut, LayoutDashboard } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export function Navbar() {
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
-
-  useEffect(() => {
-    fetch("/api/auth/me")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.authenticated && data.user) {
-          setCurrentUser(data.user);
-        } else {
-          setCurrentUser(null);
-        }
-      })
-      .catch(() => setCurrentUser(null));
-  }, []);
+  const { user, signOut } = useAuth();
 
   const handleSignOut = async () => {
-    await fetch("/api/auth/signout", { method: "POST" });
-    setCurrentUser(null);
-    router.push("/");
-    router.refresh();
+    await signOut();
   };
 
   return (
@@ -76,14 +55,13 @@ export function Navbar() {
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-white/80">
           <Link href="/dashboard" className="hover:text-court-tan transition-colors flex items-center gap-1.5">
             <FileText className="w-4 h-4 text-court-bronze" />
-            <span>Dashboard</span>
-          </Link>
-          <Link href="/start" className="hover:text-court-tan transition-colors flex items-center gap-1.5">
-            <Shield className="w-4 h-4 text-court-bronze" />
-            <span>Start Will</span>
+            <span>Overview</span>
           </Link>
           <Link href="/wizard/details" className="hover:text-court-tan transition-colors">
-            Questionnaire
+            My questionnaire
+          </Link>
+          <Link href="/dashboard/people" className="hover:text-court-tan transition-colors">
+            My people
           </Link>
           <Link href="/dashboard/support" className="hover:text-court-tan transition-colors">
             Support
@@ -95,21 +73,29 @@ export function Navbar() {
 
         {/* Right CTA / Auth state */}
         <div className="hidden sm:flex items-center gap-3">
-          {currentUser ? (
+          {user ? (
             <div className="flex items-center gap-3">
               <Link
                 href="/dashboard"
                 className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-xs text-white transition-colors border border-white/15"
+                title="Go to Dashboard"
               >
-                <div className="w-5 h-5 rounded-full bg-court-bronze text-white text-[10px] flex items-center justify-center font-bold">
-                  {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : "U"}
+                <div className="w-6 h-6 rounded-full bg-court-bronze text-white text-[11px] flex items-center justify-center font-bold">
+                  {user.name ? user.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
                 </div>
-                <span className="font-medium max-w-[120px] truncate">{currentUser.name || currentUser.email}</span>
+                <span className="font-medium max-w-[130px] truncate">{user.name || user.email}</span>
+              </Link>
+              <Link
+                href="/dashboard"
+                className="text-xs uppercase tracking-wider font-semibold bg-court-bronze hover:bg-court-bronze-dark text-white px-3.5 py-2 rounded-md shadow-sm transition-all duration-200 flex items-center gap-1.5"
+              >
+                <LayoutDashboard className="w-3.5 h-3.5" />
+                <span>Dashboard</span>
               </Link>
               <button
                 type="button"
                 onClick={handleSignOut}
-                className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
                 title="Sign Out"
               >
                 <LogOut className="w-4 h-4" />
@@ -151,35 +137,42 @@ export function Navbar() {
             onClick={() => setMobileMenuOpen(false)}
             className="block text-sm font-medium text-white/90 hover:text-court-tan py-1"
           >
-            Dashboard
+            Overview
           </Link>
           <Link
             href="/wizard/details"
             onClick={() => setMobileMenuOpen(false)}
             className="block text-sm font-medium text-white/90 hover:text-court-tan py-1"
           >
-            Questionnaire
+            My questionnaire
           </Link>
           <Link
-            href="/checkout/court-fee"
+            href="/dashboard/people"
             onClick={() => setMobileMenuOpen(false)}
             className="block text-sm font-medium text-white/90 hover:text-court-tan py-1"
           >
-            Court Fee
+            My people
           </Link>
           <Link
             href="/dashboard/support"
             onClick={() => setMobileMenuOpen(false)}
             className="block text-sm font-medium text-white/90 hover:text-court-tan py-1"
           >
-            Support Desk
+            Support
+          </Link>
+          <Link
+            href="/admin"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block text-sm font-medium text-[#A37E44] hover:text-court-tan py-1"
+          >
+            Admin Portal
           </Link>
 
           <div className="pt-3 border-t border-white/10 flex flex-col gap-2">
-            {currentUser ? (
+            {user ? (
               <div className="space-y-2">
                 <div className="text-xs text-court-tan font-medium">
-                  Signed in as: {currentUser.name}
+                  Signed in as: {user.name || user.email}
                 </div>
                 <button
                   type="button"

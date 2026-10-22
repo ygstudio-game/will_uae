@@ -2,10 +2,12 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Mail, KeyRound, ArrowRight, Loader2, Sparkles, ShieldCheck } from "lucide-react";
+import { Mail, KeyRound, ArrowRight, Loader2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export function OtpVerificationCard() {
   const router = useRouter();
+  const { refreshUser } = useAuth();
 
   const [step, setStep] = useState<"EMAIL" | "CODE">("EMAIL");
   const [email, setEmail] = useState("");
@@ -69,6 +71,7 @@ export function OtpVerificationCard() {
         throw new Error(data.error || "Invalid code.");
       }
 
+      await refreshUser();
       router.push("/dashboard");
     } catch (err: any) {
       setError(err.message || "Failed to verify code.");
@@ -77,73 +80,8 @@ export function OtpVerificationCard() {
     }
   };
 
-  const handleDemoBypass = async () => {
-    setLoading(true);
-    setError(null);
-    const demoEmail = "pm.reviewer@adjd.gov.ae";
-    setEmail(demoEmail);
-
-    try {
-      // Send OTP first to ensure account exists
-      await fetch("/api/auth/otp/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: demoEmail }),
-      });
-
-      const res = await fetch("/api/auth/otp/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: demoEmail,
-          code: "999999",
-          isDemoBypass: true,
-        }),
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        router.push("/dashboard");
-      }
-    } catch {
-      setError("Failed to run PM demo login.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="w-full max-w-md mx-auto bg-white rounded-2xl border border-[#E5E0D8] p-8 shadow-sm">
-      {/* 1-Click PM & Reviewer Demo Bypass */}
-      <div className="mb-6 p-4 rounded-xl bg-[#FAF7F2] border border-[#A37E44]/30">
-        <div className="flex items-center justify-between mb-2">
-          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#A37E44] uppercase tracking-wider">
-            <Sparkles className="w-3.5 h-3.5" />
-            PM & Reviewer Access
-          </span>
-          <span className="text-[10px] bg-[#A37E44]/10 text-[#A37E44] px-2 py-0.5 rounded font-mono font-semibold">
-            One-Click
-          </span>
-        </div>
-        <p className="text-xs text-gray-600 mb-3 leading-relaxed">
-          Skip manual email checks and sign in immediately with pre-loaded mock court records.
-        </p>
-        <button
-          type="button"
-          onClick={handleDemoBypass}
-          disabled={loading}
-          className="w-full py-2.5 px-4 rounded-lg bg-[#0B1528] hover:bg-[#111C33] text-white text-xs font-semibold tracking-wider uppercase transition-all flex items-center justify-center gap-2"
-        >
-          {loading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <>
-              <ShieldCheck className="w-4 h-4 text-[#A37E44]" />
-              <span>Launch PM / Reviewer Session</span>
-            </>
-          )}
-        </button>
-      </div>
 
       <div className="text-center mb-6">
         <h2 className="text-xl font-serif font-bold text-[#0B1528]">

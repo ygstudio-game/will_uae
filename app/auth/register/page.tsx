@@ -4,9 +4,11 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { Lock, Mail, User, ArrowRight, ShieldCheck, AlertCircle, Loader2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { refreshUser } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -50,6 +52,7 @@ export default function RegisterPage() {
         return;
       }
 
+      await refreshUser();
       router.push("/dashboard");
     } catch (err) {
       setErrorMessage("Network error occurred during registration. Please try again.");

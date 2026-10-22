@@ -121,17 +121,17 @@ async function main() {
     console.error("[FAIL] 9. Qualification intake form missing.");
   }
 
-  // Criterion 10: Passwordless Email OTP Auth with PM Bypass
+  // Criterion 10: Passwordless Email OTP Authentication
   const authOtpCode = fs.readFileSync("components/auth/OtpVerificationCard.tsx", "utf-8");
   if (
-    authOtpCode.includes("PM & Reviewer Access") ||
-    authOtpCode.includes("handleDemoBypass") ||
-    authOtpCode.includes("Launch PM / Reviewer Session")
+    authOtpCode.includes("handleSendOtp") &&
+    authOtpCode.includes("handleVerifyOtp") &&
+    authOtpCode.includes("/api/auth/otp/send")
   ) {
-    console.log("[PASS] 10. Passwordless Email OTP Auth with 1-click PM demo bypass verified.");
+    console.log("[PASS] 10. Passwordless Email OTP Authentication verified.");
     passedCriteria++;
   } else {
-    console.error("[FAIL] 10. PM OTP bypass missing.");
+    console.error("[FAIL] 10. Email OTP Auth missing.");
   }
 
   // Criterion 11: 6-Section Consolidated Questionnaire

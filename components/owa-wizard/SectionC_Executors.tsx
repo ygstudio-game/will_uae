@@ -114,14 +114,7 @@ export function SectionC_Executors() {
   };
 
   const handleReplaceExecutorDoc = async (personId: string, file?: File) => {
-    if (!file) {
-      // Simulate OCR
-      await handleUpdateExecutor(personId, {
-        passportNumber: "GBR55443322",
-        arabicName: "ديفيد ألان ويتفيلد",
-      });
-      return;
-    }
+    if (!file) return;
 
     setReplacingDocPersonId(personId);
     try {
@@ -450,15 +443,7 @@ export function SectionC_Executors() {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-2 border-t border-[#f0ebf5]">
-                      <button
-                        type="button"
-                        onClick={() => handleReplaceExecutorDoc(executorPerson.id)}
-                        className="text-xs text-[#5b3fb0] hover:underline font-medium"
-                      >
-                        ⚡ Simulate passport details
-                      </button>
-
+                    <div className="flex items-center justify-end pt-2 border-t border-[#f0ebf5]">
                       <button
                         type="button"
                         onClick={() => setEditingSlotRole(null)}
