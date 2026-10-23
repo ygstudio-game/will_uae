@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { CheckCircle2, AlertCircle, Eye, ArrowRight, ShieldCheck, Lock, Sparkles, Copy, FileText, Check, Upload } from "lucide-react";
+import { CheckCircle2, AlertCircle, ArrowRight, ShieldCheck, Lock, Sparkles, Copy, FileText, Check, Upload } from "lucide-react";
 import { useOwaStore } from "@/store/useOwaStore";
 import { TestatorSignatureCard } from "@/components/signature/TestatorSignatureCard";
 import { useRouter } from "next/navigation";
@@ -359,30 +359,6 @@ export function SectionF_ReviewDraft() {
               </div>
             );
           })}
-        </div>
-      </section>
-
-      {/* Official Court Bilingual Will Preview Card - Navigates to dedicated /preview page */}
-      <section className="bg-gradient-to-br from-[#0B1528] to-[#162544] text-white p-6 sm:p-7 rounded-2xl border border-[#A37E44]/40 shadow-md space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-[#A37E44]/20 text-[#D7B48B] border border-[#A37E44]/40 inline-block">
-              Official Form ADJD-NM0723-07-03 · Abu Dhabi Civil Family Court
-            </span>
-            <h3 className="text-lg sm:text-xl font-serif font-bold text-white">
-              Official ADJD Bilingual Court Will Draft
-            </h3>
-            <p className="text-xs text-[#D9D0E6] max-w-xl leading-relaxed">
-              Your official will is formatted according to Abu Dhabi Civil Family Court requirements, featuring statutory clauses with side-by-side English (LTR) and Arabic (RTL) court text.
-            </p>
-          </div>
-          <Link
-            href={`/preview${application?.id ? `?applicationId=${application.id}` : ""}`}
-            className="px-5 py-3 rounded-xl bg-[#A37E44] hover:bg-[#8A6233] text-white text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2 shrink-0 cursor-pointer active:scale-[0.98]"
-          >
-            <Eye className="w-4 h-4 text-[#FAF7EE]" />
-            <span>Open Court Draft Preview →</span>
-          </Link>
         </div>
       </section>
 

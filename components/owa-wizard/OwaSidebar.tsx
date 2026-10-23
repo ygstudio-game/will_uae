@@ -18,7 +18,7 @@ const STEPS: { id: OwaSectionId; num: string; label: string }[] = [
   { id: "executors", num: "03", label: "Executors" },
   { id: "guardians", num: "04", label: "Guardians" },
   { id: "beneficiaries", num: "05", label: "Beneficiaries" },
-  { id: "review", num: "06", label: "Review & draft" },
+  { id: "review", num: "06", label: "Signature and verify" },
 ];
 
 export function OwaSidebar({ currentSection }: OwaSidebarProps) {

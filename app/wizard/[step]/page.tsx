@@ -54,8 +54,8 @@ const STEP_INFO: Record<OwaSectionId, { num: number; title: string; sub: string 
   },
   review: {
     num: 6,
-    title: "Review & draft",
-    sub: "Check your appointments and roles, then preview your official court draft.",
+    title: "Signature and verify",
+    sub: "Verify your appointments, upload your signature, and proceed to your official court draft.",
   },
 };
 

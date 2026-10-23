@@ -100,7 +100,7 @@ assertCondition(
 // 15. Section F & ADJDBilingualWillDocument: Signature capture and embedding
 const cardExists = fs.existsSync(path.join(process.cwd(), "components/signature/TestatorSignatureCard.tsx"));
 assertCondition(
-  "15. TestatorSignatureCard component exists with upload and canvas draw modes",
+  "15. TestatorSignatureCard component exists with upload mode",
   cardExists
 );
 const secFContent = fs.readFileSync(path.join(process.cwd(), "components/owa-wizard/SectionF_ReviewDraft.tsx"), "utf-8");

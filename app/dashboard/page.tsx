@@ -56,8 +56,8 @@ const CHECKLIST_SECTIONS: { id: OwaSectionId; title: string; subtitle: string }[
   },
   {
     id: "review",
-    title: "Review & draft",
-    subtitle: "Check your details and view your draft",
+    title: "Signature and verify",
+    subtitle: "Upload signature and verify appointments",
   },
 ];
 

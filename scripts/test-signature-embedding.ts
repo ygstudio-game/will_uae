@@ -8,8 +8,8 @@ if (!fs.existsSync(cardPath)) {
 }
 
 const cardContent = fs.readFileSync(cardPath, "utf-8");
-if (!cardContent.includes("<canvas") || !cardContent.includes("Upload Signature")) {
-  console.error("FAIL: TestatorSignatureCard must support both upload and canvas drawing");
+if (!cardContent.includes("Upload") || !cardContent.includes("Testator Digital Signature")) {
+  console.error("FAIL: TestatorSignatureCard must support signature upload");
   process.exit(1);
 }
 

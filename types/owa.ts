@@ -177,7 +177,7 @@ export const OWA_SECTIONS = [
   { id: "executors", label: "C. Executors", letter: "C" },
   { id: "guardians", label: "D. Guardians", letter: "D" },
   { id: "beneficiaries", label: "E. Beneficiaries", letter: "E" },
-  { id: "review", label: "F. Review & Draft", letter: "F" },
+  { id: "review", label: "F. Signature and verify", letter: "F" },
 ] as const;
 
 export type OwaSectionId = typeof OWA_SECTIONS[number]["id"];

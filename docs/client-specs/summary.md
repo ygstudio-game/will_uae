@@ -29,3 +29,10 @@ first screnn is with login and signup
 
 use diffrerny color for tranlation name and english name 
 1 · Primary beneficiaries · 1 to 4, total 100% remove the 1 to 4 from this content
+
+
+
+remove the draw signature feature 
+seprate screen for upload signature 
+
+ preview card on review and darft move it to after that seprate screen for signature upload 
