@@ -33,6 +33,7 @@ use diffrerny color for tranlation name and english name
 
 
 remove the draw signature feature 
-seprate screen for upload signature 
+ 
+change heading of 6 section to signature and verify then later show the darft of preview 
 
- preview card on review and darft move it to after that seprate screen for signature upload 
+and remove the preview darft card on 6 section 

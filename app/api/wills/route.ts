@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
         applicationId: app.id,
         willIndex: 1,
         versionTag: "ADJD-NM0723-07-03",
-        domicileCountry: "United Kingdom",
+        domicileCountry: "",
       },
     });
 

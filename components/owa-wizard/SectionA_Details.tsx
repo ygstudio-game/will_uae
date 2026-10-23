@@ -33,11 +33,13 @@ export function SectionA_Details() {
   const [nationality, setNationality] = useState(testator?.nationality || "");
   const [passportNumber, setPassportNumber] = useState(testator?.passportNumber || "");
   const [emiratesId, setEmiratesId] = useState(testator?.emiratesId || "");
-  const [isUaeResident, setIsUaeResident] = useState<boolean | null>(
-    testator?.isUaeResident ?? null
+  const [isUaeResident, setIsUaeResident] = useState<boolean>(
+    testator?.isUaeResident ?? true
   );
   const [address, setAddress] = useState(testator?.address || "");
-  const [domicileCountry, setDomicileCountry] = useState(activeWill?.domicileCountry || "");
+  const [domicileCountry, setDomicileCountry] = useState(
+    activeWill?.domicileCountry === "United Kingdom" ? "" : (activeWill?.domicileCountry || "")
+  );
   const [email, setEmail] = useState(testator?.email || "");
   const [phone, setPhone] = useState(testator?.phone || "");
 
@@ -130,7 +132,7 @@ export function SectionA_Details() {
       }
     }
     if (activeWill?.domicileCountry) {
-      setDomicileCountry(activeWill.domicileCountry);
+      setDomicileCountry(activeWill.domicileCountry === "United Kingdom" ? "" : activeWill.domicileCountry);
     }
   }, [testator, activeWill]);
 
@@ -219,11 +221,6 @@ export function SectionA_Details() {
       if (ocr.nationality) {
         setNationality(ocr.nationality);
         extractedData.nationality = ocr.nationality;
-        if (!domicileCountry) {
-          setDomicileCountry(ocr.nationality);
-          extractedData.domicileCountry = ocr.nationality;
-          updateActiveWill({ domicileCountry: ocr.nationality });
-        }
       }
       if (ocr.passportNumber) {
         setPassportNumber(ocr.passportNumber);
@@ -373,6 +370,50 @@ export function SectionA_Details() {
           </p>
         </div>
 
+        {/* UAE Residence Selector */}
+        <div className="bg-[#FAF7EE] p-4 sm:p-5 rounded-xl border border-[#E2D5BE] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <div>
+            <span className="text-sm font-semibold text-[#0B1528] block">
+              Do you currently reside in the UAE?
+            </span>
+            <p className="text-[12px] text-[#6c6478] mt-0.5">
+              {isUaeResident
+                ? "As a UAE resident, an Emirates ID is required alongside your passport."
+                : "Non-UAE residents only require their passport photo page."}
+            </p>
+          </div>
+          <div className="inline-flex p-1 bg-white rounded-full border border-[#cfc6da] self-start sm:self-auto shrink-0 shadow-2xs">
+            <button
+              type="button"
+              onClick={() => {
+                setIsUaeResident(true);
+                syncToStore({ isUaeResident: true });
+              }}
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                isUaeResident
+                  ? "bg-[#0B1528] text-white shadow-xs"
+                  : "text-[#3b3346] hover:text-[#231a30]"
+              }`}
+            >
+              In the UAE
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsUaeResident(false);
+                syncToStore({ isUaeResident: false });
+              }}
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                !isUaeResident
+                  ? "bg-[#0B1528] text-white shadow-xs"
+                  : "text-[#3b3346] hover:text-[#231a30]"
+              }`}
+            >
+              Outside the UAE
+            </button>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Tile 1: Passport */}
           <div
@@ -461,15 +502,15 @@ export function SectionA_Details() {
                   <span>Emirates ID</span>
                 </span>
                 {emiratesIdUploaded ? (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#1f5a3d] bg-[#e8f4ee] px-2.5 py-0.5 rounded-full">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#1f5a3d] bg-[#e8f4ee] px-2.5 py-0.5 rounded-full whitespace-nowrap">
                     <CheckCircle2 className="w-3.5 h-3.5" /> Read
                   </span>
                 ) : isUaeResident ? (
-                  <span className="text-[11px] font-semibold text-[#b42318] bg-[#fef3f2] px-2.5 py-0.5 rounded-full">
+                  <span className="text-[11px] font-semibold text-[#b42318] bg-[#fef3f2] px-2.5 py-0.5 rounded-full whitespace-nowrap">
                     Required
                   </span>
                 ) : (
-                  <span className="text-[11px] font-semibold text-[#6c6478] bg-[#f1eef5] px-2.5 py-0.5 rounded-full">
+                  <span className="text-[11px] font-semibold text-[#6c6478] bg-[#f1eef5] px-2.5 py-0.5 rounded-full whitespace-nowrap">
                     Not required
                   </span>
                 )}

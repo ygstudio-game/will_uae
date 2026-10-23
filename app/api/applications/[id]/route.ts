@@ -264,7 +264,7 @@ export async function PATCH(
           applicationId: params.id,
           willIndex: 1,
           versionTag: "ADJD-NM0723-07-03",
-          domicileCountry: domicileCountry || "United Kingdom",
+          domicileCountry: domicileCountry || "",
           hasChildrenUnder18: Boolean(hasChildrenUnder18),
           isDraftConfirmed: Boolean(isDraftConfirmed),
           testatorPersonId: targetTestatorId,
