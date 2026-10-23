@@ -642,10 +642,12 @@ export function SectionE_Beneficiaries() {
                   <button
                     type="button"
                     onClick={() => handleOpenAddPerson("BENEFICIARY_PRIMARY", "Child")}
-                    className="px-5 py-2.5 bg-[#0B1528] hover:bg-[#1a2942] text-white text-xs font-bold rounded-xl shadow-md hover:shadow-lg flex items-center justify-center gap-2 transition-all shrink-0 cursor-pointer border border-[#A37E44]/40 active:scale-[0.98]"
+                    className="px-5 py-2.5 bg-[#FAF7EE] hover:bg-[#F3EEDC] border-2 border-[#A37E44] text-[#0B1528] text-xs font-bold rounded-xl shadow-xs hover:shadow-md flex items-center justify-center gap-2 transition-all shrink-0 cursor-pointer active:scale-[0.98] group"
                   >
-                    <Plus className="w-4 h-4 text-[#d7b48b] stroke-[2.5]" />
-                    <span>+ Add a new person or charity</span>
+                    <div className="w-5 h-5 rounded-full bg-[#A37E44] text-white flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform">
+                      <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                    </div>
+                    <span>Add a new person or charity</span>
                   </button>
                 </div>
               </div>
@@ -822,10 +824,12 @@ export function SectionE_Beneficiaries() {
                   <button
                     type="button"
                     onClick={() => handleOpenAddPerson("BENEFICIARY_SUBSTITUTE")}
-                    className="px-5 py-2.5 bg-[#0B1528] hover:bg-[#1a2942] text-white text-xs font-bold rounded-xl shadow-md hover:shadow-lg flex items-center justify-center gap-2 transition-all shrink-0 cursor-pointer border border-[#A37E44]/40 active:scale-[0.98]"
+                    className="px-5 py-2.5 bg-[#FAF7EE] hover:bg-[#F3EEDC] border-2 border-[#A37E44] text-[#0B1528] text-xs font-bold rounded-xl shadow-xs hover:shadow-md flex items-center justify-center gap-2 transition-all shrink-0 cursor-pointer active:scale-[0.98] group"
                   >
-                    <Plus className="w-4 h-4 text-[#d7b48b] stroke-[2.5]" />
-                    <span>{substituteAssignments.length === 0 ? "+ Add Substitute A" : "+ Add Substitute B"}</span>
+                    <div className="w-5 h-5 rounded-full bg-[#A37E44] text-white flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform">
+                      <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                    </div>
+                    <span>{substituteAssignments.length === 0 ? "Add Substitute A" : "Add Substitute B"}</span>
                   </button>
                 </div>
               </div>

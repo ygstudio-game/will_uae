@@ -6,6 +6,7 @@ import {
   FileText,
   CheckCircle2,
   AlertCircle,
+  Info,
   RotateCw,
   CreditCard,
   Sparkles,
@@ -33,7 +34,7 @@ export function SectionB_Children() {
     childAssignments.length > 0
       ? true
       : activeWill?.childrenAnswered
-      ? Boolean(activeWill?.hasChildrenUnder18)
+      ? false
       : null;
 
   const [hasChildren, setHasChildren] = useState<boolean | null>(initialHasChildren);
@@ -78,6 +79,10 @@ export function SectionB_Children() {
 
     if (newPerson) {
       assignPersonToRole(newPerson.id, "CHILD", childAssignments.length + 1);
+      updateActiveWill({
+        hasChildrenUnder18: true,
+        childrenAnswered: true,
+      });
       setOpenChildIndex(childAssignments.length);
     }
   };
@@ -90,6 +95,21 @@ export function SectionB_Children() {
       id: personId,
       ...updates,
     });
+
+    const currentAssignments = activeWill?.roleAssignments.filter((ra) => ra.role === "CHILD") || [];
+    const hasAnyMinor = currentAssignments.some((ca) => {
+      const p = ca.personId === personId
+        ? { ...(ca.person || {}), ...updates }
+        : (ca.person || application?.persons.find((ep) => ep.id === ca.personId));
+      if (!p?.dob) return true;
+      const age = calculateAge(p.dob);
+      return age === null || age < 18;
+    });
+
+    updateActiveWill({
+      hasChildrenUnder18: hasAnyMinor,
+      childrenAnswered: true,
+    });
   };
 
   const handleRemoveChild = (roleAssignmentId: string, index: number) => {
@@ -97,6 +117,17 @@ export function SectionB_Children() {
     if (openChildIndex === index) {
       setOpenChildIndex(Math.max(0, index - 1));
     }
+    const remaining = childAssignments.filter((ca) => ca.id !== roleAssignmentId);
+    const hasAnyMinor = remaining.some((ca) => {
+      const p = ca.person || application?.persons.find((ep) => ep.id === ca.personId);
+      if (!p?.dob) return true;
+      const age = calculateAge(p.dob);
+      return age === null || age < 18;
+    });
+    updateActiveWill({
+      hasChildrenUnder18: hasAnyMinor,
+      childrenAnswered: true,
+    });
   };
 
   // OCR upload handler for child passport or Emirates ID
@@ -171,10 +202,10 @@ export function SectionB_Children() {
       <div id="children-question" className="bg-[#FFFEFA] p-6 rounded-2xl border border-[#e4dfe9] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-sm sm:text-base font-semibold text-[#231a30]">
-            Do you have any children under 18 years old?
+            Do you have any children?
           </h2>
-          <p className="text-xs text-[#6c6478] mt-0.5">
-            Under UAE civil family law, only minor children (under 18) require court guardianship appointments. Adult children do not need guardians and can be named as beneficiaries in Section E.
+          <p className="text-xs text-[#6c6478] mt-0.5 max-w-xl leading-relaxed">
+            List your children (both minor and adult). Under UAE civil family law, only minor children (under 18) require court guardianship appointments in Section D. Adult children do not need guardians and can be named as executors or beneficiaries.
           </p>
         </div>
 
@@ -184,7 +215,6 @@ export function SectionB_Children() {
             onClick={() => {
               setHasChildren(true);
               updateActiveWill({
-                hasChildrenUnder18: true,
                 childrenAnswered: true,
               });
               if (childAssignments.length === 0) {
@@ -197,7 +227,7 @@ export function SectionB_Children() {
                 : "text-[#3b3346] hover:text-[#231a30]"
             }`}
           >
-            Yes, under 18
+            Yes, I have children
           </button>
           <button
             type="button"
@@ -217,22 +247,22 @@ export function SectionB_Children() {
                 : "text-[#3b3346] hover:text-[#231a30]"
             }`}
           >
-            No children under 18
+            No children
           </button>
         </div>
       </div>
 
       {hasChildren === null && (
         <div className="p-4 rounded-xl bg-[#FAF9FC] border border-dashed border-[#cfc6da] text-xs sm:text-sm text-[#6c6478]">
-          Please select <strong className="text-[#231a30]">Yes, under 18</strong> or <strong className="text-[#231a30]">No children under 18</strong> above to confirm whether you have children under 18.
+          Please select <strong className="text-[#231a30]">Yes, I have children</strong> or <strong className="text-[#231a30]">No children</strong> above to confirm your family details.
         </div>
       )}
 
       {hasChildren === false && (
         <div className="p-4 rounded-xl bg-[#efeaf7] text-xs sm:text-sm text-[#231a30] space-y-1">
-          <span className="font-semibold block">You indicated that you do not have children under 18.</span>
+          <span className="font-semibold block">You indicated that you do not have children.</span>
           <p className="text-[#6c6478]">
-            Section Nine (Guardianship) of your Will is not applicable. You can proceed directly to Section C (Executors). Adult children (18 and older) can be named as beneficiaries in Section E.
+            Section Nine (Guardianship) of your Will is not applicable. You can proceed directly to Section C (Executors).
           </p>
         </div>
       )}
@@ -600,19 +630,19 @@ export function SectionB_Children() {
                         className={`mt-1.5 p-2.5 rounded-lg text-xs font-medium flex items-start gap-2 ${
                           childAge < 18
                             ? "bg-[#e8f4ee] text-[#1f5a3d] border border-[#b9dcc9]"
-                            : "bg-[#fef3f2] text-[#b42318] border border-[#fecdca]"
+                            : "bg-[#FAF7EE] text-[#7A5B28] border border-[#E2D5BE]"
                         }`}
                       >
                         {childAge < 18 ? (
                           <>
                             <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-[#1f5a3d]" />
-                            <span>Age {childAge}: minor child under 18 (included in guardianship).</span>
+                            <span>Age {childAge}: Minor child under 18 (court guardianship applies in Section D).</span>
                           </>
                         ) : (
                           <>
-                            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-[#b42318]" />
+                            <Info className="w-4 h-4 shrink-0 mt-0.5 text-[#8A6233]" />
                             <span>
-                              Age {childAge}: This child is 18 or older. Section B and guardianship only apply to children under 18. Adult children do not need legal guardians and can be named as beneficiaries in Section E.
+                              Age {childAge}: Adult child (18+) — under UAE civil law, adult children do not require legal guardians. They will be automatically available for you to appoint as an Executor in Section C or Beneficiary in Section E.
                             </span>
                           </>
                         )}

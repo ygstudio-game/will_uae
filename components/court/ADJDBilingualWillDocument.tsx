@@ -139,8 +139,25 @@ export function ADJDBilingualWillDocument({ will, testator, assignments }: Props
   const subPermG = one("GUARDIAN_SUBSTITUTE_PERM");
   const tempG = one("GUARDIAN_TEMPORARY");
   const temp2G = one("GUARDIAN_TEMPORARY_SUBSTITUTE"); // optional 2nd interim guardian (see README)
-  const children = assignments.filter((a) => a.role === "CHILD" && a.person).map((a) => a.person!);
-  const childSlots: P[] = Array.from({ length: Math.max(3, children.length) }, (_, i) => children[i]);
+  // Only minor children under 18 require court guardianship appointments (Clause Nine) under UAE civil family law
+  const calcChildAge = (dobString?: string | null): number | null => {
+    if (!dobString) return null;
+    const birth = new Date(dobString);
+    if (isNaN(birth.getTime())) return null;
+    const now = new Date();
+    let age = now.getFullYear() - birth.getFullYear();
+    const m = now.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
+    return age;
+  };
+  const minorChildren = assignments
+    .filter((a) => a.role === "CHILD" && a.person)
+    .map((a) => a.person!)
+    .filter((p) => {
+      const age = calcChildAge(p.dob);
+      return age === null || age < 18;
+    });
+  const childSlots: P[] = Array.from({ length: Math.max(3, minorChildren.length) }, (_, i) => minorChildren[i]);
 
   return (
     <div className={cx("aw-root", awEn.variable, awAr.variable)}>
