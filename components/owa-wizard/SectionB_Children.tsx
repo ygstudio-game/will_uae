@@ -9,6 +9,8 @@ import {
   RotateCw,
   CreditCard,
   Sparkles,
+  Plus,
+  Check,
 } from "lucide-react";
 import { useOwaStore } from "@/store/useOwaStore";
 import { transliterateToName } from "@/lib/transliterate";
@@ -169,10 +171,10 @@ export function SectionB_Children() {
       <div id="children-question" className="bg-[#FFFEFA] p-6 rounded-2xl border border-[#e4dfe9] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-sm sm:text-base font-semibold text-[#231a30]">
-            Do you have children, by birth or legal adoption?
+            Do you have any children under 18 years old?
           </h2>
           <p className="text-xs text-[#6c6478] mt-0.5">
-            Under UAE civil family law, minor children activate court guardianship appointments.
+            Under UAE civil family law, only minor children (under 18) require court guardianship appointments. Adult children do not need guardians and can be named as beneficiaries in Section E.
           </p>
         </div>
 
@@ -195,7 +197,7 @@ export function SectionB_Children() {
                 : "text-[#3b3346] hover:text-[#231a30]"
             }`}
           >
-            Yes
+            Yes, under 18
           </button>
           <button
             type="button"
@@ -215,22 +217,22 @@ export function SectionB_Children() {
                 : "text-[#3b3346] hover:text-[#231a30]"
             }`}
           >
-            No
+            No children under 18
           </button>
         </div>
       </div>
 
       {hasChildren === null && (
         <div className="p-4 rounded-xl bg-[#FAF9FC] border border-dashed border-[#cfc6da] text-xs sm:text-sm text-[#6c6478]">
-          Please select <strong className="text-[#231a30]">Yes</strong> or <strong className="text-[#231a30]">No</strong> above to confirm whether you have children under 18.
+          Please select <strong className="text-[#231a30]">Yes, under 18</strong> or <strong className="text-[#231a30]">No children under 18</strong> above to confirm whether you have children under 18.
         </div>
       )}
 
       {hasChildren === false && (
         <div className="p-4 rounded-xl bg-[#efeaf7] text-xs sm:text-sm text-[#231a30] space-y-1">
-          <span className="font-semibold block">You indicated that you do not have children.</span>
+          <span className="font-semibold block">You indicated that you do not have children under 18.</span>
           <p className="text-[#6c6478]">
-            Section Nine (Guardianship) of your Will will not be applicable. You can proceed directly to Section C (Executors).
+            Section Nine (Guardianship) of your Will is not applicable. You can proceed directly to Section C (Executors). Adult children (18 and older) can be named as beneficiaries in Section E.
           </p>
         </div>
       )}
@@ -364,7 +366,7 @@ export function SectionB_Children() {
                       Does {child?.fullName ? child.fullName.split(" ")[0] : "this child"} live in the UAE?
                     </span>
                     <span className="text-[11px] text-[#6c6478]">
-                      If yes, add the Emirates ID as well as the passport, if you have it.
+                      If the child lives in the UAE, an Emirates ID is required alongside their passport.
                     </span>
                   </div>
 
@@ -488,15 +490,15 @@ export function SectionB_Children() {
                               <CheckCircle2 className="w-3 h-3" /> Read
                             </span>
                           ) : (
-                            <span className="text-[11px] font-medium text-[#6c6478]">
-                              Optional
+                            <span className="text-[11px] font-semibold text-[#b42318] bg-[#fef3f2] px-2 py-0.5 rounded-full">
+                              Required
                             </span>
                           )}
                         </div>
                         <p className="text-xs text-[#6c6478] leading-relaxed mb-3">
                           {child?.emiratesId
                             ? "Read: Emirates ID number."
-                            : "Front and back."}
+                            : "Front and back (required for UAE residents)."}
                         </p>
                         {child?.emiratesId && (
                           <div className="text-[11px] font-mono text-[#6c6478] truncate mb-3 bg-white px-2.5 py-1.5 rounded border border-[#e4dfe9]">
@@ -594,11 +596,27 @@ export function SectionB_Children() {
                       className="w-full px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-sm focus:outline-none focus:border-[#5b3fb0] focus:ring-1 focus:ring-[#5b3fb0] bg-white"
                     />
                     {child?.dob && childAge !== null && (
-                      <p className="text-[11px] text-[#6c6478] mt-1 font-medium">
-                        {childAge < 18
-                          ? `Age ${childAge}: included in guardianship.`
-                          : `Age ${childAge}: an adult, so no guardian is needed.`}
-                      </p>
+                      <div
+                        className={`mt-1.5 p-2.5 rounded-lg text-xs font-medium flex items-start gap-2 ${
+                          childAge < 18
+                            ? "bg-[#e8f4ee] text-[#1f5a3d] border border-[#b9dcc9]"
+                            : "bg-[#fef3f2] text-[#b42318] border border-[#fecdca]"
+                        }`}
+                      >
+                        {childAge < 18 ? (
+                          <>
+                            <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-[#1f5a3d]" />
+                            <span>Age {childAge}: minor child under 18 (included in guardianship).</span>
+                          </>
+                        ) : (
+                          <>
+                            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-[#b42318]" />
+                            <span>
+                              Age {childAge}: This child is 18 or older. Section B and guardianship only apply to children under 18. Adult children do not need legal guardians and can be named as beneficiaries in Section E.
+                            </span>
+                          </>
+                        )}
+                      </div>
                     )}
                   </div>
 
@@ -661,6 +679,18 @@ export function SectionB_Children() {
                     </div>
                   )}
                 </div>
+
+                {/* Save / Done button at bottom of child card */}
+                <div className="pt-4 border-t border-[#f0ebf5] flex items-center justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setOpenChildIndex(-1)}
+                    className="px-6 py-2.5 rounded-full bg-[#0B1528] hover:bg-[#1a2942] text-white text-xs font-semibold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer active:scale-[0.98]"
+                  >
+                    <Check className="w-3.5 h-3.5 text-[#d7b48b]" />
+                    <span>Done with {child?.fullName ? child.fullName.split(" ")[0] : `Child ${index + 1}`}</span>
+                  </button>
+                </div>
               </div>
             );
           })}
@@ -669,9 +699,14 @@ export function SectionB_Children() {
             <button
               type="button"
               onClick={handleAddChild}
-              className="w-full py-4 border-2 border-dashed border-[#cfc6da] hover:border-[#382852] bg-white hover:bg-[#faf9f8] text-[#231a30] rounded-2xl text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-4 px-6 bg-[#FAF7EE] hover:bg-[#F3EEDC] border-2 border-[#A37E44] text-[#0B1528] rounded-2xl text-sm font-bold shadow-xs hover:shadow-md transition-all flex items-center justify-center gap-3 cursor-pointer active:scale-[0.99] group"
             >
-              Add {childAssignments.length ? "another " : "a "}child ({childAssignments.length} of 5 added)
+              <div className="w-7 h-7 rounded-full bg-[#A37E44] text-white flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform">
+                <Plus className="w-4 h-4 stroke-[3]" />
+              </div>
+              <span className="text-[15px] font-bold">
+                + Add {childAssignments.length ? "another " : "a "}child ({childAssignments.length} of 5 added)
+              </span>
             </button>
           ) : (
             <p className="text-xs text-[#6c6478] text-center pt-2">

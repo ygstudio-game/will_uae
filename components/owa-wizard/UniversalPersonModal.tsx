@@ -330,6 +330,46 @@ export function UniversalPersonModal({
           </button>
         </div>
 
+        {/* UAE Residency Question — Asked BEFORE everything */}
+        <div className="mt-4 p-4 rounded-xl bg-[#FAF7EE] border border-[#E5E0D8] space-y-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <span className="text-xs font-bold text-[#0B1528] block">
+                Does this person live in the UAE? *
+              </span>
+              <p className="text-[11.5px] text-[#6c6478] mt-0.5">
+                {formData.isUaeResident
+                  ? "As a UAE resident, an Emirates ID is required alongside their passport."
+                  : "Non-UAE residents only require their passport photo page."}
+              </p>
+            </div>
+            <div className="inline-flex p-1 bg-white rounded-full border border-[#cfc6da] self-start sm:self-auto shrink-0 shadow-2xs">
+              <button
+                type="button"
+                onClick={() => setFormData((prev) => ({ ...prev, isUaeResident: true }))}
+                className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                  formData.isUaeResident
+                    ? "bg-[#0B1528] text-white shadow-xs"
+                    : "text-[#3b3346] hover:text-[#231a30]"
+                }`}
+              >
+                In the UAE
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormData((prev) => ({ ...prev, isUaeResident: false }))}
+                className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                  !formData.isUaeResident
+                    ? "bg-[#0B1528] text-white shadow-xs"
+                    : "text-[#3b3346] hover:text-[#231a30]"
+                }`}
+              >
+                Outside the UAE
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* OCR Document Upload Cards */}
         <div className="mt-4 space-y-2.5">
           <div className="flex items-center justify-between">
@@ -340,7 +380,7 @@ export function UniversalPersonModal({
             <span className="text-[11px] text-[#6c6478]">Instant OCR extraction</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className={`grid gap-3 ${formData.isUaeResident ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"}`}>
             {/* Passport Tile */}
             <div
               className={`p-3.5 rounded-xl border flex flex-col justify-between transition-all ${
@@ -360,8 +400,8 @@ export function UniversalPersonModal({
                       <CheckCircle2 className="w-3 h-3" /> Read
                     </span>
                   ) : (
-                    <span className="text-[10px] font-semibold text-[#6c6478] bg-[#f1eef5] px-1.5 py-0.5 rounded-full">
-                      Optional
+                    <span className="text-[10px] font-semibold text-[#b42318] bg-[#fef3f2] px-1.5 py-0.5 rounded-full">
+                      Required
                     </span>
                   )}
                 </div>
@@ -413,77 +453,79 @@ export function UniversalPersonModal({
               </label>
             </div>
 
-            {/* Emirates ID Tile */}
-            <div
-              className={`p-3.5 rounded-xl border flex flex-col justify-between transition-all ${
-                formData.emiratesId || uploadedEmiratesIdName
-                  ? "border-[#b9dcc9] bg-[#f3faf6]"
-                  : "border-2 border-dashed border-[#cfc6da] bg-[#faf8fc] hover:border-[#5b3fb0]/40"
-              }`}
-            >
-              <div>
-                <div className="flex items-center justify-between gap-1.5 mb-1">
-                  <span className="text-xs font-semibold text-[#231a30] flex items-center gap-1.5">
-                    <CreditCard className="w-3.5 h-3.5 text-[#8a6233]" />
-                    <span>Emirates ID card</span>
-                  </span>
-                  {formData.emiratesId || uploadedEmiratesIdName ? (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#1f5a3d] bg-[#e8f4ee] px-2 py-0.5 rounded-full">
-                      <CheckCircle2 className="w-3 h-3" /> Read
-                    </span>
-                  ) : (
-                    <span className="text-[10px] font-semibold text-[#6c6478] bg-[#f1eef5] px-1.5 py-0.5 rounded-full">
-                      UAE Residents
-                    </span>
-                  )}
-                </div>
-                <p className="text-[11px] text-[#6c6478] leading-tight mb-2">
-                  Extracts official Arabic name and 15-digit Emirates ID number.
-                </p>
-                {(uploadedEmiratesIdName || formData.emiratesId) && (
-                  <div className="text-[10px] font-mono text-[#1f5a3d] truncate mb-2 bg-white px-2 py-1 rounded border border-[#b9dcc9]">
-                    💳 {uploadedEmiratesIdName || `EID ${formData.emiratesId}`}
-                  </div>
-                )}
-              </div>
-
-              <label
-                className={`cursor-pointer inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold shadow-2xs transition-all text-center ${
-                  isAnalyzingEmiratesId
-                    ? "bg-[#5b3fb0] text-white animate-pulse"
-                    : formData.emiratesId || uploadedEmiratesIdName
-                    ? "bg-white border border-[#cfc6da] text-[#231a30] hover:border-[#382852]"
-                    : "bg-[#382852] text-white hover:bg-[#281b40]"
+            {/* Emirates ID Tile (Only if in UAE) */}
+            {formData.isUaeResident ? (
+              <div
+                className={`p-3.5 rounded-xl border flex flex-col justify-between transition-all ${
+                  formData.emiratesId || uploadedEmiratesIdName
+                    ? "border-[#b9dcc9] bg-[#f3faf6]"
+                    : "border-2 border-dashed border-[#cfc6da] bg-[#faf8fc] hover:border-[#5b3fb0]/40"
                 }`}
               >
-                {isAnalyzingEmiratesId ? (
-                  <>
-                    <RotateCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Reading Emirates ID...</span>
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-3.5 h-3.5" />
-                    <span>
-                      {formData.emiratesId || uploadedEmiratesIdName
-                        ? "Replace Emirates ID"
-                        : "Upload Emirates ID"}
+                <div>
+                  <div className="flex items-center justify-between gap-1.5 mb-1">
+                    <span className="text-xs font-semibold text-[#231a30] flex items-center gap-1.5">
+                      <CreditCard className="w-3.5 h-3.5 text-[#8a6233]" />
+                      <span>Emirates ID card</span>
                     </span>
-                  </>
-                )}
-                <input
-                  type="file"
-                  accept="image/*,.pdf"
-                  className="hidden"
-                  disabled={Boolean(analyzingType)}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleFileUpload(file, "EMIRATES_ID");
-                    e.target.value = "";
-                  }}
-                />
-              </label>
-            </div>
+                    {formData.emiratesId || uploadedEmiratesIdName ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#1f5a3d] bg-[#e8f4ee] px-2 py-0.5 rounded-full">
+                        <CheckCircle2 className="w-3 h-3" /> Read
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-semibold text-[#b42318] bg-[#fef3f2] px-1.5 py-0.5 rounded-full">
+                        Required
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-[#6c6478] leading-tight mb-2">
+                    Extracts official Arabic name and 15-digit Emirates ID number.
+                  </p>
+                  {(uploadedEmiratesIdName || formData.emiratesId) && (
+                    <div className="text-[10px] font-mono text-[#1f5a3d] truncate mb-2 bg-white px-2 py-1 rounded border border-[#b9dcc9]">
+                      💳 {uploadedEmiratesIdName || `EID ${formData.emiratesId}`}
+                    </div>
+                  )}
+                </div>
+
+                <label
+                  className={`cursor-pointer inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold shadow-2xs transition-all text-center ${
+                    isAnalyzingEmiratesId
+                      ? "bg-[#5b3fb0] text-white animate-pulse"
+                      : formData.emiratesId || uploadedEmiratesIdName
+                      ? "bg-white border border-[#cfc6da] text-[#231a30] hover:border-[#382852]"
+                      : "bg-[#382852] text-white hover:bg-[#281b40]"
+                  }`}
+                >
+                  {isAnalyzingEmiratesId ? (
+                    <>
+                      <RotateCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Reading Emirates ID...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>
+                        {formData.emiratesId || uploadedEmiratesIdName
+                          ? "Replace Emirates ID"
+                          : "Upload Emirates ID"}
+                      </span>
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*,.pdf"
+                    className="hidden"
+                    disabled={Boolean(analyzingType)}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleFileUpload(file, "EMIRATES_ID");
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+              </div>
+            ) : null}
           </div>
 
           {/* OCR Feedback Message */}
@@ -650,7 +692,7 @@ export function UniversalPersonModal({
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-xs font-semibold text-[#231a30]">
-                  Passport number <span className="font-normal text-[#6c6478]">(optional)</span>
+                  Passport number *
                 </label>
                 {autofilledFields.passportNumber && (
                   <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#1f5a3d] bg-[#e8f4ee] px-1.5 py-0.5 rounded">
@@ -660,42 +702,12 @@ export function UniversalPersonModal({
               </div>
               <input
                 type="text"
+                required
                 value={formData.passportNumber || ""}
                 onChange={(e) => setFormData({ ...formData, passportNumber: e.target.value })}
                 placeholder="e.g. 509876543"
                 className="w-full text-xs sm:text-sm px-3.5 py-2.5 rounded-lg border border-[#cfc6da] focus:outline-none focus:border-[#5b3fb0] font-mono bg-white text-[#231a30]"
               />
-            </div>
-          </div>
-
-          {/* UAE Residency Segment */}
-          <div className="space-y-1.5 pt-1">
-            <label className="block text-xs font-semibold text-[#231a30]">
-              Does this person live in the UAE?
-            </label>
-            <div className="inline-flex p-1 bg-[#efeaf7] rounded-full border border-[#cfc6da]">
-              <button
-                type="button"
-                onClick={() => setFormData({ ...formData, isUaeResident: true })}
-                className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-                  formData.isUaeResident
-                    ? "bg-[#382852] text-white shadow-xs"
-                    : "text-[#3b3346] hover:text-[#231a30]"
-                }`}
-              >
-                In the UAE
-              </button>
-              <button
-                type="button"
-                onClick={() => setFormData({ ...formData, isUaeResident: false })}
-                className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-                  !formData.isUaeResident
-                    ? "bg-[#382852] text-white shadow-xs"
-                    : "text-[#3b3346] hover:text-[#231a30]"
-                }`}
-              >
-                Outside the UAE
-              </button>
             </div>
           </div>
 

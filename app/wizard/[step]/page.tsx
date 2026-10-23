@@ -35,7 +35,7 @@ const STEP_INFO: Record<OwaSectionId, { num: number; title: string; sub: string 
   children: {
     num: 2,
     title: "Children",
-    sub: "Tell us about the children who need guardian appointments.",
+    sub: "Tell us about any children under 18 who need guardian appointments.",
   },
   executors: {
     num: 3,
@@ -55,7 +55,7 @@ const STEP_INFO: Record<OwaSectionId, { num: number; title: string; sub: string 
   review: {
     num: 6,
     title: "Review & draft",
-    sub: "Check each section before your application goes to OWA.",
+    sub: "Check your appointments and roles, then preview your official court draft.",
   },
 };
 
@@ -282,7 +282,13 @@ function WizardStepContent() {
         (!currentWill?.roleAssignments ||
           currentWill.roleAssignments.filter((ra) => ra.role === "CHILD").length === 0);
       if (isChildrenUnanswered) {
-        return { isValid: false, reason: "Please indicate whether you have children." };
+        return { isValid: false, reason: "Please indicate whether you have children under 18." };
+      }
+      if (currentWill?.hasChildrenUnder18) {
+        const children = currentWill?.roleAssignments?.filter((ra) => ra.role === "CHILD") || [];
+        if (children.length === 0) {
+          return { isValid: false, reason: "Please add your children under 18 before continuing." };
+        }
       }
       return { isValid: true };
     }
@@ -296,9 +302,8 @@ function WizardStepContent() {
     }
 
     if (currentSectionId === "guardians") {
-      const children = currentWill?.roleAssignments?.filter((ra) => ra.role === "CHILD") || [];
-      const hasKids = children.length > 0 || currentWill?.hasChildrenUnder18;
-      if (hasKids) {
+      const hasUnder18 = Boolean(currentWill?.hasChildrenUnder18);
+      if (hasUnder18) {
         const hasPerm = currentWill?.roleAssignments?.some((ra) => ra.role === "GUARDIAN_PERMANENT");
         if (!hasPerm) {
           return { isValid: false, reason: "Please choose a permanent guardian for children under 18." };

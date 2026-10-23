@@ -464,16 +464,22 @@ export function SectionA_Details() {
                   <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#1f5a3d] bg-[#e8f4ee] px-2.5 py-0.5 rounded-full">
                     <CheckCircle2 className="w-3.5 h-3.5" /> Read
                   </span>
+                ) : isUaeResident ? (
+                  <span className="text-[11px] font-semibold text-[#b42318] bg-[#fef3f2] px-2.5 py-0.5 rounded-full">
+                    Required
+                  </span>
                 ) : (
                   <span className="text-[11px] font-semibold text-[#6c6478] bg-[#f1eef5] px-2.5 py-0.5 rounded-full">
-                    Optional
+                    Not required
                   </span>
                 )}
               </div>
               <p className="text-[13px] text-[#6c6478] leading-relaxed mb-3">
                 {emiratesIdUploaded
                   ? "Read: Emirates ID number and official Arabic name."
-                  : "Front and back, if you live in the UAE."}
+                  : isUaeResident
+                  ? "Front and back (required for UAE residents)."
+                  : "Front and back, if you reside in the UAE."}
               </p>
               {emiratesIdUploaded && (
                 <div className="text-[12px] font-mono text-[#6c6478] truncate mb-3 bg-white px-2.5 py-1.5 rounded-md border border-[#e4dfe9]">

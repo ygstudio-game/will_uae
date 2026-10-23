@@ -187,22 +187,33 @@ export function SectionD_Guardians() {
   }
 
   // If user answered but has no minor children (or no children at all)
-  if (childAssignments.length === 0 || minorChildren.length === 0) {
+  if (!activeWill?.hasChildrenUnder18 || childAssignments.length === 0 || minorChildren.length === 0) {
     return (
       <div className="space-y-6">
-        <div className="bg-[#efeaf7] p-6 sm:p-7 rounded-2xl border border-transparent space-y-2">
+        <div className="bg-[#efeaf7] p-6 sm:p-7 rounded-2xl border border-transparent space-y-3">
           <h2 className="text-lg font-serif font-bold text-[#231a30]">
             No guardians needed
           </h2>
           <p className="text-sm text-[#6c6478] leading-relaxed">
             {childAssignments.length > 0
-              ? "None of the children you listed is under 18."
-              : "You indicated that you do not have minor children."}{" "}
-            Section Nine of your Will stays empty.{" "}
-            <Link href="/wizard/children" className="text-[#5b3fb0] font-semibold underline">
-              Change your answer in Section B
-            </Link>.
+              ? "None of the children you listed is under 18 years old."
+              : "You indicated that you do not have children under 18."}{" "}
+            Under UAE civil family law, court guardianship appointments (Section Nine of your Will) only apply to minor children under 18.
           </p>
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            <Link
+              href="/wizard/beneficiaries"
+              className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-[#0B1528] hover:bg-[#1a2942] text-white text-xs font-semibold shadow-sm transition-all"
+            >
+              <span>Continue to Section E (Beneficiaries) &rarr;</span>
+            </Link>
+            <Link
+              href="/wizard/children"
+              className="text-xs text-[#5b3fb0] hover:underline font-semibold"
+            >
+              Update your answer in Section B (Children)
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -434,10 +445,10 @@ export function SectionD_Guardians() {
                 <button
                   type="button"
                   onClick={() => handleAddNewPersonToSlot(slot)}
-                  className="w-full py-2.5 bg-[#382852] hover:bg-[#281b40] text-white text-xs font-semibold rounded-lg shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                  className="w-full py-2.5 bg-[#0B1528] hover:bg-[#1a2942] text-white text-xs font-bold rounded-xl shadow-md hover:shadow-lg flex items-center justify-center gap-2 transition-all cursor-pointer border border-[#A37E44]/40 active:scale-[0.98]"
                 >
-                  <Plus className="w-3.5 h-3.5" />
-                  Add a new person
+                  <Plus className="w-4 h-4 text-[#d7b48b] stroke-[2.5]" />
+                  <span>+ Add a new person</span>
                 </button>
               </div>
             </section>

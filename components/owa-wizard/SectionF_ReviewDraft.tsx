@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { CheckCircle2, AlertCircle, Eye, ArrowRight, ShieldCheck, Lock, Sparkles, Copy, FileText, Check, Upload } from "lucide-react";
 import { useOwaStore } from "@/store/useOwaStore";
-import { ADJDBilingualWillDocument } from "@/components/court/ADJDBilingualWillDocument";
 import { TestatorSignatureCard } from "@/components/signature/TestatorSignatureCard";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -139,10 +138,10 @@ export function SectionF_ReviewDraft() {
     setIsCopying(false);
   };
 
-  const handleProceedToSubmission = async () => {
+  const handleProceedToPreview = async () => {
     if (!allReady) return;
     await saveCurrentSectionToDb();
-    router.push(`/checkout/court-fee?applicationId=${application?.id}`);
+    router.push(`/preview${application?.id ? `?applicationId=${application.id}` : ""}`);
   };
 
   return (
@@ -267,34 +266,34 @@ export function SectionF_ReviewDraft() {
             </div>
           </div>
 
-          {/* Arabic Names */}
+          {/* Roles and Names */}
           <div className="bg-[#FFFEFA] p-3.5 rounded-xl border border-[#e4dfe9] flex items-start gap-2.5">
             <CheckCircle2 className="w-4 h-4 text-[#2f7a55] shrink-0 mt-0.5" />
             <div>
-              <a href="#arabic-names" className="text-xs font-bold text-[#231a30] hover:underline">
-                Arabic names
+              <a href="#roles-and-names" className="text-xs font-bold text-[#231a30] hover:underline">
+                Roles & names
               </a>
               <span className="text-[11px] text-[#6c6478] block">
-                {peopleList.length} transliterated for ADJD
+                {peopleList.length} people appointed & transliterated
               </span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Arabic Spelling of Names Card - Clean display for review and draft */}
-      <section id="arabic-names" className="bg-[#FFFEFA] p-5 sm:p-6 rounded-2xl border border-[#e4dfe9] shadow-sm space-y-4">
+      {/* Roles and Names in your Will Card */}
+      <section id="roles-and-names" className="bg-[#FFFEFA] p-5 sm:p-6 rounded-2xl border border-[#e4dfe9] shadow-sm space-y-4">
         <div className="flex items-center justify-between border-b border-[#f0ebf5] pb-3">
           <div>
             <h2 className="text-base font-serif font-bold text-[#231a30]">
-              Arabic spelling of every name
+              Roles and names
             </h2>
             <p className="text-xs text-[#6c6478] mt-0.5">
-              ADJD requires each person&apos;s name to appear in both English and phonetic Arabic transliteration.
+              Review all appointed roles and verify each person&apos;s legal English name and official Arabic phonetic transliteration.
             </p>
           </div>
           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[#FAF7EE] text-[#8A6233] border border-[#e2d5be]">
-            {peopleList.length} names recorded
+            {peopleList.length} persons appointed
           </span>
         </div>
 
@@ -305,15 +304,27 @@ export function SectionF_ReviewDraft() {
             return (
               <div
                 key={person.id}
-                className="p-3.5 rounded-xl bg-white border border-[#e4dfe9] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs"
+                className="p-3.5 rounded-xl bg-white border border-[#e4dfe9] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs hover:border-[#cfc6da] transition-all"
               >
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-[1.2px] text-[#A37E44] block">
-                    {roles.join(" · ").toUpperCase()}
-                  </span>
+                  <div className="flex flex-wrap gap-1.5 mb-1.5">
+                    {roles.map((r, rIdx) => (
+                      <span
+                        key={rIdx}
+                        className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-[1px] bg-[#FAF7EE] text-[#8A6233] border border-[#e2d5be]"
+                      >
+                        {r}
+                      </span>
+                    ))}
+                  </div>
                   <h3 className="text-base font-serif font-bold text-[#0B1528]">
                     {person.fullName || "Unnamed"}
                   </h3>
+                  <p className="text-[12px] text-[#6c6478] pt-0.5">
+                    {person.nationality || "National"} · {person.isUaeResident ? "UAE resident" : "Outside UAE"}
+                    {person.passportNumber ? ` · Passport ${person.passportNumber}` : ""}
+                    {person.isUaeResident && person.emiratesId ? ` · EID ${person.emiratesId}` : ""}
+                  </p>
                 </div>
 
                 <div className="flex items-center gap-3 self-end sm:self-auto">
@@ -351,36 +362,27 @@ export function SectionF_ReviewDraft() {
         </div>
       </section>
 
-      {/* Official Court Bilingual Will Preview Card */}
-      <section className="bg-white rounded-2xl border border-[#e4dfe9] shadow-sm overflow-hidden">
-        <div className="bg-[#382852] text-white px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-          <div>
-            <h3 className="text-sm font-semibold tracking-wide">
-              Official ADJD Bilingual Will Draft (ADJD-NM0723-07-03)
+      {/* Official Court Bilingual Will Preview Card - Navigates to dedicated /preview page */}
+      <section className="bg-gradient-to-br from-[#0B1528] to-[#162544] text-white p-6 sm:p-7 rounded-2xl border border-[#A37E44]/40 shadow-md space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1.5">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-[#A37E44]/20 text-[#D7B48B] border border-[#A37E44]/40 inline-block">
+              Official Form ADJD-NM0723-07-03 · Abu Dhabi Civil Family Court
+            </span>
+            <h3 className="text-lg sm:text-xl font-serif font-bold text-white">
+              Official ADJD Bilingual Court Will Draft
             </h3>
-            <span className="text-xs text-[#d7b48b]">Side-by-side English LTR & Arabic RTL</span>
+            <p className="text-xs text-[#D9D0E6] max-w-xl leading-relaxed">
+              Your official will is formatted according to Abu Dhabi Civil Family Court requirements, featuring statutory clauses with side-by-side English (LTR) and Arabic (RTL) court text.
+            </p>
           </div>
           <Link
-            href="/preview"
-            className="text-xs text-[#d7b48b] hover:underline flex items-center gap-1 font-semibold"
+            href={`/preview${application?.id ? `?applicationId=${application.id}` : ""}`}
+            className="px-5 py-3 rounded-xl bg-[#A37E44] hover:bg-[#8A6233] text-white text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2 shrink-0 cursor-pointer active:scale-[0.98]"
           >
-            <Eye className="w-3.5 h-3.5" />
-            <span>Open full 10 sections</span>
+            <Eye className="w-4 h-4 text-[#FAF7EE]" />
+            <span>Open Court Draft Preview →</span>
           </Link>
-        </div>
-
-        <div className="p-4 sm:p-6 bg-[#fbfaf8] max-h-[600px] overflow-y-auto">
-          {activeWill && testator ? (
-            <ADJDBilingualWillDocument
-              will={activeWill}
-              testator={testator}
-              assignments={activeWill.roleAssignments}
-            />
-          ) : (
-            <div className="text-center py-8 text-xs text-[#6c6478]">
-              Details loading...
-            </div>
-          )}
         </div>
       </section>
 
@@ -422,21 +424,21 @@ export function SectionF_ReviewDraft() {
         </div>
 
         <div className="pt-3 border-t border-[#f0ebf5] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <p className="text-xs text-[#6c6478] max-w-lg">
-            Next: our legal expert reviews your Will, then we file it with ADJD. You pay ADJD&apos;s AED 950 court fee on its portal after ADJD approves it.
+          <p className="text-xs text-[#6c6478] max-w-lg leading-relaxed">
+            Next: Review your full bilingual ADJD court document draft. After previewing, our legal expert reviews your Will before filing with ADJD.
           </p>
 
           <button
             type="button"
             disabled={!allReady}
-            onClick={handleProceedToSubmission}
+            onClick={handleProceedToPreview}
             className={`px-6 py-3 rounded-full font-semibold text-xs transition-all flex items-center justify-center gap-2 shrink-0 ${
               allReady
                 ? "bg-[#0B1528] hover:bg-[#1a2942] text-white cursor-pointer shadow-md"
                 : "bg-[#e4dfe9] text-[#6c6478] cursor-not-allowed"
             }`}
           >
-            <span>Approve and send for legal review</span>
+            <span>Continue to Court Will Draft Preview</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>

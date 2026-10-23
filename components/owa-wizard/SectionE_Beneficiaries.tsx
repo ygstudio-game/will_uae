@@ -24,19 +24,20 @@ function BeneficiaryShareControl({
   disabled = false,
 }: {
   value: number | null | undefined;
-  onChange: (val: number) => void;
+  onChange: (val: number | null) => void;
   color?: string;
   disabled?: boolean;
 }) {
-  const numericVal = value !== null && value !== undefined ? Math.round(Number(value)) : 0;
-  const [text, setText] = useState<string>(String(numericVal));
+  const hasValue = value !== null && value !== undefined && value > 0;
+  const [text, setText] = useState<string>(hasValue ? String(Math.round(Number(value))) : "");
   const isFocused = useRef(false);
 
   useEffect(() => {
     if (!isFocused.current) {
-      setText(String(numericVal));
+      const isSet = value !== null && value !== undefined && value > 0;
+      setText(isSet ? String(Math.round(Number(value))) : "");
     }
-  }, [numericVal]);
+  }, [value]);
 
   // While typing: do NOT validate, clamp, or call parent onChange!
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -48,12 +49,19 @@ function BeneficiaryShareControl({
   // Check AFTER typing finishes (on blur or Enter)
   const handleCommit = () => {
     isFocused.current = false;
-    let finalVal = 0;
-    if (text !== "" && !isNaN(parseInt(text, 10))) {
-      finalVal = Math.min(100, Math.max(0, parseInt(text, 10)));
+    if (text === "") {
+      onChange(null);
+      return;
     }
-    setText(String(finalVal));
-    onChange(finalVal);
+    const parsed = parseInt(text, 10);
+    if (!isNaN(parsed)) {
+      const finalVal = Math.min(100, Math.max(0, parsed));
+      setText(String(finalVal));
+      onChange(finalVal);
+    } else {
+      setText("");
+      onChange(null);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -62,32 +70,10 @@ function BeneficiaryShareControl({
     }
   };
 
-  // Slider change: user is dragging slider, smoothly commit
-  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseInt(e.target.value, 10) || 0;
-    setText(String(val));
-    onChange(val);
-  };
-
   return (
     <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
-      {/* Interactive Range Slider */}
-      <div className="flex-1 sm:w-28 md:w-36 flex items-center gap-1.5">
-        <input
-          type="range"
-          min="0"
-          max="100"
-          step="1"
-          value={numericVal}
-          onChange={handleSliderChange}
-          disabled={disabled}
-          className="w-full h-2 bg-[#efeaf7] rounded-lg appearance-none cursor-pointer accent-[#382852] focus:outline-none"
-          title={`Adjust share: ${numericVal}%`}
-        />
-      </div>
-
-      {/* Robust Text Input (checks only after typing on blur / enter) */}
-      <div className="flex items-center gap-1 bg-white border border-[#cfc6da] rounded-lg px-2.5 py-1.5 focus-within:border-[#5b3fb0] focus-within:ring-2 focus-within:ring-[#5b3fb0]/20 transition-all shadow-2xs">
+      {/* Manual Percentage Input — starts blank, filled in by client */}
+      <div className="flex items-center gap-1.5 bg-white border border-[#cfc6da] rounded-xl px-3 py-1.5 focus-within:border-[#A37E44] focus-within:ring-2 focus-within:ring-[#A37E44]/25 transition-all shadow-xs">
         <input
           type="text"
           inputMode="numeric"
@@ -99,10 +85,10 @@ function BeneficiaryShareControl({
           onBlur={handleCommit}
           onKeyDown={handleKeyDown}
           disabled={disabled}
-          className="w-10 text-sm font-mono font-bold text-right text-[#231a30] bg-transparent focus:outline-none"
+          className="w-12 text-sm font-mono font-bold text-right text-[#0B1528] bg-transparent focus:outline-none placeholder:text-[#a09aa8] placeholder:font-normal"
           placeholder="0"
         />
-        <span className="text-xs font-bold text-[#6c6478] select-none">%</span>
+        <span className="text-xs font-bold text-[#8A6233] select-none">%</span>
       </div>
     </div>
   );
@@ -167,27 +153,16 @@ export function SectionE_Beneficiaries() {
   const [isSpouse100Mode, setIsSpouse100Mode] = useState(false);
 
   // Auto-initialize Primary 1 if none exists
+  // Optional initial Primary 1 without pre-calculating share
   const hasAutoInitialized = useRef(false);
   useEffect(() => {
     if (!hasAutoInitialized.current && primaryAssignments.length === 0) {
       hasAutoInitialized.current = true;
       if (potentialSpouse && potentialSpouse.fullName?.trim()) {
-        assignPersonToRole(potentialSpouse.id, "BENEFICIARY_PRIMARY", 1, 100);
-      } else {
-        const firstNamedChild = existingPersons.find(
-          (p) =>
-            p.id !== testatorId &&
-            Boolean(p.fullName?.trim()) &&
-            activeWill?.roleAssignments.some(
-              (ra) => ra.role === "CHILD" && ra.personId === p.id
-            )
-        );
-        if (firstNamedChild) {
-          assignPersonToRole(firstNamedChild.id, "BENEFICIARY_PRIMARY", 1, 100);
-        }
+        assignPersonToRole(potentialSpouse.id, "BENEFICIARY_PRIMARY", 1, undefined);
       }
     }
-  }, [primaryAssignments.length, potentialSpouse, existingPersons, testatorId, activeWill]);
+  }, [primaryAssignments.length, potentialSpouse]);
 
   // Open modal for Adding New Person
   const handleOpenAddPerson = (
@@ -227,7 +202,7 @@ export function SectionE_Beneficiaries() {
     }
   };
 
-  // Save handler from UniversalPersonModal
+  // Save handler from UniversalPersonModal — no auto calculation, leaves share blank
   const handleModalSave = (savedPerson: PersonData) => {
     if (isSpouse100Mode) {
       for (let i = 1; i < primaryAssignments.length; i++) {
@@ -240,42 +215,24 @@ export function SectionE_Beneficiaries() {
 
     if (!personToEdit) {
       if (modalRole === "BENEFICIARY_PRIMARY") {
-        if (primaryAssignments.length === 1 && (primaryAssignments[0].sharePercentage === 100 || primaryTotal === 100)) {
-          // Auto split 50 / 50 when adding 2nd beneficiary
-          updateRoleShares("BENEFICIARY_PRIMARY", [
-            { assignmentId: primaryAssignments[0].id, sharePercentage: 50 },
-          ]);
-          assignPersonToRole(savedPerson.id, "BENEFICIARY_PRIMARY", 2, 50);
-        } else {
-          const remaining = Math.max(0, 100 - primaryTotal);
-          assignPersonToRole(
-            savedPerson.id,
-            "BENEFICIARY_PRIMARY",
-            primaryAssignments.length + 1,
-            remaining > 0 ? remaining : 0
-          );
-        }
+        assignPersonToRole(
+          savedPerson.id,
+          "BENEFICIARY_PRIMARY",
+          primaryAssignments.length + 1,
+          undefined
+        );
       } else {
-        if (substituteAssignments.length === 1 && (substituteAssignments[0].sharePercentage === 100 || substituteTotal === 100)) {
-          // Auto split 50 / 50 when adding 2nd substitute
-          updateRoleShares("BENEFICIARY_SUBSTITUTE", [
-            { assignmentId: substituteAssignments[0].id, sharePercentage: 50 },
-          ]);
-          assignPersonToRole(savedPerson.id, "BENEFICIARY_SUBSTITUTE", 2, 50);
-        } else {
-          const remaining = Math.max(0, 100 - substituteTotal);
-          assignPersonToRole(
-            savedPerson.id,
-            "BENEFICIARY_SUBSTITUTE",
-            substituteAssignments.length + 1,
-            remaining > 0 ? remaining : 0
-          );
-        }
+        assignPersonToRole(
+          savedPerson.id,
+          "BENEFICIARY_SUBSTITUTE",
+          substituteAssignments.length + 1,
+          undefined
+        );
       }
     }
   };
 
-  // Pick existing person for Primary
+  // Pick existing person for Primary — no auto-split, leaves share blank
   const handleSelectExistingPrimary = (personId: string) => {
     if (!personId) return;
     if (personId === "__ADD_NEW__") {
@@ -283,23 +240,15 @@ export function SectionE_Beneficiaries() {
       return;
     }
     if (primaryAssignments.length >= 4) return;
-    if (primaryAssignments.length === 1 && (primaryAssignments[0].sharePercentage === 100 || primaryTotal === 100)) {
-      updateRoleShares("BENEFICIARY_PRIMARY", [
-        { assignmentId: primaryAssignments[0].id, sharePercentage: 50 },
-      ]);
-      assignPersonToRole(personId, "BENEFICIARY_PRIMARY", 2, 50);
-    } else {
-      const remaining = Math.max(0, 100 - primaryTotal);
-      assignPersonToRole(
-        personId,
-        "BENEFICIARY_PRIMARY",
-        primaryAssignments.length + 1,
-        remaining > 0 ? remaining : 0
-      );
-    }
+    assignPersonToRole(
+      personId,
+      "BENEFICIARY_PRIMARY",
+      primaryAssignments.length + 1,
+      undefined
+    );
   };
 
-  // Pick existing person for Substitute
+  // Pick existing person for Substitute — no auto-split, leaves share blank
   const handleSelectExistingSubstitute = (personId: string) => {
     if (!personId) return;
     if (personId === "__ADD_NEW__") {
@@ -307,61 +256,29 @@ export function SectionE_Beneficiaries() {
       return;
     }
     if (substituteAssignments.length >= 2) return;
-    if (substituteAssignments.length === 1 && (substituteAssignments[0].sharePercentage === 100 || substituteTotal === 100)) {
-      updateRoleShares("BENEFICIARY_SUBSTITUTE", [
-        { assignmentId: substituteAssignments[0].id, sharePercentage: 50 },
-      ]);
-      assignPersonToRole(personId, "BENEFICIARY_SUBSTITUTE", 2, 50);
-    } else {
-      const remaining = Math.max(0, 100 - substituteTotal);
-      assignPersonToRole(
-        personId,
-        "BENEFICIARY_SUBSTITUTE",
-        substituteAssignments.length + 1,
-        remaining > 0 ? remaining : 0
-      );
-    }
+    assignPersonToRole(
+      personId,
+      "BENEFICIARY_SUBSTITUTE",
+      substituteAssignments.length + 1,
+      undefined
+    );
   };
 
-  // Update Primary share with smart 2-person auto balancing
-  const handlePrimaryShareChange = (targetAssignmentId: string, val: number) => {
-    const clamped = Math.min(100, Math.max(0, Math.round(val)));
-    if (primaryAssignments.length === 2) {
-      // Auto-manage other beneficiary to keep total at 100%
-      const other = primaryAssignments.find((a) => a.id !== targetAssignmentId);
-      if (other) {
-        const otherShare = 100 - clamped;
-        updateRoleShares("BENEFICIARY_PRIMARY", [
-          { assignmentId: targetAssignmentId, sharePercentage: clamped },
-          { assignmentId: other.id, sharePercentage: otherShare },
-        ]);
-        return;
-      }
-    }
+  // Update Primary share manually (no auto calculation / balancing of others)
+  const handlePrimaryShareChange = (targetAssignmentId: string, val: number | null) => {
     const target = primaryAssignments.find((a) => a.id === targetAssignmentId);
     if (target) {
-      assignPersonToRole(target.personId, "BENEFICIARY_PRIMARY", target.appointmentOrder, clamped);
+      const finalVal = val !== null && val !== undefined ? Math.min(100, Math.max(0, Math.round(val))) : undefined;
+      assignPersonToRole(target.personId, "BENEFICIARY_PRIMARY", target.appointmentOrder, finalVal);
     }
   };
 
-  // Update Substitute share with smart 2-person auto balancing
-  const handleSubstituteShareChange = (targetAssignmentId: string, val: number) => {
-    const clamped = Math.min(100, Math.max(0, Math.round(val)));
-    if (substituteAssignments.length === 2) {
-      // Auto-manage other substitute to keep total at 100%
-      const other = substituteAssignments.find((a) => a.id !== targetAssignmentId);
-      if (other) {
-        const otherShare = 100 - clamped;
-        updateRoleShares("BENEFICIARY_SUBSTITUTE", [
-          { assignmentId: targetAssignmentId, sharePercentage: clamped },
-          { assignmentId: other.id, sharePercentage: otherShare },
-        ]);
-        return;
-      }
-    }
+  // Update Substitute share manually (no auto calculation / balancing of others)
+  const handleSubstituteShareChange = (targetAssignmentId: string, val: number | null) => {
     const target = substituteAssignments.find((a) => a.id === targetAssignmentId);
     if (target) {
-      assignPersonToRole(target.personId, "BENEFICIARY_SUBSTITUTE", target.appointmentOrder, clamped);
+      const finalVal = val !== null && val !== undefined ? Math.min(100, Math.max(0, Math.round(val))) : undefined;
+      assignPersonToRole(target.personId, "BENEFICIARY_SUBSTITUTE", target.appointmentOrder, finalVal);
     }
   };
 
@@ -562,28 +479,11 @@ export function SectionE_Beneficiaries() {
               </div>
             )}
 
-            {/* Equal Split & Auto-Balance bar if > 1 primary */}
+            {/* Manual Share Notice */}
             {primaryAssignments.length > 1 && (
-              <div className="flex items-center justify-between gap-2 flex-wrap pt-1 pb-1">
-                <span className="text-[11px] text-[#6c6478]">
-                  {primaryAssignments.length === 2 ? (
-                    <span className="text-[#382852] font-semibold">
-                      💡 Changing one share automatically balances the other to 100%.
-                    </span>
-                  ) : (
-                    <span>Adjust shares below using the sliders or number boxes:</span>
-                  )}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => handleSplitEqually("BENEFICIARY_PRIMARY")}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#efeaf7] hover:bg-[#e4dfe9] text-[#382852] text-xs font-semibold transition-colors cursor-pointer border border-[#cfc6da]"
-                  title="Distribute 100% equally among all primary beneficiaries"
-                >
-                  <Scale className="w-3.5 h-3.5 text-[#5b3fb0]" />
-                  Split equally ({Math.floor(100 / primaryAssignments.length)}% each)
-                </button>
-              </div>
+              <p className="text-[12px] text-[#6c6478] bg-[#FAF8F5] p-2.5 rounded-lg border border-[#e4dfe9]">
+                💡 Enter each beneficiary&apos;s share percentage manually. Total must equal 100%.
+              </p>
             )}
 
             {/* Primary Share Rows */}
@@ -732,9 +632,9 @@ export function SectionE_Beneficiaries() {
                     <button
                       type="button"
                       onClick={() => handleOpenAddPerson("BENEFICIARY_PRIMARY", "Spouse")}
-                      className="px-3.5 py-2.5 border border-[#382852] text-[#382852] hover:bg-[#382852] hover:text-white text-xs font-semibold rounded-lg shadow-2xs flex items-center justify-center gap-1.5 transition-all shrink-0 cursor-pointer"
+                      className="px-4 py-2.5 border-2 border-[#A37E44] text-[#7A5B28] hover:bg-[#FAF7EE] text-xs font-bold rounded-xl shadow-xs flex items-center justify-center gap-1.5 transition-all shrink-0 cursor-pointer"
                     >
-                      <HeartHandshake className="w-3.5 h-3.5" />
+                      <HeartHandshake className="w-3.5 h-3.5 text-[#A37E44]" />
                       + Add Spouse
                     </button>
                   )}
@@ -742,10 +642,10 @@ export function SectionE_Beneficiaries() {
                   <button
                     type="button"
                     onClick={() => handleOpenAddPerson("BENEFICIARY_PRIMARY", "Child")}
-                    className="px-4 py-2.5 bg-[#382852] hover:bg-[#281b40] text-white text-xs font-semibold rounded-lg shadow-sm flex items-center justify-center gap-1.5 transition-all shrink-0 cursor-pointer"
+                    className="px-5 py-2.5 bg-[#0B1528] hover:bg-[#1a2942] text-white text-xs font-bold rounded-xl shadow-md hover:shadow-lg flex items-center justify-center gap-2 transition-all shrink-0 cursor-pointer border border-[#A37E44]/40 active:scale-[0.98]"
                   >
-                    <Plus className="w-3.5 h-3.5" />
-                    Add a new person or charity
+                    <Plus className="w-4 h-4 text-[#d7b48b] stroke-[2.5]" />
+                    <span>+ Add a new person or charity</span>
                   </button>
                 </div>
               </div>
@@ -771,24 +671,11 @@ export function SectionE_Beneficiaries() {
               </span>
             </div>
 
-            {/* Equal Split & Auto-Balance bar if 2 substitutes */}
+            {/* Manual Substitute Notice */}
             {substituteAssignments.length > 1 && (
-              <div className="flex items-center justify-between gap-2 flex-wrap pt-1 pb-1">
-                <span className="text-[11px] text-[#6c6478]">
-                  <span className="text-[#382852] font-semibold">
-                    💡 Changing one share automatically balances the other to 100%.
-                  </span>
-                </span>
-                <button
-                  type="button"
-                  onClick={() => handleSplitEqually("BENEFICIARY_SUBSTITUTE")}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#efeaf7] hover:bg-[#e4dfe9] text-[#382852] text-xs font-semibold transition-colors cursor-pointer border border-[#cfc6da]"
-                  title="Distribute 100% equally between Substitute A and B"
-                >
-                  <Scale className="w-3.5 h-3.5 text-[#5b3fb0]" />
-                  Split equally (50% / 50%)
-                </button>
-              </div>
+              <p className="text-[12px] text-[#6c6478] bg-[#FAF8F5] p-2.5 rounded-lg border border-[#e4dfe9]">
+                💡 Enter each substitute beneficiary&apos;s share percentage manually. Total must equal 100%.
+              </p>
             )}
 
             {/* Substitute Share Rows */}
@@ -935,10 +822,10 @@ export function SectionE_Beneficiaries() {
                   <button
                     type="button"
                     onClick={() => handleOpenAddPerson("BENEFICIARY_SUBSTITUTE")}
-                    className="px-4 py-2.5 bg-[#382852] hover:bg-[#281b40] text-white text-xs font-semibold rounded-lg shadow-sm flex items-center justify-center gap-1.5 transition-all shrink-0 cursor-pointer"
+                    className="px-5 py-2.5 bg-[#0B1528] hover:bg-[#1a2942] text-white text-xs font-bold rounded-xl shadow-md hover:shadow-lg flex items-center justify-center gap-2 transition-all shrink-0 cursor-pointer border border-[#A37E44]/40 active:scale-[0.98]"
                   >
-                    <Plus className="w-3.5 h-3.5" />
-                    {substituteAssignments.length === 0 ? "Add substitute A" : "Add substitute B"}
+                    <Plus className="w-4 h-4 text-[#d7b48b] stroke-[2.5]" />
+                    <span>{substituteAssignments.length === 0 ? "+ Add Substitute A" : "+ Add Substitute B"}</span>
                   </button>
                 </div>
               </div>

@@ -300,10 +300,10 @@ export function SectionC_Executors() {
                     <button
                       type="button"
                       onClick={() => handleAddNewPersonToSlot(slot)}
-                      className="px-4 py-2.5 bg-[#382852] hover:bg-[#281b40] text-white text-xs font-semibold rounded-lg shadow-sm flex items-center justify-center gap-1.5 transition-all shrink-0 cursor-pointer"
+                      className="px-5 py-2.5 bg-[#0B1528] hover:bg-[#1a2942] text-white text-xs font-bold rounded-xl shadow-md hover:shadow-lg flex items-center justify-center gap-2 transition-all shrink-0 cursor-pointer border border-[#A37E44]/40 active:scale-[0.98]"
                     >
-                      <Plus className="w-3.5 h-3.5" />
-                      Add a new person
+                      <Plus className="w-4 h-4 text-[#d7b48b] stroke-[2.5]" />
+                      <span>+ Add a new person</span>
                     </button>
 
                     {slot.order === 1 && !potentialSpouse && (
@@ -390,7 +390,7 @@ export function SectionC_Executors() {
           </ol>
 
           <p className="text-[11px] text-[#6c6478] pt-3 border-t border-[#f0ebf5] leading-relaxed">
-            Each person needs a passport. Add their Emirates ID if they live in the UAE.
+            Each person needs a passport. An Emirates ID is required if they live in the UAE.
           </p>
         </aside>
       </div>

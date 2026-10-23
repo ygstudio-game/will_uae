@@ -1,0 +1,115 @@
+/* ==========================================================================
+   ADJD Last Will & Testament – exact A4 replica (ADJD-NM0723-07-03)
+   All measurements are in pt, taken from the official PDF (595.276 x 841.89pt)
+   ========================================================================== */
+.aw-root {
+  --aw-bg: #f5f4f2;
+  --aw-text: #46464b;
+  --aw-line: #dac0ae;
+  --aw-bar-a: #9b736e;
+  --aw-bar-b: #c19578;
+  --aw-val: #0b1528;
+  font-family: var(--aw-font-en), "Helvetica Neue", Arial, sans-serif;
+  color: var(--aw-text);
+}
+.aw-fit { width: 100%; overflow: hidden; }
+.aw-stack { width: 595.276pt; transform-origin: top left; }
+
+/* ---------- Page ---------- */
+.aw-page {
+  position: relative;
+  width: 595.276pt;
+  min-height: 841.89pt;
+  background: var(--aw-bg);
+  padding: 36.7pt 31pt 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  margin: 0 0 14pt;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.12);
+}
+.aw-page--first { padding-top: 0; }
+.aw-page-body { padding-bottom: 60pt; }
+
+/* ---------- Header (page 1) ---------- */
+.aw-header { display: block; width: 595.276pt; height: 153.6pt; margin: 0 -31pt; max-width: none; }
+
+/* ---------- Skyline (page 8) ---------- */
+.aw-skyline {
+  position: absolute; left: 0; bottom: 48pt; width: 595.276pt; height: auto;
+  pointer-events: none; z-index: 0;
+}
+
+/* ---------- Footer ---------- */
+.aw-footer { position: absolute; left: 0; right: 0; bottom: 0; height: 56pt; z-index: 2; }
+.aw-footer-contact { position: absolute; left: 32pt; bottom: 22.5pt; width: 216pt; height: auto; }
+.aw-footer-page {
+  position: absolute; left: 256pt; bottom: 36pt; font-size: 6.2pt; line-height: 9pt;
+  letter-spacing: .1pt; color: var(--aw-text); display: flex; gap: 20pt; white-space: nowrap;
+}
+.aw-footer-code { position: absolute; left: 256pt; bottom: 25.5pt; font-size: 6.2pt; line-height: 9pt; color: var(--aw-text); }
+.aw-footer-copy {
+  position: absolute; right: 36pt; bottom: 25.5pt; font-size: 6.2pt; line-height: 9pt; text-align: right; color: var(--aw-text);
+}
+.aw-footer-copy .ar { font-family: var(--aw-font-ar), sans-serif; display: block; margin-bottom: 4pt; direction: rtl; }
+
+/* ---------- Cards / bars ---------- */
+.aw-card { background: #fff; border-radius: 6.5pt; box-shadow: 0 0 6pt rgba(0,0,0,.04); overflow: hidden; margin-bottom: 15pt; position: relative; }
+.aw-card--tight { margin-bottom: 10.3pt; }
+.aw-bar {
+  display: flex; align-items: center; justify-content: space-between; color: #fff; font-weight: 700;
+  font-size: 10.6pt; padding: 0 14pt; height: 32pt;
+  background: linear-gradient(100deg, var(--aw-bar-a) 0%, var(--aw-bar-b) 100%);
+}
+.aw-bar--muted { background: linear-gradient(100deg, #9b736e 0%, #a98072 100%); }
+.aw-bar--light { background: #c19478; }
+.aw-bar--tall { height: 41pt; }
+.aw-bar--p1 { height: 33pt; }
+.aw-bar .ar { font-family: var(--aw-font-ar), sans-serif; direction: rtl; font-size: 11pt; }
+
+/* ---------- Two-column grid ---------- */
+.aw-grid { display: grid; grid-template-columns: 1fr 1fr; padding: 0 14pt; column-gap: 23pt; }
+.aw-grid--wide { padding: 0 12.9pt; column-gap: 52pt; }
+.aw-col-ar { direction: rtl; font-family: var(--aw-font-ar), sans-serif; text-align: right; }
+.aw-col-en { direction: ltr; text-align: left; }
+
+/* ---------- Text ---------- */
+.aw-p { font-size: 8.4pt; line-height: 14.3pt; font-weight: 300; text-align: justify; padding: 0 4pt; }
+.aw-p--lg { font-size: 9pt; line-height: 15.5pt; padding: 0; }
+.aw-p--bold { font-weight: 700; }
+.aw-col-ar .aw-p, .aw-col-ar.aw-p { font-weight: 300; }
+.aw-b { font-weight: 700; }
+.aw-it { font-style: italic; }
+
+/* Hanging list item  (c) d) e) ) */
+.aw-li { display: flex; gap: 8pt; margin-bottom: 12.5pt; }
+.aw-li > b { flex: 0 0 12pt; font-weight: 700; }
+.aw-li > span { flex: 1; text-align: justify; }
+
+/* ---------- Field rows (label on top, value on the ruled line) ---------- */
+.aw-cell {
+  position: relative; display: flex; flex-direction: column; justify-content: space-between;
+  border-bottom: 0.55pt solid var(--aw-line); box-sizing: border-box; padding: 7.4pt 4pt 2.2pt;
+  font-size: 8.4pt; line-height: 11pt; font-weight: 300;
+}
+.aw-grid--wide .aw-cell { padding-inline: 0; }
+.aw-cell--noline { border-bottom-color: transparent; }
+.aw-cell--bold .aw-lbl { font-weight: 700; }
+.aw-lbl { display: block; }
+.aw-lbl u { text-decoration: none; display: inline-block; min-width: 24pt; text-align: center; border-bottom: .5pt solid var(--aw-text); }
+.aw-val { display: block; font-weight: 700; font-size: 9.6pt; line-height: 11pt; color: var(--aw-val); margin-top: auto; padding-top: 2pt; }
+.aw-col-ar .aw-val { font-size: 10.2pt; }
+.aw-split { display: flex; justify-content: space-between; align-items: baseline; }
+.aw-split .ar { font-family: var(--aw-font-ar), sans-serif; direction: rtl; }
+.aw-sig { max-height: 30pt; max-width: 130pt; object-fit: contain; display: block; }
+
+.aw-pad-b { padding-bottom: 14pt; }
+
+/* ---------- Print ---------- */
+@page { size: A4; margin: 0; }
+@media print {
+  html, body { background: #fff !important; }
+  .aw-fit { overflow: visible !important; height: auto !important; }
+  .aw-stack { transform: none !important; }
+  .aw-page { margin: 0 !important; box-shadow: none !important; height: 841.89pt; break-after: page; page-break-after: always; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .aw-page:last-child { break-after: auto; page-break-after: auto; }
+}
