@@ -194,7 +194,43 @@ function PreviewContent() {
           const res = await fetch(`/api/applications/${queryAppId}`);
           const data = await res.json();
           if (data.success && data.application) {
-            setAppData(data.application);
+            const storeApp = useOwaStore.getState().application;
+            let cachedSig: string | null = null;
+            if (typeof window !== "undefined") {
+              try {
+                cachedSig = localStorage.getItem("owa_signature_latest");
+              } catch (_) {}
+            }
+            const mergedPersons = (data.application.persons || []).map((p: any) => {
+              const sp = storeApp?.persons?.find((ep: any) => ep.id === p.id || ep.fullName === p.fullName);
+              let localSig: string | null = null;
+              if (typeof window !== "undefined") {
+                try {
+                  localSig = localStorage.getItem(`owa_signature_${p.id}`);
+                } catch (_) {}
+              }
+              return {
+                ...p,
+                signatureDataUrl: p.signatureDataUrl || sp?.signatureDataUrl || localSig || (p.relationship === "Self" ? cachedSig : null) || null,
+              };
+            });
+            const mergedWills = (data.application.wills || []).map((w: any) => {
+              const sw = storeApp?.wills?.find((ew: any) => ew.id === w.id || ew.willIndex === w.willIndex);
+              let t = w.testatorPerson || sw?.testatorPerson;
+              if (t) {
+                const matchP = mergedPersons.find((mp: any) => mp.id === t.id || mp.relationship === "Self");
+                t = {
+                  ...t,
+                  signatureDataUrl: t.signatureDataUrl || matchP?.signatureDataUrl || sw?.testatorPerson?.signatureDataUrl || cachedSig || null,
+                };
+              }
+              return { ...w, testatorPerson: t };
+            });
+            setAppData({
+              ...data.application,
+              persons: mergedPersons,
+              wills: mergedWills,
+            });
           }
         } else if (!application) {
           // Attempt to load from current session
@@ -220,7 +256,36 @@ function PreviewContent() {
   const activeApp = appData || application;
   const currentWillIndex = queryWillIndex ? Number(queryWillIndex) : (activeWillIndex || 1);
   const rawWill = activeApp?.wills?.find((w: any) => w.willIndex === currentWillIndex) || activeApp?.wills?.[0];
-  const rawTestator = rawWill?.testatorPerson;
+  let rawTestator = rawWill?.testatorPerson;
+
+  // Resolve signature with multiple fallbacks so it is NEVER lost on preview
+  if (rawTestator && !rawTestator.signatureDataUrl) {
+    const fromPersons = activeApp?.persons?.find(
+      (p: any) => p.id === rawTestator.id || p.relationship === "Self" || (p.fullName && p.fullName === rawTestator.fullName)
+    );
+    const storeApp = useOwaStore.getState().application;
+    const fromStore =
+      storeApp?.wills?.find((w: any) => w.willIndex === currentWillIndex)?.testatorPerson ||
+      storeApp?.persons?.find((p: any) => p.relationship === "Self" || p.id === rawTestator.id);
+    let fromStorage: string | null = null;
+    if (typeof window !== "undefined") {
+      try {
+        fromStorage =
+          localStorage.getItem(`owa_signature_${rawTestator.id}`) ||
+          localStorage.getItem("owa_signature_latest");
+      } catch (_) {}
+    }
+    const signature =
+      fromPersons?.signatureDataUrl ||
+      fromStore?.signatureDataUrl ||
+      fromStorage ||
+      null;
+
+    if (signature) {
+      rawTestator = { ...rawTestator, signatureDataUrl: signature };
+    }
+  }
+
   const rawAssignments = rawWill?.roleAssignments || [];
 
   const isRealDataReady = Boolean(rawWill && rawTestator?.fullName);

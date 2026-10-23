@@ -100,7 +100,7 @@
 .aw-col-ar .aw-val { font-size: 10.2pt; }
 .aw-split { display: flex; justify-content: space-between; align-items: baseline; }
 .aw-split .ar { font-family: var(--aw-font-ar), sans-serif; direction: rtl; }
-.aw-sig { max-height: 30pt; max-width: 130pt; object-fit: contain; display: block; }
+.aw-sig { max-height: 38pt; max-width: 140pt; object-fit: contain; display: block; margin-top: auto; }
 
 .aw-pad-b { padding-bottom: 14pt; }
 

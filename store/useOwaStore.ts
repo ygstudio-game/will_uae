@@ -126,6 +126,57 @@ export const createDefaultDraftApplication = (): ApplicationData => {
   };
 };
 
+function mergeLocalSignatures(incomingApp: any, localApp?: any): any {
+  if (!incomingApp) return incomingApp;
+  let cachedSig: string | null = null;
+  if (typeof window !== "undefined") {
+    try {
+      cachedSig = localStorage.getItem("owa_signature_latest");
+    } catch (_) {}
+  }
+
+  const mergedPersons = (incomingApp.persons || []).map((p: any) => {
+    let personSig = p.signatureDataUrl;
+    if (!personSig && typeof window !== "undefined") {
+      try {
+        personSig = localStorage.getItem(`owa_signature_${p.id}`);
+      } catch (_) {}
+    }
+    const localP = localApp?.persons?.find((ep: any) => ep.id === p.id || ep.fullName === p.fullName);
+    return {
+      ...p,
+      signatureDataUrl: personSig || localP?.signatureDataUrl || (p.relationship === "Self" ? cachedSig : null) || null,
+    };
+  });
+
+  const mergedWills = (incomingApp.wills || []).map((w: any) => {
+    const localW = localApp?.wills?.find((ew: any) => ew.id === w.id || ew.willIndex === w.willIndex);
+    let testator = w.testatorPerson || localW?.testatorPerson;
+    if (testator) {
+      const matchP = mergedPersons.find((mp: any) => mp.id === testator.id || mp.relationship === "Self");
+      testator = {
+        ...testator,
+        signatureDataUrl:
+          testator.signatureDataUrl ||
+          matchP?.signatureDataUrl ||
+          localW?.testatorPerson?.signatureDataUrl ||
+          cachedSig ||
+          null,
+      };
+    }
+    return {
+      ...w,
+      testatorPerson: testator,
+    };
+  });
+
+  return {
+    ...incomingApp,
+    persons: mergedPersons,
+    wills: mergedWills,
+  };
+}
+
 export const useOwaStore = create<OwaState>()(
   persist(
     (set, get) => {
@@ -167,9 +218,11 @@ export const useOwaStore = create<OwaState>()(
             const res = await fetch(`/api/applications/${id}`);
             const data = await res.json();
             if (data.success && data.application) {
+              const state = get();
+              const merged = mergeLocalSignatures(data.application, state.application);
               set({
                 applicationId: id,
-                application: data.application,
+                application: merged,
                 isLoadingData: false,
                 loadingMessage: null,
                 saveError: null,
@@ -206,9 +259,10 @@ export const useOwaStore = create<OwaState>()(
 
             const data = await res.json();
             if (data.success && data.application) {
+              const merged = mergeLocalSignatures(data.application, state.application);
               set({
                 applicationId: data.application.id,
-                application: data.application,
+                application: merged,
                 isLoadingData: false,
                 loadingMessage: null,
                 isSaving: false,
@@ -281,8 +335,9 @@ export const useOwaStore = create<OwaState>()(
             }
 
             if (data.application) {
+              const merged = mergeLocalSignatures(data.application, state.application);
               set({
-                application: data.application,
+                application: merged,
                 applicationId: data.application.id,
                 isSaving: false,
               });
@@ -375,7 +430,11 @@ export const useOwaStore = create<OwaState>()(
           const updatedWills = currentApp.wills.map((will) => ({
             ...will,
             testatorPerson:
-              will.testatorPersonId === personId ? updatedPerson : will.testatorPerson,
+              will.testatorPersonId === personId ||
+              will.testatorPerson?.id === personId ||
+              (will.willIndex === 1 && (personData.relationship === "Self" || existingPerson?.relationship === "Self"))
+                ? updatedPerson
+                : will.testatorPerson,
             roleAssignments: will.roleAssignments.map((ra) =>
               ra.personId === personId ? { ...ra, person: updatedPerson } : ra
             ),
@@ -390,6 +449,20 @@ export const useOwaStore = create<OwaState>()(
             },
           });
 
+          // Sync signature to localStorage for bulletproof offline fallback
+          if (typeof window !== "undefined" && personData.signatureDataUrl !== undefined) {
+            try {
+              if (personData.signatureDataUrl) {
+                localStorage.setItem(`owa_signature_${personId}`, personData.signatureDataUrl);
+                if (personData.relationship === "Self" || existingPerson?.relationship === "Self" || currentApp.wills[0]?.testatorPersonId === personId) {
+                  localStorage.setItem("owa_signature_latest", personData.signatureDataUrl);
+                }
+              } else {
+                localStorage.removeItem(`owa_signature_${personId}`);
+              }
+            } catch (_) {}
+          }
+
           // Server background sync if authenticated and not in local-only draft mode
           if (currentAppId && !currentAppId.startsWith("draft-")) {
             try {
@@ -398,6 +471,7 @@ export const useOwaStore = create<OwaState>()(
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   ...personData,
+                  signatureDataUrl: updatedPerson.signatureDataUrl,
                   id: personId,
                   applicationId: currentAppId,
                 }),
@@ -415,6 +489,7 @@ export const useOwaStore = create<OwaState>()(
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                       ...personData,
+                      signatureDataUrl: updatedPerson.signatureDataUrl,
                       id: personId,
                       applicationId: d.application.id,
                     }),

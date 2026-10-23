@@ -349,16 +349,26 @@ export function ADJDBilingualWillDocument({ will, testator, assignments }: Props
                 {testator.passportNumber ? <span className="aw-val">{testator.passportNumber}</span> : null}
               </div>
             </Grid>
-            <Grid>
-              <div className="aw-cell aw-cell--noline" style={{ minHeight: "48pt" }} />
-              <div className="aw-cell aw-col-en" style={{ minHeight: "60pt", direction: "ltr" }}>
-                <span className="aw-lbl aw-split"><span>Signature</span><span className="ar">التوقيع</span></span>
-                {testator.signatureDataUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img className="aw-sig" src={testator.signatureDataUrl} alt="Testator signature" />
-                ) : null}
-              </div>
-            </Grid>
+            {(() => {
+              const effectiveSignature =
+                testator.signatureDataUrl ||
+                (typeof window !== "undefined"
+                  ? localStorage.getItem(`owa_signature_${testator.id}`) ||
+                    localStorage.getItem("owa_signature_latest")
+                  : null);
+              return (
+                <Grid>
+                  <div className="aw-cell aw-cell--noline" style={{ minHeight: "48pt" }} />
+                  <div className="aw-cell aw-col-en" style={{ minHeight: "60pt", direction: "ltr" }}>
+                    <span className="aw-lbl aw-split"><span>Signature</span><span className="ar">التوقيع</span></span>
+                    {effectiveSignature ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img className="aw-sig" src={effectiveSignature} alt="Testator signature" />
+                    ) : null}
+                  </div>
+                </Grid>
+              );
+            })()}
 
             <div style={{ height: "38pt" }} />
             <Row bold h={30} pt={4} noLineEn noLineAr en="To be completed by the Court:" ar="للاستكمال من قبل المحكمة :" />

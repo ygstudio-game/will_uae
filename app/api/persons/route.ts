@@ -55,6 +55,7 @@ export async function POST(req: NextRequest) {
       address,
       email,
       phone,
+      signatureDataUrl,
     } = body;
 
     if (!applicationId || !fullName) {
@@ -82,6 +83,7 @@ export async function POST(req: NextRequest) {
             address: address?.trim() || null,
             email: email?.trim() || null,
             phone: phone?.trim() || null,
+            ...(signatureDataUrl !== undefined ? { signatureDataUrl } : {}),
           },
           include: { documents: true },
         });
@@ -108,6 +110,7 @@ export async function POST(req: NextRequest) {
             address: address?.trim() || existingByName.address,
             email: email?.trim() || existingByName.email,
             phone: phone?.trim() || existingByName.phone,
+            ...(signatureDataUrl !== undefined ? { signatureDataUrl } : {}),
           },
           include: { documents: true },
         });
@@ -127,6 +130,7 @@ export async function POST(req: NextRequest) {
             address: address?.trim() || null,
             email: email?.trim() || null,
             phone: phone?.trim() || null,
+            signatureDataUrl: signatureDataUrl || null,
           },
           include: { documents: true },
         });

@@ -164,6 +164,7 @@ model Person {
   address         String?
   email           String?
   phone           String?
+  signatureDataUrl String?           @db.Text
   
   testatorWills   Will[]             @relation("TestatorWill")
   roleAssignments RoleAssignment[]

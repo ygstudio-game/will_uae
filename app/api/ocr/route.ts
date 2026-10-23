@@ -82,6 +82,8 @@ CRITICAL LEGAL & TRANSLITERATION RULES:
 5. Address (if utility bill / tenancy contract): Extract full residential street/area and emirate (e.g., Abu Dhabi, Dubai).
 6. Confidence: Provide an integer confidence score from 0 to 100 based on legibility, resolution, and certainty.
 7. Flags: Return an array of warning strings if there are any issues (e.g., "Document expired", "Blurry image", "MRZ code mismatch", "Potential low resolution").
+8. Issuing Country & Nationality:
+   - For Passport: Extract nationality (e.g. "British", "Indian", "French") AND the issuing country/country of passport (e.g. "United Kingdom", "India", "France", "United States", "Canada").
 
 Return ONLY valid JSON matching this schema:
 {
@@ -89,6 +91,7 @@ Return ONLY valid JSON matching this schema:
   "arabicName": string,
   "dob": string,
   "nationality": string,
+  "issuingCountry": string,
   "passportNumber": string,
   "emiratesId": string,
   "residentialAddress": string,

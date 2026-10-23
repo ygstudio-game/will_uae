@@ -150,6 +150,7 @@ export async function PATCH(
             address: testatorPerson.address?.trim() || null,
             email: testatorPerson.email?.trim() || null,
             phone: testatorPerson.phone?.trim() || null,
+            ...(testatorPerson.signatureDataUrl !== undefined ? { signatureDataUrl: testatorPerson.signatureDataUrl } : {}),
           },
         });
         targetTestatorId = updated.id;
@@ -170,6 +171,7 @@ export async function PATCH(
             address: testatorPerson.address?.trim() || null,
             email: testatorPerson.email?.trim() || null,
             phone: testatorPerson.phone?.trim() || null,
+            signatureDataUrl: testatorPerson.signatureDataUrl || null,
           },
         });
         targetTestatorId = created.id;
@@ -210,6 +212,7 @@ export async function PATCH(
               address: p.address?.trim() || null,
               email: p.email?.trim() || null,
               phone: p.phone?.trim() || null,
+              ...(p.signatureDataUrl !== undefined ? { signatureDataUrl: p.signatureDataUrl } : {}),
             },
           });
           if (p.id) idMapping[p.id] = updated.id;
@@ -229,6 +232,7 @@ export async function PATCH(
               address: p.address?.trim() || null,
               email: p.email?.trim() || null,
               phone: p.phone?.trim() || null,
+              signatureDataUrl: p.signatureDataUrl || null,
             },
           });
           if (p.id) idMapping[p.id] = created.id;

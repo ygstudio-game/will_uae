@@ -18,6 +18,54 @@ import { useOwaStore } from "@/store/useOwaStore";
 import { transliterateToName } from "@/lib/transliterate";
 import { UploadedDocumentData, DocumentType } from "@/types/owa";
 
+function normalizeCountryFromNationality(nat?: string | null): string {
+  if (!nat) return "";
+  const n = nat.trim().toLowerCase();
+  const map: Record<string, string> = {
+    british: "United Kingdom",
+    uk: "United Kingdom",
+    "united kingdom": "United Kingdom",
+    english: "United Kingdom",
+    scottish: "United Kingdom",
+    welsh: "United Kingdom",
+    indian: "India",
+    india: "India",
+    french: "France",
+    france: "France",
+    american: "United States",
+    usa: "United States",
+    "united states": "United States",
+    canadian: "Canada",
+    canada: "Canada",
+    australian: "Australia",
+    australia: "Australia",
+    german: "Germany",
+    germany: "Germany",
+    italian: "Italy",
+    italy: "Italy",
+    irish: "Ireland",
+    ireland: "Ireland",
+    spanish: "Spain",
+    spain: "Spain",
+    "south african": "South Africa",
+    filipino: "Philippines",
+    philippines: "Philippines",
+    pakistani: "Pakistan",
+    pakistan: "Pakistan",
+    russian: "Russia",
+    russia: "Russia",
+    chinese: "China",
+    china: "China",
+    egyptian: "Egypt",
+    egypt: "Egypt",
+    lebanese: "Lebanon",
+    lebanon: "Lebanon",
+    jordanian: "Jordan",
+    jordan: "Jordan",
+  };
+  return map[n] || nat.trim();
+}
+
 export function SectionA_Details() {
   const { application, activeWillIndex, addOrUpdatePerson, updateActiveWill } = useOwaStore();
 
@@ -227,6 +275,16 @@ export function SectionA_Details() {
         extractedData.passportNumber = ocr.passportNumber;
       }
 
+      // Automatically take Country of Domicile from passport country
+      let passportCountry = (ocr.issuingCountry || ocr.country || "").trim();
+      if (!passportCountry && ocr.nationality) {
+        passportCountry = normalizeCountryFromNationality(ocr.nationality);
+      }
+      if (passportCountry) {
+        setDomicileCountry(passportCountry);
+        updateActiveWill({ domicileCountry: passportCountry });
+      }
+
       setAutofilledFields((prev) => ({
         ...prev,
         fullName: `Passport · ${ocr.confidence}%`,
@@ -234,11 +292,12 @@ export function SectionA_Details() {
         dob: "Passport",
         nationality: "Passport",
         passportNumber: "Passport",
+        ...(passportCountry ? { domicileCountry: "Passport" } : {}),
       }));
 
       const flagsMsg = ocr.flags?.length ? ` (Flags: ${ocr.flags.join(", ")})` : "";
       setJustExtractedBanner(`Passport analyzed by Gemini Vision (${ocr.confidence}% confidence)! Details autofilled below${flagsMsg}.`);
-      syncToStore(extractedData);
+      syncToStore(extractedData, passportCountry || undefined);
     } catch (err: any) {
       console.error("Passport OCR error:", err);
       setJustExtractedBanner(`OCR Note: ${err.message || "Could not auto-read file"}. You may fill details manually.`);
@@ -839,9 +898,16 @@ export function SectionA_Details() {
 
           {/* Country of Domicile */}
           <div>
-            <label htmlFor="field-domicileCountry" className="block text-[14px] font-semibold text-[#231a30] mb-1.5">
-              Country of domicile *
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label htmlFor="field-domicileCountry" className="block text-[14px] font-semibold text-[#231a30]">
+                Country of domicile *
+              </label>
+              {autofilledFields.domicileCountry && (
+                <span className="text-[11px] text-[#1f5a3d] font-semibold bg-[#e8f4ee] px-2 py-0.5 rounded-md">
+                  Autofilled
+                </span>
+              )}
+            </div>
             <input
               id="field-domicileCountry"
               type="text"

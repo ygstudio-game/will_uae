@@ -365,8 +365,25 @@ export function SectionF_ReviewDraft() {
       {/* Signature Capture Card */}
       {testator && (
         <TestatorSignatureCard
-          signatureDataUrl={testator?.signatureDataUrl}
+          signatureDataUrl={
+            testator?.signatureDataUrl ||
+            (typeof window !== "undefined"
+              ? localStorage.getItem(`owa_signature_${testator.id}`) ||
+                localStorage.getItem("owa_signature_latest")
+              : null)
+          }
           onSaveSignature={async (dataUrl) => {
+            if (typeof window !== "undefined") {
+              try {
+                if (dataUrl) {
+                  localStorage.setItem("owa_signature_latest", dataUrl);
+                  localStorage.setItem(`owa_signature_${testator.id}`, dataUrl);
+                } else {
+                  localStorage.removeItem("owa_signature_latest");
+                  localStorage.removeItem(`owa_signature_${testator.id}`);
+                }
+              } catch (_) {}
+            }
             if (testator?.id) {
               await addOrUpdatePerson({
                 id: testator.id,
