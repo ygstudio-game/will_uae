@@ -80,7 +80,7 @@ export async function GET(req: NextRequest) {
           willIndex: 1,
           versionTag: "ADJD-NM0723-07-03",
           testatorPersonId: testatorPerson.id,
-          domicileCountry: "United Kingdom",
+          domicileCountry: "",
         },
       });
 
@@ -213,7 +213,7 @@ export async function POST(req: NextRequest) {
             applicationId: appId,
             willIndex: 1,
             versionTag: "ADJD-NM0723-07-03",
-            domicileCountry: localWill.domicileCountry || "United Kingdom",
+            domicileCountry: localWill.domicileCountry || "",
             hasChildrenUnder18: Boolean(localWill.hasChildrenUnder18),
             isDraftConfirmed: Boolean(localWill.isDraftConfirmed),
             testatorPersonId: dbTestator?.id,
@@ -223,7 +223,7 @@ export async function POST(req: NextRequest) {
         await prisma.will.update({
           where: { id: dbWill.id },
           data: {
-            domicileCountry: localWill.domicileCountry || dbWill.domicileCountry,
+            domicileCountry: localWill.domicileCountry !== undefined ? localWill.domicileCountry : dbWill.domicileCountry,
             hasChildrenUnder18:
               localWill.hasChildrenUnder18 !== undefined
                 ? Boolean(localWill.hasChildrenUnder18)

@@ -35,7 +35,7 @@ const STEP_INFO: Record<OwaSectionId, { num: number; title: string; sub: string 
   children: {
     num: 2,
     title: "Children",
-    sub: "Tell us about any children under 18 who need guardian appointments.",
+    sub: "Add your family details and specify whether any children require court guardianship appointments.",
   },
   executors: {
     num: 3,
@@ -282,7 +282,7 @@ function WizardStepContent() {
         (!currentWill?.roleAssignments ||
           currentWill.roleAssignments.filter((ra) => ra.role === "CHILD").length === 0);
       if (isChildrenUnanswered) {
-        return { isValid: false, reason: "Please indicate whether you have children under 18." };
+        return { isValid: false, reason: "Please confirm your family details and children under 18 status above." };
       }
       if (currentWill?.hasChildrenUnder18) {
         const children = currentWill?.roleAssignments?.filter((ra) => ra.role === "CHILD") || [];

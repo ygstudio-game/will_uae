@@ -129,7 +129,7 @@ export default function WillPrintPage() {
             applicationId: "app-default",
             willIndex: 1,
             versionTag: "ADJD-NM0723-07-03",
-            domicileCountry: willData.testator.domicileCountry || "United Kingdom",
+            domicileCountry: willData.testator.domicileCountry || "",
             declarationConfirmed: true,
             hasChildrenUnder18: willData.children.length > 0,
             isDraftConfirmed: true,

@@ -766,13 +766,16 @@ export const useOwaStore = create<OwaState>()(
           case "executors":
             return will.roleAssignments.some((ra) => ra.role === "EXECUTOR_PRIMARY");
           case "guardians": {
+            // If testator answered children question and has no children under 18, guardianship does not apply
+            if (will.childrenAnswered && !will.hasChildrenUnder18) {
+              return true;
+            }
             const children = will.roleAssignments.filter((ra) => ra.role === "CHILD");
             // Guardians requires Children section to be answered first
             if (!will.childrenAnswered && children.length === 0) {
               return false;
             }
-            const hasKids = children.length > 0 || will.hasChildrenUnder18;
-            if (!hasKids) return true;
+            if (!will.hasChildrenUnder18) return true;
             const hasPerm = will.roleAssignments.some((ra) => ra.role === "GUARDIAN_PERMANENT");
             const hasSubPerm = will.roleAssignments.some((ra) => ra.role === "GUARDIAN_SUBSTITUTE_PERM");
             return hasPerm && hasSubPerm;

@@ -34,10 +34,18 @@ export function SectionB_Children() {
     childAssignments.length > 0
       ? true
       : activeWill?.childrenAnswered
+      ? (activeWill.hasChildrenUnder18 || childAssignments.length > 0)
+      : null;
+
+  const initialHasUnder18: boolean | null =
+    activeWill?.hasChildrenUnder18 === true
+      ? true
+      : activeWill?.childrenAnswered && activeWill?.hasChildrenUnder18 === false
       ? false
       : null;
 
   const [hasChildren, setHasChildren] = useState<boolean | null>(initialHasChildren);
+  const [hasUnder18, setHasUnder18] = useState<boolean | null>(initialHasUnder18);
   const [openChildIndex, setOpenChildIndex] = useState<number>(
     childAssignments.length > 0 ? childAssignments.length - 1 : 0
   );
@@ -66,7 +74,7 @@ export function SectionB_Children() {
   };
 
   // Helper to add a new child
-  const handleAddChild = async () => {
+  const handleAddChild = async (isUnder18: boolean = true) => {
     if (childAssignments.length >= 5) return;
 
     const newPerson = await addOrUpdatePerson({
@@ -80,7 +88,7 @@ export function SectionB_Children() {
     if (newPerson) {
       assignPersonToRole(newPerson.id, "CHILD", childAssignments.length + 1);
       updateActiveWill({
-        hasChildrenUnder18: true,
+        hasChildrenUnder18: isUnder18,
         childrenAnswered: true,
       });
       setOpenChildIndex(childAssignments.length);
@@ -97,14 +105,18 @@ export function SectionB_Children() {
     });
 
     const currentAssignments = activeWill?.roleAssignments.filter((ra) => ra.role === "CHILD") || [];
-    const hasAnyMinor = currentAssignments.some((ca) => {
-      const p = ca.personId === personId
-        ? { ...(ca.person || {}), ...updates }
-        : (ca.person || application?.persons.find((ep) => ep.id === ca.personId));
-      if (!p?.dob) return true;
-      const age = calculateAge(p.dob);
-      return age === null || age < 18;
-    });
+    const hasAnyMinor = hasUnder18 === false 
+      ? false 
+      : hasUnder18 === true 
+      ? true 
+      : currentAssignments.some((ca) => {
+          const p = ca.personId === personId
+            ? { ...(ca.person || {}), ...updates }
+            : (ca.person || application?.persons.find((ep) => ep.id === ca.personId));
+          if (!p?.dob) return true;
+          const age = calculateAge(p.dob);
+          return age === null || age < 18;
+        });
 
     updateActiveWill({
       hasChildrenUnder18: hasAnyMinor,
@@ -118,14 +130,18 @@ export function SectionB_Children() {
       setOpenChildIndex(Math.max(0, index - 1));
     }
     const remaining = childAssignments.filter((ca) => ca.id !== roleAssignmentId);
-    const hasAnyMinor = remaining.some((ca) => {
-      const p = ca.person || application?.persons.find((ep) => ep.id === ca.personId);
-      if (!p?.dob) return true;
-      const age = calculateAge(p.dob);
-      return age === null || age < 18;
-    });
+    const hasAnyMinor = hasUnder18 === false
+      ? false
+      : remaining.length === 0
+      ? Boolean(hasUnder18)
+      : remaining.some((ca) => {
+          const p = ca.person || application?.persons.find((ep) => ep.id === ca.personId);
+          if (!p?.dob) return true;
+          const age = calculateAge(p.dob);
+          return age === null || age < 18;
+        });
     updateActiveWill({
-      hasChildrenUnder18: hasAnyMinor,
+      hasChildrenUnder18: remaining.length === 0 ? Boolean(hasUnder18) : hasAnyMinor,
       childrenAnswered: true,
     });
   };
@@ -198,14 +214,14 @@ export function SectionB_Children() {
   return (
     <div className="space-y-6">
 
-      {/* Children Existence Segment Question */}
-      <div id="children-question" className="bg-[#FFFEFA] p-6 rounded-2xl border border-[#e4dfe9] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Question 1: Children Existence */}
+      <div id="children-question-1" className="bg-[#FFFEFA] p-6 rounded-2xl border border-[#e4dfe9] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-sm sm:text-base font-semibold text-[#231a30]">
             Do you have any children?
           </h2>
           <p className="text-xs text-[#6c6478] mt-0.5 max-w-xl leading-relaxed">
-            List your children (both minor and adult). Under UAE civil family law, only minor children (under 18) require court guardianship appointments in Section D. Adult children do not need guardians and can be named as executors or beneficiaries.
+            List your children (both minor and adult). Adult children do not need guardians and can be named as executors or beneficiaries.
           </p>
         </div>
 
@@ -217,9 +233,6 @@ export function SectionB_Children() {
               updateActiveWill({
                 childrenAnswered: true,
               });
-              if (childAssignments.length === 0) {
-                handleAddChild();
-              }
             }}
             className={`px-5 py-2 rounded-full text-xs font-semibold transition-all cursor-pointer ${
               hasChildren === true
@@ -233,6 +246,7 @@ export function SectionB_Children() {
             type="button"
             onClick={() => {
               setHasChildren(false);
+              setHasUnder18(false);
               updateActiveWill({
                 hasChildrenUnder18: false,
                 childrenAnswered: true,
@@ -252,9 +266,72 @@ export function SectionB_Children() {
         </div>
       </div>
 
+      {/* Question 2: Children Under 18 (Guardianship) - appears below Question 1 when hasChildren is true */}
+      {hasChildren === true && (
+        <div id="children-question-2" className="bg-[#FFFEFA] p-6 rounded-2xl border border-[#e4dfe9] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div>
+            <h2 className="text-sm sm:text-base font-semibold text-[#231a30]">
+              Tell us about any children under 18 who need guardian appointments.
+            </h2>
+            <p className="text-xs text-[#6c6478] mt-0.5 max-w-xl leading-relaxed">
+              Under UAE civil family law, only minor children (under 18) require court guardianship appointments in Section Nine. If yes, you will appoint guardians in Step 4.
+            </p>
+          </div>
+
+          <div className="inline-flex p-1 bg-[#efeaf7] rounded-full border border-[#cfc6da] self-start sm:self-auto shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                setHasUnder18(true);
+                updateActiveWill({
+                  hasChildrenUnder18: true,
+                  childrenAnswered: true,
+                });
+                if (childAssignments.length === 0) {
+                  handleAddChild(true);
+                }
+              }}
+              className={`px-5 py-2 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                hasUnder18 === true
+                  ? "bg-[#382852] text-white shadow-sm"
+                : "text-[#3b3346] hover:text-[#231a30]"
+              }`}
+            >
+              Yes, under 18
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setHasUnder18(false);
+                updateActiveWill({
+                  hasChildrenUnder18: false,
+                  childrenAnswered: true,
+                  roleAssignments: (activeWill?.roleAssignments || []).filter(
+                    (ra) => !ra.role.startsWith("GUARDIAN_")
+                  ),
+                });
+              }}
+              className={`px-5 py-2 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                hasUnder18 === false
+                  ? "bg-[#382852] text-white shadow-sm"
+                  : "text-[#3b3346] hover:text-[#231a30]"
+              }`}
+            >
+              No children under 18
+            </button>
+          </div>
+        </div>
+      )}
+
       {hasChildren === null && (
         <div className="p-4 rounded-xl bg-[#FAF9FC] border border-dashed border-[#cfc6da] text-xs sm:text-sm text-[#6c6478]">
           Please select <strong className="text-[#231a30]">Yes, I have children</strong> or <strong className="text-[#231a30]">No children</strong> above to confirm your family details.
+        </div>
+      )}
+
+      {hasChildren === true && hasUnder18 === null && (
+        <div className="p-4 rounded-xl bg-[#FAF9FC] border border-dashed border-[#cfc6da] text-xs sm:text-sm text-[#6c6478]">
+          Please confirm whether you have any children <strong className="text-[#231a30]">under 18</strong> above to determine court guardianship requirements.
         </div>
       )}
 
@@ -267,8 +344,32 @@ export function SectionB_Children() {
         </div>
       )}
 
+      {hasChildren === true && hasUnder18 === false && (
+        <div className="p-4 rounded-xl bg-[#efeaf7] text-xs sm:text-sm text-[#231a30] space-y-2 border border-[#cfc6da]">
+          <div className="flex items-center gap-2 text-[#1f5a3d] font-semibold">
+            <CheckCircle2 className="w-4 h-4 text-[#1f5a3d]" />
+            <span>No guardianship appointments needed</span>
+          </div>
+          <p className="text-[#6c6478]">
+            Because you have no children under 18, Section Nine (Guardianship) of your Will is not applicable. You may still optionally record adult children below for family records and beneficiary reference, or proceed to Section C (Executors).
+          </p>
+        </div>
+      )}
+
+      {hasChildren === true && hasUnder18 === true && (
+        <div className="p-4 rounded-xl bg-[#FAF7EE] border border-[#d7b48b] text-xs sm:text-sm text-[#231a30] flex items-start gap-3">
+          <Info className="w-4 h-4 text-[#A37E44] shrink-0 mt-0.5" />
+          <div>
+            <span className="font-semibold block text-[#0B1528]">Children under 18 requiring guardianship</span>
+            <p className="text-[#6c6478] mt-0.5">
+              Add your minor children below. You will appoint permanent, substitute, and optional temporary guardians for them in Step 4 (Guardianship).
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Children List */}
-      {hasChildren === true && (
+      {hasChildren === true && (hasUnder18 !== null || childAssignments.length > 0) && (
         <div className="space-y-4">
           {childAssignments.map((assignment, index) => {
             const child =
@@ -301,9 +402,18 @@ export function SectionB_Children() {
                       {index + 1}
                     </span>
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-[1.2px] text-[#C73A30] block">
-                        CHILD {index + 1}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold uppercase tracking-[1.2px] text-[#C73A30] block">
+                          CHILD {index + 1}
+                        </span>
+                        {childAge !== null && (
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            childAge < 18 ? "bg-[#e8f4ee] text-[#1f5a3d]" : "bg-[#f1f5f9] text-[#475569]"
+                          }`}>
+                            {childAge < 18 ? `Minor (age ${childAge})` : `Adult (age ${childAge})`}
+                          </span>
+                        )}
+                      </div>
                       <h2 className="text-lg sm:text-xl font-serif font-bold text-[#0B1528] leading-tight">
                         {child?.fullName || `Child ${index + 1}`}
                       </h2>
@@ -353,9 +463,18 @@ export function SectionB_Children() {
                       {index + 1}
                     </span>
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-[1.2px] text-[#C73A30] block">
-                        CHILD {index + 1}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold uppercase tracking-[1.2px] text-[#C73A30] block">
+                          CHILD {index + 1}
+                        </span>
+                        {childAge !== null && (
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            childAge < 18 ? "bg-[#e8f4ee] text-[#1f5a3d]" : "bg-[#f1f5f9] text-[#475569]"
+                          }`}>
+                            {childAge < 18 ? `Minor (age ${childAge})` : `Adult (age ${childAge})`}
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2">
                         <h2 className="text-lg sm:text-xl font-serif font-bold text-[#0B1528]">
                           {child?.fullName || `Child ${index + 1}`}
@@ -728,14 +847,14 @@ export function SectionB_Children() {
           {childAssignments.length < 5 ? (
             <button
               type="button"
-              onClick={handleAddChild}
+              onClick={() => handleAddChild(hasUnder18 === true)}
               className="w-full py-4 px-6 bg-[#FAF7EE] hover:bg-[#F3EEDC] border-2 border-[#A37E44] text-[#0B1528] rounded-2xl text-sm font-bold shadow-xs hover:shadow-md transition-all flex items-center justify-center gap-3 cursor-pointer active:scale-[0.99] group"
             >
               <div className="w-7 h-7 rounded-full bg-[#A37E44] text-white flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform">
                 <Plus className="w-4 h-4 stroke-[3]" />
               </div>
               <span className="text-[15px] font-bold">
-                + Add {childAssignments.length ? "another " : "a "}child ({childAssignments.length} of 5 added)
+                + Add {childAssignments.length ? "another " : "a "}child {hasUnder18 === false ? "(adult)" : "under 18"} ({childAssignments.length} of 5 added)
               </span>
             </button>
           ) : (

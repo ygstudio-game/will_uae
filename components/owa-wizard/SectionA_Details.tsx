@@ -86,7 +86,7 @@ export function SectionA_Details() {
   );
   const [address, setAddress] = useState(testator?.address || "");
   const [domicileCountry, setDomicileCountry] = useState(
-    activeWill?.domicileCountry === "United Kingdom" ? "" : (activeWill?.domicileCountry || "")
+    activeWill?.domicileCountry || ""
   );
   const [email, setEmail] = useState(testator?.email || "");
   const [phone, setPhone] = useState(testator?.phone || "");
@@ -180,7 +180,7 @@ export function SectionA_Details() {
       }
     }
     if (activeWill?.domicileCountry) {
-      setDomicileCountry(activeWill.domicileCountry === "United Kingdom" ? "" : activeWill.domicileCountry);
+      setDomicileCountry(activeWill.domicileCountry);
     }
   }, [testator, activeWill]);
 
@@ -902,11 +902,11 @@ export function SectionA_Details() {
               <label htmlFor="field-domicileCountry" className="block text-[14px] font-semibold text-[#231a30]">
                 Country of domicile *
               </label>
-              {autofilledFields.domicileCountry && (
+              {autofilledFields.domicileCountry ? (
                 <span className="text-[11px] text-[#1f5a3d] font-semibold bg-[#e8f4ee] px-2 py-0.5 rounded-md">
-                  Autofilled
+                  Autofilled from {autofilledFields.domicileCountry}
                 </span>
-              )}
+              ) : null}
             </div>
             <input
               id="field-domicileCountry"
@@ -923,11 +923,11 @@ export function SectionA_Details() {
                 updateActiveWill({ domicileCountry: val });
                 syncToStore(undefined, val);
               }}
-              placeholder="e.g. United Kingdom"
+              placeholder="e.g. Origin country as mentioned in passport"
               className="w-full min-h-[48px] px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-[15px] text-[#231a30] focus:outline-none focus:border-[#382852] focus:ring-2 focus:ring-[#d7b48b]/30 bg-white transition-all"
             />
             <p className="text-[13px] text-[#6c6478] mt-1.5">
-              Section Ten of your Will records it.
+              Will be as per origin country mentioned in passport. Section Ten of your Will records it.
             </p>
           </div>
 

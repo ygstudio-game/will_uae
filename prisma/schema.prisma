@@ -131,7 +131,7 @@ model Will {
   // Section A: Testator profile reference
   testatorPersonId     String?
   testatorPerson       Person?           @relation("TestatorWill", fields: [testatorPersonId], references: [id])
-  domicileCountry      String            @default("United Kingdom")
+  domicileCountry      String            @default("")
   
   // Statutory confirmations
   declarationConfirmed Boolean           @default(false)
