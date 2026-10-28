@@ -9,7 +9,6 @@ import {
   Lock,
   Loader2,
   AlertCircle,
-  FileText,
 } from "lucide-react";
 import { PrePaymentJourneyState } from "@/types/pre-payment";
 
@@ -45,230 +44,269 @@ export function Step4Payment({
   return (
     <div className="pre-step-4">
       {/* Page Header */}
-      <div className="pre-pagehead">
-        <span className="pre-eyebrow">STEP 4 OF 4 · PAYMENT</span>
-        <h1>Complete your checkout</h1>
-        <p className="sub">
-          Review your order details and confirm payment to start your Will preparation.
+      <div className="pagehead saas-checkout-head">
+        <div className="eyebrow text-[#5730A1] text-xs font-bold mb-1 tracking-wider">
+          STEP 4 OF 4 · PAYMENT
+        </div>
+        <h1 className="font-serif text-3xl font-bold text-[#2c184b]">
+          Complete your checkout
+        </h1>
+        <p className="sub text-[#625975] text-sm mt-1">
+          Your Will preparation with Online Wills Advisor.
         </p>
       </div>
 
-      {/* Two-Column Checkout Layout */}
+      {/* Two-Column SaaS Checkout Layout */}
       <div className="saas-checkout mt-6">
-        {/* Left Column: Order Summary */}
-        <section className="pre-card p-6 sm:p-8" aria-label="Order summary">
-          <div className="flex items-center justify-between pb-4 border-b border-[#E5E0D8]">
-            <span className="pre-eyebrow text-[10px]">YOUR ORDER</span>
-            <button
-              type="button"
-              className="pre-link text-xs text-[#A37E44] hover:underline"
-              onClick={onEditPackage}
-            >
+        {/* Left Column: Rich Satin Order Summary */}
+        <section className="saas-order" aria-label="Order summary">
+          <div className="saas-order-top">
+            <span className="saas-label">YOUR ORDER</span>
+            <button type="button" onClick={onEditPackage}>
               Change
             </button>
           </div>
 
-          <div className="py-5">
-            <h2 className="text-xl font-serif font-bold text-[#0B1528]">
-              {isCouples ? "Wills for Couples" : "Individual Will"}
-            </h2>
-            <p className="text-xs text-[#64748B] mt-1">
-              {isCouples ? "Two separate or mirror Wills" : "One Will"} · English & Arabic
-            </p>
-            <div className="text-xs text-[#0B1528] mt-3 font-medium bg-[#FBF9F5] p-3 rounded border border-[#E5E0D8]">
-              Prepared for: <strong>{state.fullName}</strong>
-              {isCouples ? " and your partner" : ""}
+          <div className="saas-product">
+            <span className="saas-product-icon" aria-hidden="true">
+              <svg viewBox="0 0 40 44" fill="none" className="w-6 h-6 text-white">
+                <path
+                  d="M9 4h16l8 8v28H9zM25 4v9h8M15 21h12M15 27h12M15 33h8"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                />
+              </svg>
+            </span>
+            <div>
+              <h2>{isCouples ? "Wills for Couples" : "Individual Will"}</h2>
+              <p>{isCouples ? "Two separate Wills" : "One Will"} · English & Arabic</p>
             </div>
           </div>
 
-          <div className="py-4 border-t border-[#E5E0D8]">
-            <span className="text-xs text-[#64748B] block">Payable now to OWA</span>
-            <div className="pre-price my-2">
-              AED {feeAed.toLocaleString()}
-              <span className="text-xs text-[#64748B]">OWA service fee</span>
-            </div>
+          <div className="saas-order-name">
+            Prepared for <strong>{state.fullName}{isCouples ? " and your partner" : ""}</strong>
           </div>
 
-          <div className="py-4 border-t border-[#E5E0D8]">
-            <h3 className="text-xs font-bold text-[#0B1528] uppercase tracking-wider mb-3">
-              Your package includes
-            </h3>
-            <ul className="space-y-2 text-xs text-[#0B1528]">
-              <li className="flex items-center gap-2">
-                <Check className="w-3.5 h-3.5 text-[#1E6B4A] flex-shrink-0" />
-                <span>Six-section questionnaire with real-time auto-save</span>
+          <div className="saas-price-block">
+            <span>Payable now to OWA</span>
+            <div className="saas-price">
+              <span>AED</span>
+              <strong>{feeAed.toLocaleString()}</strong>
+            </div>
+            <p className="text-xs text-[#e5d7f2] mt-1">OWA service fee</p>
+          </div>
+
+          <div className="saas-inclusions">
+            <h3>Your package includes</h3>
+            <ul>
+              <li>
+                <Check className="w-3.5 h-3.5 text-[#d1f5dc] flex-shrink-0" />
+                <span>Six-section questionnaire with auto-save</span>
               </li>
-              <li className="flex items-center gap-2">
-                <Check className="w-3.5 h-3.5 text-[#1E6B4A] flex-shrink-0" />
-                <span>Certified English and Arabic court draft</span>
+              <li>
+                <Check className="w-3.5 h-3.5 text-[#d1f5dc] flex-shrink-0" />
+                <span>English and Arabic Will draft</span>
               </li>
-              <li className="flex items-center gap-2">
-                <Check className="w-3.5 h-3.5 text-[#1E6B4A] flex-shrink-0" />
-                <span>Document assistance and in-app support ticketing</span>
+              <li>
+                <Check className="w-3.5 h-3.5 text-[#d1f5dc] flex-shrink-0" />
+                <span>Document assistance and in-app support</span>
               </li>
-              <li className="flex items-center gap-2">
-                <Check className="w-3.5 h-3.5 text-[#1E6B4A] flex-shrink-0" />
-                <span>Application legal review and direct ADJD court submission</span>
+              <li>
+                <Check className="w-3.5 h-3.5 text-[#d1f5dc] flex-shrink-0" />
+                <span>Application review and ADJD submission</span>
               </li>
             </ul>
-
-            <button
-              type="button"
-              className="pre-link text-xs text-[#A37E44] hover:underline mt-4 inline-flex items-center gap-1 font-semibold"
-              onClick={onOpenSample}
-            >
-              <span>View a sample bilingual Will</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
           </div>
 
-          <div className="pre-court-line mt-4">
-            ADJD court fee: <strong>AED {courtFeeAed.toLocaleString()}{isCouples ? " for two Wills" : " per Will"}</strong>,
-            paid directly to ADJD later (not charged by OWA).
-          </div>
+          <button
+            type="button"
+            className="saas-sample"
+            onClick={onOpenSample}
+          >
+            View a sample Will →
+          </button>
+
+          <p className="saas-court">
+            ADJD court fee: <strong>AED {courtFeeAed.toLocaleString()} {isCouples ? "for two Wills" : "per Will"}</strong>, paid directly to ADJD later (not charged by OWA).
+          </p>
         </section>
 
-        {/* Right Column: Payment Details */}
-        <section className="pre-card p-6 sm:p-8" aria-label="Payment details">
-          <div className="flex items-center justify-between pb-4 border-b border-[#E5E0D8]">
-            <h2 className="text-base font-bold text-[#0B1528]">Payment Details</h2>
-            <span className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold text-[#1E6B4A] bg-[#EDF5F0] px-2 py-0.5 rounded">
-              <Lock className="w-3 h-3" />
-              SECURE CHECKOUT
-            </span>
-          </div>
-
-          {/* Contact Verification Box */}
-          <div className="my-5 p-3.5 bg-[#FBF9F5] border border-[#E5E0D8] rounded-md">
-            <div className="flex items-center justify-between text-xs mb-1.5">
-              <span className="text-[#64748B] font-medium">Your contact details:</span>
+        {/* Right Column: Customer Details & Card Payment Simulation */}
+        <div className="p-6 sm:p-8 flex flex-col justify-between">
+          <div className="space-y-6">
+            {/* Account Info Pill */}
+            <div className="p-4 bg-[#F8F5FA] border border-[#E1DDEB] rounded-xl flex items-center justify-between">
+              <div>
+                <span className="text-[10px] text-[#5730A1] font-bold uppercase tracking-wider block">
+                  RECEIPT & APPLICATION ACCOUNT
+                </span>
+                <span className="text-sm font-semibold text-[#241B35] block mt-0.5">
+                  {state.email}
+                </span>
+                <span className="text-xs text-[#625975] block">
+                  {state.phoneNumber}
+                </span>
+              </div>
               <button
                 type="button"
-                className="pre-link text-xs text-[#A37E44] hover:underline"
+                className="text-xs text-[#5730A1] hover:underline font-semibold bg-transparent border-0 cursor-pointer"
                 onClick={onEditContact}
               >
                 Edit
               </button>
             </div>
-            <div className="text-xs font-semibold text-[#0B1528]">{state.email}</div>
-            <div className="text-xs text-[#64748B] mt-0.5">{state.phoneNumber}</div>
+
+            {/* Payment Method Details */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-[#241B35] uppercase tracking-wider">
+                  Payment Method
+                </span>
+                <div className="flex items-center gap-1.5 text-xs text-[#625975]">
+                  <Lock className="w-3 h-3 text-[#005E53]" />
+                  <span>256-bit Encrypted SSL</span>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="field">
+                  <label htmlFor="card-name" className="text-xs font-semibold text-[#241B35] block mb-1">
+                    Cardholder name
+                  </label>
+                  <input
+                    id="card-name"
+                    type="text"
+                    defaultValue={state.fullName}
+                    className="w-full p-2.5 border border-[#DCD5E8] rounded-lg text-sm"
+                  />
+                </div>
+
+                <div className="field">
+                  <label htmlFor="card-num" className="text-xs font-semibold text-[#241B35] block mb-1">
+                    Card number
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="card-num"
+                      type="text"
+                      placeholder="4242 •••• •••• 4242"
+                      className="w-full p-2.5 pr-10 border border-[#DCD5E8] rounded-lg text-sm font-mono"
+                    />
+                    <CreditCard className="w-4 h-4 text-[#8B6DB4] absolute right-3 top-3 pointer-events-none" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="field">
+                    <label htmlFor="card-exp" className="text-xs font-semibold text-[#241B35] block mb-1">
+                      Expiry date
+                    </label>
+                    <input
+                      id="card-exp"
+                      type="text"
+                      placeholder="MM / YY"
+                      maxLength={5}
+                      className="w-full p-2.5 border border-[#DCD5E8] rounded-lg text-sm font-mono text-center"
+                    />
+                  </div>
+                  <div className="field">
+                    <label htmlFor="card-cvc" className="text-xs font-semibold text-[#241B35] block mb-1">
+                      Security code
+                    </label>
+                    <input
+                      id="card-cvc"
+                      type="text"
+                      placeholder="CVC"
+                      maxLength={4}
+                      className="w-full p-2.5 border border-[#DCD5E8] rounded-lg text-sm font-mono text-center"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Terms and Privacy Agreement */}
+            <div className="pt-2">
+              <label className="flex items-start gap-2.5 cursor-pointer text-xs text-[#241B35] select-none">
+                <input
+                  type="checkbox"
+                  checked={state.termsAccepted}
+                  onChange={(e) => onToggleTerms(e.target.checked)}
+                  className="mt-0.5 accent-[#5730A1] rounded"
+                />
+                <span className="leading-relaxed">
+                  I agree to the{" "}
+                  <button
+                    type="button"
+                    className="text-[#5730A1] hover:underline font-semibold bg-transparent border-0 p-0 cursor-pointer"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onOpenTerms();
+                    }}
+                  >
+                    Terms of Service
+                  </button>{" "}
+                  and{" "}
+                  <button
+                    type="button"
+                    className="text-[#5730A1] hover:underline font-semibold bg-transparent border-0 p-0 cursor-pointer"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onOpenPrivacy();
+                    }}
+                  >
+                    Privacy Policy
+                  </button>
+                  . I understand the ADJD court registration fee will be paid directly to the court later.
+                </span>
+              </label>
+            </div>
+
+            {error && (
+              <div className="flex items-center gap-2 p-3 bg-[#FFF2F1] border border-[#EDC8C5] rounded text-xs text-[#9F3431]">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
           </div>
 
-          {/* Payment Method Option */}
-          <div className="mb-4">
-            <div className="text-xs font-semibold text-[#0B1528] mb-2">Payment method</div>
-            <div className="flex items-center gap-3 p-3.5 border-2 border-[#0B1528] rounded-md bg-[#FFFDFB]">
-              <div className="p-2 bg-[#FAF7F2] rounded border border-[#E5E0D8]">
-                <CreditCard className="w-5 h-5 text-[#0B1528]" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-bold text-[#0B1528]">Card Payment</div>
-                <div className="text-[11px] text-[#64748B]">Visa, Mastercard, or Apple Pay</div>
-              </div>
-              <span className="text-xs font-semibold text-[#1E6B4A]">Active</span>
-            </div>
-            <p className="text-[11px] text-[#64748B] mt-2 leading-relaxed">
-              Instant verification mode. Submitting establishes your official application record in
-              our database.
+          {/* Pay Button Action */}
+          <div className="mt-8 pt-4 border-t border-[#E1DDEB]">
+            <button
+              type="button"
+              className="saas-pay-cta w-full flex items-center justify-center gap-2"
+              onClick={onPay}
+              disabled={loading || !state.termsAccepted}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Processing payment...</span>
+                </>
+              ) : (
+                <>
+                  <Lock className="w-4 h-4" />
+                  <span>Pay AED {feeAed.toLocaleString()} now</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+            <p className="text-[11px] text-center text-[#625975] mt-2">
+              Simulated sandbox checkout for prototype testing. No real card charge will occur.
             </p>
           </div>
-
-          {/* Total Payable */}
-          <div className="py-4 border-t border-b border-[#E5E0D8] my-4 flex items-center justify-between">
-            <span className="text-sm font-semibold text-[#0B1528]">Payable now</span>
-            <span className="text-xl font-bold font-serif text-[#0B1528]">
-              AED {feeAed.toLocaleString()}
-            </span>
-          </div>
-
-          {/* Terms Checkbox */}
-          <div className="space-y-3 mb-6">
-            <label className="flex items-start gap-2.5 cursor-pointer text-xs text-[#0B1528]">
-              <input
-                type="checkbox"
-                checked={state.termsAccepted}
-                onChange={(e) => onToggleTerms(e.target.checked)}
-                className="mt-0.5 rounded border-[#E5E0D8] text-[#0B1528] focus:ring-[#0B1528]"
-              />
-              <span className="leading-relaxed">
-                I agree to the OWA Service Terms and confirm my understanding that the ADJD court
-                registration fee is paid separately.
-              </span>
-            </label>
-
-            <div className="flex items-center gap-2 text-xs text-[#A37E44]">
-              <button
-                type="button"
-                className="hover:underline font-semibold"
-                onClick={onOpenTerms}
-              >
-                Service Terms
-              </button>
-              <span>·</span>
-              <button
-                type="button"
-                className="hover:underline font-semibold"
-                onClick={onOpenPrivacy}
-              >
-                Privacy Policy
-              </button>
-            </div>
-          </div>
-
-          {/* Error Message */}
-          {error && (
-            <div className="flex items-center gap-2 p-3 bg-[#FFF2F1] border border-[#EDC8C5] rounded text-xs text-[#9F3431] mb-4">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {/* Pay Button */}
-          <button
-            type="button"
-            className="pre-btn primary w-full justify-center py-3 min-h-[48px] text-sm"
-            disabled={!state.termsAccepted || loading}
-            onClick={onPay}
-          >
-            {loading ? (
-              <span className="inline-flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Processing payment & setting up application...</span>
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-2">
-                <span>Pay AED {feeAed.toLocaleString()}</span>
-                <ArrowRight className="w-4 h-4" />
-              </span>
-            )}
-          </button>
-
-          <p className="text-[11px] text-[#64748B] text-center mt-3">
-            Encrypted 256-bit SSL transaction. Official receipt generated upon completion.
-          </p>
-
-          <div className="mt-5 p-3.5 bg-[#FAF7F2] border border-[#E5E0D8] rounded-md text-xs text-[#0B1528] flex items-start gap-2.5">
-            <span className="text-[#A37E44] font-bold text-sm">→</span>
-            <div>
-              <strong>Next: your guided questionnaire</strong>
-              <p className="text-[#64748B] mt-0.5 leading-relaxed">
-                Your application will immediately open on your dashboard. Complete the sections to
-                generate your bilingual ADJD draft.
-              </p>
-            </div>
-          </div>
-        </section>
+        </div>
       </div>
 
-      {/* Back Link */}
-      <div className="mt-8 pt-6 border-t border-[#E5E0D8]">
+      {/* Back button */}
+      <div>
         <button
           type="button"
-          className="pre-link text-xs text-[#64748B] hover:text-[#0B1528]"
+          className="btn"
           onClick={onEditContact}
         >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to review details</span>
+          <ArrowLeft className="w-4 h-4 mr-1 inline" />
+          <span>Back to review</span>
         </button>
       </div>
     </div>

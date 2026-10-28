@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ArrowRight, HelpCircle } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 interface PrePaymentHeaderProps {
   onOpenHelp: () => void;
@@ -22,9 +22,9 @@ export function PrePaymentHeader({
         onClick={onGoToStart}
         aria-label="Online Wills Advisor application start"
       >
-        <span className="brand-text">
+        <span className="brand">
           owa
-          <span className="brand-sub">
+          <span>
             Online Wills
             <br />
             Advisor
@@ -33,12 +33,12 @@ export function PrePaymentHeader({
       </button>
 
       <div className="cro-header-help">
-        <span className="text-xs text-[#64748B] hidden sm:inline">
-          Questions before you continue?
+        <span className="muted-text hidden sm:inline">
+          A question before you continue?
         </span>
         <button
           type="button"
-          className="pre-link text-xs sm:text-sm text-[#A37E44] hover:text-[#8C6A35] font-semibold"
+          className="text-xs sm:text-sm text-[#e0d1ee] hover:text-white flex items-center gap-1 font-semibold bg-transparent border-0 cursor-pointer"
           onClick={onOpenHelp}
         >
           <span>Get help</span>

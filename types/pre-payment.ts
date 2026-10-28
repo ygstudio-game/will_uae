@@ -2,7 +2,7 @@ export type PrePaymentPackageType = "INDIVIDUAL" | "COUPLES";
 
 export type PrePaymentPaymentStatus = "unpaid" | "pending" | "paid" | "failed";
 
-export type PrePaymentInclusionTab = "questionnaire" | "bilingual" | "support" | "court";
+export type PrePaymentInclusionTab = "guided" | "questionnaire" | "bilingual" | "support" | "court";
 
 export type PrePaymentModalType = "sample" | "help" | "terms" | "privacy" | "resume" | null;
 
@@ -48,7 +48,7 @@ export const DEFAULT_PREPAYMENT_STATE: PrePaymentJourneyState = {
   phoneNumber: "",
   termsAccepted: false,
   paymentStatus: "unpaid",
-  activeInclusionTab: "questionnaire",
+  activeInclusionTab: "guided",
   activeModal: null,
   isEmailVerified: false,
   errors: [],

@@ -31,24 +31,24 @@ export function Step2AboutYou({
 
   const handleNextClick = () => {
     if (!state.fullName.trim()) {
-      setErrorMsg("Please enter your full legal name as shown on your passport.");
+      setErrorMsg("Enter your full name as shown on your passport.");
       return;
     }
     if (state.primaryApplicant.married === null) {
-      setErrorMsg("Please answer whether you are legally married.");
+      setErrorMsg("Answer the marriage question for yourself.");
       return;
     }
     if (state.primaryApplicant.children === null) {
-      setErrorMsg("Please answer whether you have children under 18.");
+      setErrorMsg("Answer the children-under-18 question for yourself.");
       return;
     }
     if (isCouples) {
       if (state.partnerApplicant.married === null) {
-        setErrorMsg("Please answer the marriage question for your partner.");
+        setErrorMsg("Answer the marriage question for your partner.");
         return;
       }
       if (state.partnerApplicant.children === null) {
-        setErrorMsg("Please answer the minor children question for your partner.");
+        setErrorMsg("Answer the children-under-18 question for your partner.");
         return;
       }
     }
@@ -94,108 +94,120 @@ export function Step2AboutYou({
 
   return (
     <div className="pre-step-2">
-      <div className="pre-pagehead">
-        <span className="pre-eyebrow">STEP 2 OF 4 · ABOUT YOU</span>
-        <h1>A few details about you.</h1>
-        <p className="sub">
-          These answers configure your application and ensure the correct ADJD statutory clauses
-          are loaded for your Will.
+      <div className="pagehead">
+        <div className="eyebrow text-[#5730A1] text-xs font-bold mb-1 tracking-wider">
+          STEP 2 OF 4 · ABOUT YOU
+        </div>
+        <h1 className="font-serif text-3xl font-bold text-[#2c184b]">
+          A little about you and your family.
+        </h1>
+        <p className="sub text-[#625975] text-sm mt-1">
+          These details help us prepare your questionnaire. No document uploads are needed yet.
         </p>
       </div>
 
-      <div className="pre-card">
-        <div className="pre-cardbody">
-          {/* Full Legal Name */}
-          <div className="pre-field">
-            <label htmlFor="fullName" className="flex items-center justify-between">
-              <span>Full legal name as on passport *</span>
+      <div className="pre-step-2-grid mt-6">
+        {/* Left Column: Form Details Card */}
+        <div className="card pre-details-card">
+          <div className="cardbody">
+            <label className="field font-semibold text-sm text-[#241B35] block">
+              Your full name *
+              <input
+                type="text"
+                autoComplete="name"
+                aria-required="true"
+                placeholder="e.g. John Michael Smith"
+                value={state.fullName}
+                onChange={(e) => onUpdateFullName(e.target.value)}
+              />
+              <span className="hint">Use your name as shown on your passport.</span>
             </label>
-            <input
-              id="fullName"
-              type="text"
-              autoComplete="name"
-              placeholder="e.g. John Michael Smith"
-              value={state.fullName}
-              onChange={(e) => onUpdateFullName(e.target.value)}
-              className="mt-1"
-            />
-            <span className="hint">
-              Enter your exact name as shown in the machine-readable zone of your passport.
-              This will be registered with the ADJD Civil Family Court.
-            </span>
-          </div>
 
-          <hr className="border-t border-[#E5E0D8] my-6" />
+            <div className={`grid ${isCouples ? "grid-cols-1 md:grid-cols-2 gap-4" : "grid-cols-1"} mt-6`}>
+              <section>
+                <h3 className="font-serif text-lg font-bold text-[#322046] mb-3">
+                  {isCouples ? "You" : "Personal details"}
+                </h3>
+                {renderRadioQuestion(
+                  "Are you married?",
+                  false,
+                  "married",
+                  state.primaryApplicant.married
+                )}
+                {renderRadioQuestion(
+                  "Do you have any children under 18?",
+                  false,
+                  "children",
+                  state.primaryApplicant.children
+                )}
+              </section>
 
-          {/* Primary Applicant Marital & Children Questions */}
-          <div className="space-y-4">
-            <div className="font-semibold text-xs text-[#A37E44] uppercase tracking-wider mb-2">
-              Your Marital & Family Status
+              {isCouples && (
+                <section>
+                  <h3 className="font-serif text-lg font-bold text-[#322046] mb-3">
+                    Your partner
+                  </h3>
+                  {renderRadioQuestion(
+                    "Is your partner married?",
+                    true,
+                    "married",
+                    state.partnerApplicant.married
+                  )}
+                  {renderRadioQuestion(
+                    "Does your partner have any children under 18?",
+                    true,
+                    "children",
+                    state.partnerApplicant.children
+                  )}
+                </section>
+              )}
             </div>
-            {renderRadioQuestion(
-              "Are you legally married?",
-              false,
-              "married",
-              state.primaryApplicant.married
-            )}
-            {renderRadioQuestion(
-              "Do you have children under 18 years of age?",
-              false,
-              "children",
-              state.primaryApplicant.children,
-              "ADJD requires guardian clauses if you have minor children residing in or outside the UAE."
-            )}
-          </div>
 
-          {/* Partner Questions (if Couples) */}
-          {isCouples && (
-            <div className="space-y-4 mt-8 pt-6 border-t border-[#E5E0D8]">
-              <div className="font-semibold text-xs text-[#A37E44] uppercase tracking-wider mb-2">
-                Your Partner's Family Status
+            {isCouples && (
+              <p className="text-xs text-[#625975] mt-4 leading-relaxed">
+                You’ll enter your partner’s full identity and contact details after payment. Each Will can have different children and appointments.
+              </p>
+            )}
+
+            {errorMsg && (
+              <div className="flex items-center gap-2 p-3 bg-[#FFF2F1] border border-[#EDC8C5] rounded text-xs text-[#9F3431] mt-5">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>{errorMsg}</span>
               </div>
-              {renderRadioQuestion(
-                "Is your partner legally married to you?",
-                true,
-                "married",
-                state.partnerApplicant.married
-              )}
-              {renderRadioQuestion(
-                "Does your partner have children under 18 years of age?",
-                true,
-                "children",
-                state.partnerApplicant.children
-              )}
-            </div>
-          )}
-
-          {/* Error Message */}
-          {errorMsg && (
-            <div className="flex items-center gap-2 p-3 bg-[#FFF2F1] border border-[#EDC8C5] rounded text-xs text-[#9F3431] mt-6">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              <span>{errorMsg}</span>
-            </div>
-          )}
-
-          {/* Action Bar */}
-          <div className="flex items-center justify-between mt-8 pt-6 border-t border-[#E5E0D8]">
-            <button
-              type="button"
-              className="pre-link text-xs text-[#64748B] hover:text-[#0B1528]"
-              onClick={onBack}
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back to package choice</span>
-            </button>
-            <button
-              type="button"
-              className="pre-btn primary"
-              onClick={handleNextClick}
-            >
-              <span>Continue to review</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
+            )}
           </div>
         </div>
+
+        {/* Right Column: Reassurance Green Satin Card */}
+        <aside className="callout pre-about-note">
+          <div>
+            <strong>You won’t need to enter this twice</strong>
+            <p>
+              Your answers carry into the questionnaire and help us show the relevant sections. You choose your beneficiaries and appointments later.
+            </p>
+            <p>You can edit these details later.</p>
+          </div>
+        </aside>
+      </div>
+
+      {/* Action Navigation */}
+      <div className="flex items-center justify-between mt-8">
+        <button
+          type="button"
+          className="btn"
+          onClick={onBack}
+        >
+          <ArrowLeft className="w-4 h-4 mr-1 inline" />
+          <span>Back</span>
+        </button>
+        <button
+          type="button"
+          className="btn primary"
+          onClick={handleNextClick}
+        >
+          <span>Review your package</span>
+          <ArrowRight className="w-4 h-4 ml-1 inline" />
+        </button>
       </div>
     </div>
   );

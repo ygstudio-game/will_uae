@@ -37,6 +37,9 @@ export function OwaFooter() {
             <Link href="/dashboard/support" className="text-white hover:underline transition-colors">
               Contact support
             </Link>
+            <Link href="/handbook" className="text-white hover:underline transition-colors">
+              Developer Handbook
+            </Link>
           </nav>
         </div>
 
