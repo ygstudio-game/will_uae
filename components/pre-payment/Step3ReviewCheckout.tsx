@@ -10,6 +10,8 @@ import {
   LifeBuoy,
   Scale,
   AlertCircle,
+  KeyRound,
+  CheckCircle2,
 } from "lucide-react";
 import {
   PrePaymentJourneyState,
@@ -20,6 +22,7 @@ interface Step3ReviewCheckoutProps {
   state: PrePaymentJourneyState;
   onUpdateEmail: (email: string) => void;
   onUpdatePhone: (phone: string) => void;
+  onVerifyEmail: (verified: boolean) => void;
   onUpdateInclusionTab: (tab: PrePaymentInclusionTab) => void;
   onEditDetails: () => void;
   onEditPackage: () => void;
@@ -32,6 +35,7 @@ export function Step3ReviewCheckout({
   state,
   onUpdateEmail,
   onUpdatePhone,
+  onVerifyEmail,
   onUpdateInclusionTab,
   onEditDetails,
   onEditPackage,
@@ -44,6 +48,24 @@ export function Step3ReviewCheckout({
   const courtFeeAed = isCouples ? 1900 : 950;
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const [otpInput, setOtpInput] = useState("");
+  const [otpError, setOtpError] = useState<string | null>(null);
+
+  const handleVerifyOtp = () => {
+    if (otpInput.trim() === "123456") {
+      onVerifyEmail(true);
+      setOtpError(null);
+    } else {
+      setOtpError("Incorrect test code. For prototype mode, use 123456.");
+    }
+  };
+
+  const handleAutoFillAndVerify = () => {
+    setOtpInput("123456");
+    onVerifyEmail(true);
+    setOtpError(null);
+  };
+
   const handleProceedClick = () => {
     if (!state.email.trim() || !state.email.includes("@")) {
       setErrorMsg("Please enter a valid email address for your receipt and login.");
@@ -52,6 +74,11 @@ export function Step3ReviewCheckout({
     if (!state.phoneNumber.trim() || state.phoneNumber.trim().length < 7) {
       setErrorMsg("Please enter a valid phone number with country code (e.g. +971 50 000 0001).");
       return;
+    }
+
+    // Auto-verify email if user proceeds and hasn't verified yet
+    if (!state.isEmailVerified) {
+      onVerifyEmail(true);
     }
 
     setErrorMsg(null);
@@ -238,7 +265,10 @@ export function Step3ReviewCheckout({
                   autoComplete="email"
                   placeholder="you@example.com"
                   value={state.email}
-                  onChange={(e) => onUpdateEmail(e.target.value)}
+                  onChange={(e) => {
+                    onUpdateEmail(e.target.value);
+                    if (state.isEmailVerified) onVerifyEmail(false);
+                  }}
                 />
               </div>
               <div className="pre-field">
@@ -254,6 +284,65 @@ export function Step3ReviewCheckout({
                 <span className="hint">Include your country code.</span>
               </div>
             </div>
+
+            {/* Email OTP Verification Box */}
+            {state.email.trim().includes("@") && (
+              <div className="mt-4">
+                {state.isEmailVerified ? (
+                  <div className="flex items-center gap-2 p-3 bg-[#EDF5F0] border border-[#BCD4C7] rounded-md text-xs text-[#1E6B4A] font-medium">
+                    <CheckCircle2 className="w-4 h-4 text-[#1E6B4A] flex-shrink-0" />
+                    <span>Email verified for this application (Test session active).</span>
+                  </div>
+                ) : (
+                  <div className="p-4 bg-[#FAF7F2] border border-[#E5E0D8] rounded-lg text-xs">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                      <span className="font-bold text-[#0B1528] flex items-center gap-1.5">
+                        <KeyRound className="w-3.5 h-3.5 text-[#A37E44]" />
+                        Email verification
+                      </span>
+                      <span className="px-2 py-0.5 bg-[#F4EFEA] border border-[#C5A880] text-[#A37E44] font-mono text-[11px] font-bold rounded">
+                        PROTOTYPE OTP: 123456
+                      </span>
+                    </div>
+                    <p className="text-[#64748B] mb-3 leading-relaxed">
+                      Testing mode: enter <strong>123456</strong> to verify your email address.
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <input
+                        type="text"
+                        maxLength={6}
+                        placeholder="123456"
+                        value={otpInput}
+                        onChange={(e) => {
+                          setOtpInput(e.target.value);
+                          setOtpError(null);
+                        }}
+                        className="w-32 tracking-widest text-center font-mono font-bold text-sm bg-white border border-[#E5E0D8] rounded px-3 py-1.5 text-[#0B1528]"
+                      />
+                      <button
+                        type="button"
+                        className="pre-btn primary text-xs py-1.5 px-3 min-h-[36px]"
+                        onClick={handleVerifyOtp}
+                      >
+                        Verify code
+                      </button>
+                      <button
+                        type="button"
+                        className="pre-btn text-xs py-1.5 px-3 min-h-[36px]"
+                        onClick={handleAutoFillAndVerify}
+                      >
+                        Auto-fill 123456
+                      </button>
+                    </div>
+                    {otpError && (
+                      <div className="text-xs text-[#9F3431] mt-2 font-medium">
+                        {otpError}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             {errorMsg && (
               <div className="flex items-center gap-2 p-3 bg-[#FFF2F1] border border-[#EDC8C5] rounded text-xs text-[#9F3431] mt-3">

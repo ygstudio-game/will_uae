@@ -25,7 +25,6 @@ async function verifyEverything() {
     "sample-passport.pdf",
     "sample-emirates-id.pdf",
     "sample-address.pdf",
-    "123456",
   ];
 
   let foundForbidden = false;

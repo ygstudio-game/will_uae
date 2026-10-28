@@ -132,6 +132,14 @@ export function PrePaymentFlow({ onSuccess }: PrePaymentFlowProps) {
     saveDraft({
       ...state,
       email,
+      isEmailVerified: false,
+    });
+  };
+
+  const handleVerifyEmail = (isEmailVerified: boolean) => {
+    saveDraft({
+      ...state,
+      isEmailVerified,
     });
   };
 
@@ -294,6 +302,7 @@ export function PrePaymentFlow({ onSuccess }: PrePaymentFlowProps) {
             state={state}
             onUpdateEmail={handleUpdateEmail}
             onUpdatePhone={handleUpdatePhone}
+            onVerifyEmail={handleVerifyEmail}
             onUpdateInclusionTab={handleUpdateInclusionTab}
             onEditDetails={() => handleGoToStep(2)}
             onEditPackage={() => handleGoToStep(1)}

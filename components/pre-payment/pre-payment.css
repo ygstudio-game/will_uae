@@ -102,7 +102,7 @@
   font-weight: 500;
 }
 
-.pre-progress li > span {
+.pre-progress .step-num {
   display: grid;
   place-items: center;
   width: 26px;
@@ -113,27 +113,23 @@
   font-size: 12px;
   font-weight: 600;
   background: var(--owa-paper);
+  color: var(--owa-muted);
 }
 
-.pre-progress .active {
-  color: var(--owa-ink);
-  font-weight: 700;
-}
-
-.pre-progress .active span {
+.pre-progress .active .step-num {
   background: var(--owa-ink);
   color: var(--owa-white);
   border-color: var(--owa-ink);
 }
 
-.pre-progress .done {
-  color: var(--owa-ink);
-}
-
-.pre-progress .done span {
+.pre-progress .done .step-num {
   background: var(--owa-green);
   color: var(--owa-white);
   border-color: var(--owa-green);
+}
+
+.pre-progress .step-label {
+  white-space: nowrap;
 }
 
 /* Pagehead */

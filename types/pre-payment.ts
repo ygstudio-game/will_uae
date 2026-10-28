@@ -26,6 +26,7 @@ export interface PrePaymentJourneyState {
   paymentStatus: PrePaymentPaymentStatus;
   activeInclusionTab: PrePaymentInclusionTab;
   activeModal: PrePaymentModalType;
+  isEmailVerified: boolean;
   errors: string[];
 }
 
@@ -49,5 +50,6 @@ export const DEFAULT_PREPAYMENT_STATE: PrePaymentJourneyState = {
   paymentStatus: "unpaid",
   activeInclusionTab: "questionnaire",
   activeModal: null,
+  isEmailVerified: false,
   errors: [],
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, ArrowRight, ShieldCheck, Scale, FileText } from "lucide-react";
+import { X, ArrowRight, ShieldCheck, Scale, FileText, KeyRound, CheckCircle2 } from "lucide-react";
 import { PrePaymentModalType } from "@/types/pre-payment";
 
 interface PrePaymentModalsProps {
@@ -16,18 +16,43 @@ export function PrePaymentModals({
   onResumeEmail,
 }: PrePaymentModalsProps) {
   const [resumeEmailInput, setResumeEmailInput] = useState("");
+  const [resumeOtpStep, setResumeOtpStep] = useState(false);
+  const [resumeOtpInput, setResumeOtpInput] = useState("");
   const [resumeError, setResumeError] = useState<string | null>(null);
 
   if (!activeModal) return null;
 
-  const handleResumeSubmit = (e: React.FormEvent) => {
+  const handleResumeLookup = (e: React.FormEvent) => {
     e.preventDefault();
     if (!resumeEmailInput.trim() || !resumeEmailInput.includes("@")) {
       setResumeError("Please enter a valid email address.");
       return;
     }
     setResumeError(null);
+    setResumeOtpStep(true);
+  };
+
+  const handleVerifyResumeOtp = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (resumeOtpInput.trim() === "123456") {
+      setResumeError(null);
+      onResumeEmail(resumeEmailInput.trim().toLowerCase());
+    } else {
+      setResumeError("Incorrect test code. For prototype mode, use 123456.");
+    }
+  };
+
+  const handleAutoFillAndVerify = () => {
+    setResumeOtpInput("123456");
+    setResumeError(null);
     onResumeEmail(resumeEmailInput.trim().toLowerCase());
+  };
+
+  const handleClose = () => {
+    setResumeOtpStep(false);
+    setResumeOtpInput("");
+    setResumeError(null);
+    onClose();
   };
 
   return (
@@ -36,7 +61,7 @@ export function PrePaymentModals({
       role="dialog"
       aria-modal="true"
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) handleClose();
       }}
     >
       <div className="pre-modal">
@@ -51,7 +76,7 @@ export function PrePaymentModals({
               <button
                 type="button"
                 className="p-1.5 rounded-full hover:bg-[#F4EFEA] text-[#64748B] hover:text-[#0B1528]"
-                onClick={onClose}
+                onClick={handleClose}
                 aria-label="Close modal"
               >
                 <X className="w-5 h-5" />
@@ -141,7 +166,7 @@ export function PrePaymentModals({
               </div>
 
               <div className="flex justify-end pt-3">
-                <button type="button" className="pre-btn primary" onClick={onClose}>
+                <button type="button" className="pre-btn primary" onClick={handleClose}>
                   Close sample
                 </button>
               </div>
@@ -160,7 +185,7 @@ export function PrePaymentModals({
               <button
                 type="button"
                 className="p-1.5 rounded-full hover:bg-[#F4EFEA] text-[#64748B] hover:text-[#0B1528]"
-                onClick={onClose}
+                onClick={handleClose}
                 aria-label="Close modal"
               >
                 <X className="w-5 h-5" />
@@ -200,7 +225,7 @@ export function PrePaymentModals({
               </div>
 
               <div className="flex justify-end pt-3">
-                <button type="button" className="pre-btn primary" onClick={onClose}>
+                <button type="button" className="pre-btn primary" onClick={handleClose}>
                   Got it, thank you
                 </button>
               </div>
@@ -219,7 +244,7 @@ export function PrePaymentModals({
               <button
                 type="button"
                 className="p-1.5 rounded-full hover:bg-[#F4EFEA] text-[#64748B] hover:text-[#0B1528]"
-                onClick={onClose}
+                onClick={handleClose}
                 aria-label="Close modal"
               >
                 <X className="w-5 h-5" />
@@ -246,7 +271,7 @@ export function PrePaymentModals({
                 regenerate drafts without charge until the final review and court submission stage.
               </p>
               <div className="flex justify-end pt-3">
-                <button type="button" className="pre-btn primary" onClick={onClose}>
+                <button type="button" className="pre-btn primary" onClick={handleClose}>
                   I Understand
                 </button>
               </div>
@@ -265,7 +290,7 @@ export function PrePaymentModals({
               <button
                 type="button"
                 className="p-1.5 rounded-full hover:bg-[#F4EFEA] text-[#64748B] hover:text-[#0B1528]"
-                onClick={onClose}
+                onClick={handleClose}
                 aria-label="Close modal"
               >
                 <X className="w-5 h-5" />
@@ -288,7 +313,7 @@ export function PrePaymentModals({
                 protection regulations.
               </p>
               <div className="flex justify-end pt-3">
-                <button type="button" className="pre-btn primary" onClick={onClose}>
+                <button type="button" className="pre-btn primary" onClick={handleClose}>
                   Close
                 </button>
               </div>
@@ -296,7 +321,7 @@ export function PrePaymentModals({
           </>
         )}
 
-        {/* Modal 5: Resume Application */}
+        {/* Modal 5: Resume Application with Prototype OTP */}
         {activeModal === "resume" && (
           <>
             <div className="pre-modalhead">
@@ -307,46 +332,109 @@ export function PrePaymentModals({
               <button
                 type="button"
                 className="p-1.5 rounded-full hover:bg-[#F4EFEA] text-[#64748B] hover:text-[#0B1528]"
-                onClick={onClose}
+                onClick={handleClose}
                 aria-label="Close modal"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="pre-modalbody">
-              <p className="text-xs text-[#64748B] mb-4">
-                Enter the email address you used for your Will preparation. We will check for your
-                saved draft on this browser or take you directly to your application dashboard.
-              </p>
-              <form onSubmit={handleResumeSubmit} className="space-y-4">
-                <div className="pre-field">
-                  <label htmlFor="resume-email">Your email address</label>
-                  <input
-                    id="resume-email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={resumeEmailInput}
-                    onChange={(e) => setResumeEmailInput(e.target.value)}
-                    autoFocus
-                  />
-                </div>
+              {!resumeOtpStep ? (
+                <>
+                  <p className="text-xs text-[#64748B] mb-4">
+                    Enter the email address you used for your Will preparation. We will check for your
+                    saved draft on this browser or take you directly to your application dashboard.
+                  </p>
+                  <form onSubmit={handleResumeLookup} className="space-y-4">
+                    <div className="pre-field">
+                      <label htmlFor="resume-email">Your email address</label>
+                      <input
+                        id="resume-email"
+                        type="email"
+                        placeholder="you@example.com"
+                        value={resumeEmailInput}
+                        onChange={(e) => setResumeEmailInput(e.target.value)}
+                        autoFocus
+                      />
+                    </div>
 
-                {resumeError && (
-                  <div className="text-xs text-[#9F3431] bg-[#FFF2F1] p-2.5 rounded border border-[#EDC8C5]">
-                    {resumeError}
+                    {resumeError && (
+                      <div className="text-xs text-[#9F3431] bg-[#FFF2F1] p-2.5 rounded border border-[#EDC8C5]">
+                        {resumeError}
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-end gap-3 pt-2">
+                      <button type="button" className="pre-btn text-xs" onClick={handleClose}>
+                        Cancel
+                      </button>
+                      <button type="submit" className="pre-btn primary text-xs">
+                        <span>Continue</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </form>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs text-[#64748B]">
+                      Verification code sent to <strong>{resumeEmailInput}</strong>
+                    </span>
+                    <span className="px-2 py-0.5 bg-[#FAF7F2] border border-[#C5A880] text-[#A37E44] font-mono text-[11px] font-bold rounded">
+                      PROTOTYPE OTP: 123456
+                    </span>
                   </div>
-                )}
 
-                <div className="flex items-center justify-end gap-3 pt-2">
-                  <button type="button" className="pre-btn text-xs" onClick={onClose}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="pre-btn primary text-xs">
-                    <span>Look up application</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </form>
+                  <form onSubmit={handleVerifyResumeOtp} className="space-y-4">
+                    <div className="pre-field">
+                      <label htmlFor="resume-otp">Enter 6-digit test code</label>
+                      <input
+                        id="resume-otp"
+                        type="text"
+                        maxLength={6}
+                        placeholder="123456"
+                        value={resumeOtpInput}
+                        onChange={(e) => {
+                          setResumeOtpInput(e.target.value);
+                          setResumeError(null);
+                        }}
+                        className="text-center font-mono font-bold tracking-widest text-base"
+                        autoFocus
+                      />
+                    </div>
+
+                    {resumeError && (
+                      <div className="text-xs text-[#9F3431] bg-[#FFF2F1] p-2.5 rounded border border-[#EDC8C5]">
+                        {resumeError}
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                      <button
+                        type="button"
+                        className="pre-btn text-xs py-1.5 px-3 min-h-[36px]"
+                        onClick={handleAutoFillAndVerify}
+                      >
+                        Auto-fill 123456 & Resume
+                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          className="pre-btn text-xs"
+                          onClick={() => setResumeOtpStep(false)}
+                        >
+                          Change email
+                        </button>
+                        <button type="submit" className="pre-btn primary text-xs">
+                          <span>Verify & Resume</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                </>
+              )}
             </div>
           </>
         )}
