@@ -127,7 +127,7 @@ function DashboardContent() {
   const [appData, setAppData] = useState<any>(null);
 
   useEffect(() => {
-    const rawAppId = searchParams.get("applicationId") || applicationId;
+    const rawAppId = searchParams.get("appId") || searchParams.get("applicationId") || applicationId;
     const appIdToLoad = rawAppId && !rawAppId.startsWith("draft-") ? rawAppId : null;
     if (appIdToLoad) {
       fetch(`/api/applications/${appIdToLoad}`)
