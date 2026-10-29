@@ -14,7 +14,6 @@ import {
   DEFAULT_PREPAYMENT_STATE,
 } from "@/types/pre-payment";
 
-import { PrePaymentHeader } from "./PrePaymentHeader";
 import { PrePaymentProgress } from "./PrePaymentProgress";
 import { Step1ChoosePackage } from "./Step1ChoosePackage";
 import { Step2AboutYou } from "./Step2AboutYou";
@@ -53,6 +52,19 @@ export function PrePaymentFlow({ onSuccess }: PrePaymentFlowProps) {
     } catch (e) {
       console.warn("Failed to restore saved pre-payment draft from localStorage", e);
     }
+
+    // Listen for modal triggers from the unified blended Navbar on /start
+    const handleNavbarModal = (event: Event) => {
+      const customEvent = event as CustomEvent<PrePaymentModalType>;
+      if (customEvent.detail) {
+        handleOpenModal(customEvent.detail);
+      }
+    };
+
+    window.addEventListener("owa-open-prepayment-modal", handleNavbarModal);
+    return () => {
+      window.removeEventListener("owa-open-prepayment-modal", handleNavbarModal);
+    };
   }, []);
 
   // Save to localStorage whenever meaningful state changes
@@ -262,13 +274,6 @@ export function PrePaymentFlow({ onSuccess }: PrePaymentFlowProps) {
 
   return (
     <div className="pre-wrapper">
-      {/* Brand Header */}
-      <PrePaymentHeader
-        onOpenHelp={() => handleOpenModal("help")}
-        onOpenResume={() => handleOpenModal("resume")}
-        onGoToStart={() => handleGoToStep(1)}
-      />
-
       {/* Main Container */}
       <main id="main" className="pre-main">
         {/* 4-Step Stepper */}
