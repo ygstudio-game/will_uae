@@ -16,6 +16,7 @@ interface Step1ChoosePackageProps {
     field: keyof PrePaymentApplicant,
     value: boolean
   ) => void;
+  onOpenHelp?: () => void;
   onNext: () => void;
 }
 
@@ -23,9 +24,38 @@ export function Step1ChoosePackage({
   state,
   onUpdatePackage,
   onUpdateApplicantEligibility,
+  onOpenHelp,
   onNext,
 }: Step1ChoosePackageProps) {
   const isCouples = state.packageType === "COUPLES";
+
+  // Requirement 2: Auto-scroll to Section 02 on package selection
+  const handleSelectPackage = (pkg: PrePaymentPackageType) => {
+    onUpdatePackage(pkg);
+    setTimeout(() => {
+      const scopeEl = document.getElementById("pre-scope-section");
+      if (scopeEl) {
+        scopeEl.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 100);
+  };
+
+  const handleRadioChange = (
+    isPartner: boolean,
+    field: keyof PrePaymentApplicant,
+    val: boolean
+  ) => {
+    onUpdateApplicantEligibility(isPartner, field, val);
+    // If the answer is Yes, check if all questions are answered to guide toward continue
+    if (val === true) {
+      setTimeout(() => {
+        const nextBtn = document.getElementById("pre-step1-continue-btn");
+        if (nextBtn) {
+          nextBtn.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+      }, 150);
+    }
+  };
 
   const renderRadioQuestion = (
     label: string,
@@ -43,7 +73,7 @@ export function Step1ChoosePackage({
             type="radio"
             name={`${isPartner ? "partner" : "primary"}-${field}`}
             checked={currentValue === true}
-            onChange={() => onUpdateApplicantEligibility(isPartner, field, true)}
+            onChange={() => handleRadioChange(isPartner, field, true)}
           />
           <span>Yes</span>
         </label>
@@ -52,7 +82,7 @@ export function Step1ChoosePackage({
             type="radio"
             name={`${isPartner ? "partner" : "primary"}-${field}`}
             checked={currentValue === false}
-            onChange={() => onUpdateApplicantEligibility(isPartner, field, false)}
+            onChange={() => handleRadioChange(isPartner, field, false)}
           />
           <span>No</span>
         </label>
@@ -79,6 +109,151 @@ export function Step1ChoosePackage({
       (state.partnerApplicant.age21 === null ||
         state.partnerApplicant.nonUae === null ||
         state.partnerApplicant.uaeAssets === null));
+
+  // =========================================================================
+  // REQUIREMENT 3 & 4: 9-WAY LEGAL REPLIES SYSTEM
+  // Replaces the generic "Please check: this answer needs a team check" card
+  // with 9 tailored, authoritative, reassuring legal replies.
+  // =========================================================================
+  interface ScopeReply {
+    id: number;
+    badge: string;
+    title: string;
+    text: string;
+    recommendation: string;
+    actionLabel?: string;
+    onAction?: () => void;
+    correctionField: keyof PrePaymentApplicant;
+    isPartnerCorrection: boolean;
+  }
+
+  const activeReplies: ScopeReply[] = [];
+
+  // --- CRITERION 1: AGE 21+ ---
+  if (state.primaryApplicant.age21 === false && (!isCouples || state.partnerApplicant.age21 !== false)) {
+    // Way 1: Primary under 21
+    activeReplies.push({
+      id: 1,
+      badge: "ADJD Civil Family Court · Age Requirement",
+      title: "Minimum Age Requirement (You)",
+      text: "Under Abu Dhabi Civil Family Court Law No. 14 of 2021, a testator must be at least 21 years of age according to the Gregorian calendar to legally register a Will in the UAE.",
+      recommendation: "If you are currently under 21, you cannot execute a standalone Will yet. Our legal specialists can guide your family on interim custody declarations and guardian nominations.",
+      actionLabel: "Speak with our legal team",
+      onAction: onOpenHelp,
+      correctionField: "age21",
+      isPartnerCorrection: false,
+    });
+  } else if (isCouples && state.partnerApplicant.age21 === false && state.primaryApplicant.age21 !== false) {
+    // Way 2: Partner under 21
+    activeReplies.push({
+      id: 2,
+      badge: "ADJD Civil Family Court · Age Requirement",
+      title: "Partner Minimum Age (Under 21)",
+      text: "Your partner must reach 21 years of age under ADJD court regulations to register a Will in Abu Dhabi.",
+      recommendation: "You can proceed with an Individual Will (AED 999) for yourself today. Once your partner celebrates their 21st birthday, we can easily register a separate Will for them.",
+      actionLabel: "Switch to Individual Will (AED 999)",
+      onAction: () => onUpdatePackage("INDIVIDUAL"),
+      correctionField: "age21",
+      isPartnerCorrection: true,
+    });
+  } else if (isCouples && state.primaryApplicant.age21 === false && state.partnerApplicant.age21 === false) {
+    // Way 3: Both under 21
+    activeReplies.push({
+      id: 3,
+      badge: "ADJD Civil Family Court · Age Requirement",
+      title: "Minimum Age Requirement (Both Testators)",
+      text: "Both testators must be at least 21 years of age to register legal wills with the Abu Dhabi Judicial Department.",
+      recommendation: "Our team can assist you with preliminary family estate structuring and custody planning so your documents are ready for court submission when you reach 21.",
+      actionLabel: "Contact Legal Support",
+      onAction: onOpenHelp,
+      correctionField: "age21",
+      isPartnerCorrection: false,
+    });
+  }
+
+  // --- CRITERION 2: NON-UAE NATIONALITY ---
+  if (state.primaryApplicant.nonUae === false && (!isCouples || state.partnerApplicant.nonUae !== false)) {
+    // Way 4: Primary is UAE national
+    activeReplies.push({
+      id: 4,
+      badge: "ADJD Jurisdiction · Nationality Scope",
+      title: "ADJD Non-Muslim Registry is for Expatriates (You)",
+      text: "The ADJD Civil Family Court Non-Muslim Wills Registry is specifically established for expatriates and foreign nationals. For UAE citizens, inheritance is governed by the UAE Personal Status Law.",
+      recommendation: "Our licensed legal consultancy can advise you on Sharia-compliant estate planning and specialized family estate distribution in accordance with UAE law.",
+      actionLabel: "Request UAE National Consultation",
+      onAction: onOpenHelp,
+      correctionField: "nonUae",
+      isPartnerCorrection: false,
+    });
+  } else if (isCouples && state.partnerApplicant.nonUae === false && state.primaryApplicant.nonUae !== false) {
+    // Way 5: Partner is UAE national
+    activeReplies.push({
+      id: 5,
+      badge: "ADJD Jurisdiction · Nationality Scope",
+      title: "Partner is a UAE Citizen",
+      text: "The ADJD Non-Muslim Will regime applies to non-UAE citizens. If your partner is a UAE citizen, their estate is governed by the UAE Personal Status Law.",
+      recommendation: "You can proceed with an Individual Will (AED 999) for yourself as an expatriate, and our legal team can assist your partner with UAE national estate arrangements.",
+      actionLabel: "Proceed with Individual Will (AED 999)",
+      onAction: () => onUpdatePackage("INDIVIDUAL"),
+      correctionField: "nonUae",
+      isPartnerCorrection: true,
+    });
+  } else if (isCouples && state.primaryApplicant.nonUae === false && state.partnerApplicant.nonUae === false) {
+    // Way 6: Both are UAE nationals
+    activeReplies.push({
+      id: 6,
+      badge: "ADJD Jurisdiction · Nationality Scope",
+      title: "Both Testators are UAE Citizens",
+      text: "The ADJD Non-Muslim Wills Registry exclusively registers wills for foreign non-UAE nationals. UAE citizens are subject to the UAE Personal Status Law.",
+      recommendation: "Please connect with our legal consultancy team for tailored Sharia-compliant estate planning and court-notarized inheritance documentation.",
+      actionLabel: "Contact Family Law Consultancy",
+      onAction: onOpenHelp,
+      correctionField: "nonUae",
+      isPartnerCorrection: false,
+    });
+  }
+
+  // --- CRITERION 3: UAE ASSETS ---
+  if (state.primaryApplicant.uaeAssets === false && (!isCouples || state.partnerApplicant.uaeAssets !== false)) {
+    // Way 7: Primary has no UAE assets
+    activeReplies.push({
+      id: 7,
+      badge: "ADJD Jurisdiction · UAE Assets",
+      title: "No Current Assets Owned in the UAE (You)",
+      text: "An ADJD Non-Muslim Will is registered with the Abu Dhabi Judicial Department to distribute and protect assets (real estate, bank accounts, business shares, vehicles) situated within the UAE.",
+      recommendation: "If you are in the process of purchasing real estate, opening UAE bank accounts, or moving funds to the UAE, our team can help you prepare your draft now so it is ready once assets are formalized.",
+      actionLabel: "Consult about Future Assets",
+      onAction: onOpenHelp,
+      correctionField: "uaeAssets",
+      isPartnerCorrection: false,
+    });
+  } else if (isCouples && state.partnerApplicant.uaeAssets === false && state.primaryApplicant.uaeAssets !== false) {
+    // Way 8: Partner has no UAE assets
+    activeReplies.push({
+      id: 8,
+      badge: "ADJD Jurisdiction · UAE Assets",
+      title: "Your Partner Does Not Own Assets in the UAE",
+      text: "A UAE Will distributes assets located inside the Emirates. If your partner does not hold assets in the UAE, a separate Will may not be required for them.",
+      recommendation: "An Individual Will (AED 999) for your assets may be more suitable, or we can structure the couples package to protect prospective assets your partner plans to acquire in the UAE.",
+      actionLabel: "Switch to Individual Will (AED 999)",
+      onAction: () => onUpdatePackage("INDIVIDUAL"),
+      correctionField: "uaeAssets",
+      isPartnerCorrection: true,
+    });
+  } else if (isCouples && state.primaryApplicant.uaeAssets === false && state.partnerApplicant.uaeAssets === false) {
+    // Way 9: Neither has UAE assets
+    activeReplies.push({
+      id: 9,
+      badge: "ADJD Jurisdiction · UAE Assets",
+      title: "No Current Assets in the UAE (Both Testators)",
+      text: "ADJD Non-Muslim Wills are designed specifically to protect and distribute assets situated within the United Arab Emirates.",
+      recommendation: "If you are relocating to the UAE, acquiring property, or setting up businesses here, our team can prepare your draft in advance ready for court registration when your assets are in place.",
+      actionLabel: "Inquire about Prospective Assets",
+      onAction: onOpenHelp,
+      correctionField: "uaeAssets",
+      isPartnerCorrection: false,
+    });
+  }
 
   return (
     <div className="pre-step-1">
@@ -114,7 +289,7 @@ export function Step1ChoosePackage({
           data-package-choice="individual"
           className={`card pre-package individual ${!isCouples ? "selected" : ""}`}
           aria-pressed={!isCouples}
-          onClick={() => onUpdatePackage("INDIVIDUAL")}
+          onClick={() => handleSelectPackage("INDIVIDUAL")}
         >
           <span className="cardbody">
             <span className="pre-package-photo" aria-hidden="true">
@@ -152,7 +327,7 @@ export function Step1ChoosePackage({
           data-package-choice="couples"
           className={`card pre-package couples ${isCouples ? "selected" : ""}`}
           aria-pressed={isCouples}
-          onClick={() => onUpdatePackage("COUPLES")}
+          onClick={() => handleSelectPackage("COUPLES")}
         >
           <span className="cardbody">
             <span className="pre-package-photo" aria-hidden="true">
@@ -185,8 +360,8 @@ export function Step1ChoosePackage({
         </button>
       </div>
 
-      {/* Scope Essentials Section */}
-      <div className="card pre-scope">
+      {/* Scope Essentials Section - with id for smooth redirect */}
+      <div id="pre-scope-section" className="card pre-scope">
         <div className="pre-scope-heading">
           <span>02</span>
           <strong>Confirm a few essentials</strong>
@@ -241,27 +416,82 @@ export function Step1ChoosePackage({
               </section>
             )}
           </div>
+          <p className="pre-scope-note">
+            These questions verify ADJD Civil Family Court service scope. Answering No to any item will provide specific legal guidance below.
+          </p>
         </div>
       </div>
 
-      {/* Ineligibility Advice Warning */}
-      {(hasIneligiblePrimary || hasIneligiblePartner) && (
-        <div
-          className="flex items-start gap-3 p-4 bg-[#FFF2F1] border border-[#EDC8C5] rounded-xl text-sm text-[#9F3431] mt-6"
-          role="alert"
-        >
-          <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+      {/* 9-Way Tailored Legal Replies */}
+      {activeReplies.length > 0 && (
+        <div className="space-y-4 mt-6 animate-in fade-in slide-in-from-top-3 duration-200">
+          {activeReplies.map((reply) => (
+            <div
+              key={reply.id}
+              className="p-5 bg-[#FAF7F3] border border-[#E4D8C7] rounded-2xl shadow-sm text-[#2E203C]"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-[#EADCC8] text-[#694A22]">
+                  {reply.badge}
+                </span>
+                <button
+                  type="button"
+                  className="text-xs text-[#8C6D41] hover:text-[#5A3F1A] underline font-medium cursor-pointer"
+                  onClick={() =>
+                    onUpdateApplicantEligibility(
+                      reply.isPartnerCorrection,
+                      reply.correctionField,
+                      true
+                    )
+                  }
+                >
+                  Change answer to &quot;Yes&quot;
+                </button>
+              </div>
+
+              <h4 className="font-serif text-base font-bold text-[#27173B] mb-1.5">
+                {reply.title}
+              </h4>
+              <p className="text-xs text-[#4F415D] leading-relaxed mb-2.5">
+                {reply.text}
+              </p>
+              <div className="p-3 bg-[#FFFFFF] rounded-xl border border-[#E9E0D4] text-xs text-[#635570] leading-relaxed mb-3">
+                <strong className="text-[#8C6D41]">Recommendation: </strong>
+                {reply.recommendation}
+              </div>
+
+              {reply.actionLabel && reply.onAction && (
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={reply.onAction}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#21152F] hover:bg-[#322046] text-white text-xs font-semibold rounded-lg shadow-sm transition-all cursor-pointer"
+                  >
+                    <span>{reply.actionLabel}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* All Eligible Reassurance Badge */}
+      {!isFormIncomplete && activeReplies.length === 0 && (
+        <div className="flex items-center gap-3 p-4 bg-[#EDF8F4] border border-[#BCE4D7] rounded-xl text-xs sm:text-sm text-[#1B6D53] mt-6 animate-in fade-in duration-200">
+          <span className="w-5 h-5 rounded-full bg-[#248B69] text-white flex items-center justify-center text-xs font-bold shrink-0">
+            ✓
+          </span>
           <div>
-            <strong className="block font-semibold">Special assistance required:</strong>
-            ADJD Non-Muslim Wills require testators to be non-Muslim expatriates aged 21 or over
-            with assets in the UAE. If you answered &quot;No&quot; to any of these, our legal team
-            will need to assist you directly before proceeding.
+            <strong className="font-bold">Standard ADJD Scope Confirmed: </strong>
+            Non-Muslim expatriate testators aged 21+ with assets in the UAE. You are eligible for court-notarized Will preparation.
           </div>
         </div>
       )}
 
       {/* Continue CTA */}
-      <div className="flex items-center justify-end mt-8">
+      <div id="pre-step1-continue-btn" className="flex items-center justify-end mt-8">
         <button
           type="button"
           className="pre-btn primary"

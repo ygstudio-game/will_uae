@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Upload,
   FileText,
@@ -30,22 +30,43 @@ export function SectionB_Children() {
   const childAssignments =
     activeWill?.roleAssignments.filter((ra) => ra.role === "CHILD") || [];
 
+  // Map intake answer: if activeWill has hasChildrenUnder18, pre-select it
   const initialHasChildren: boolean | null =
     childAssignments.length > 0
       ? true
+      : activeWill?.hasChildrenUnder18 !== undefined && activeWill?.hasChildrenUnder18 !== null
+      ? Boolean(activeWill.hasChildrenUnder18)
       : activeWill?.childrenAnswered
       ? (activeWill.hasChildrenUnder18 || childAssignments.length > 0)
       : null;
 
   const initialHasUnder18: boolean | null =
-    activeWill?.hasChildrenUnder18 === true
+    childAssignments.length > 0
       ? true
+      : activeWill?.hasChildrenUnder18 !== undefined && activeWill?.hasChildrenUnder18 !== null
+      ? Boolean(activeWill.hasChildrenUnder18)
       : activeWill?.childrenAnswered && activeWill?.hasChildrenUnder18 === false
       ? false
       : null;
 
   const [hasChildren, setHasChildren] = useState<boolean | null>(initialHasChildren);
   const [hasUnder18, setHasUnder18] = useState<boolean | null>(initialHasUnder18);
+
+  // Synchronize state when activeWill loads or switches (e.g. from DB or between couple wills)
+  useEffect(() => {
+    if (!activeWill) return;
+    const hasAssignments = (activeWill.roleAssignments || []).some((ra) => ra.role === "CHILD");
+    if (hasAssignments) {
+      setHasChildren(true);
+      setHasUnder18(true);
+    } else if (activeWill.hasChildrenUnder18 !== undefined && activeWill.hasChildrenUnder18 !== null) {
+      setHasChildren(Boolean(activeWill.hasChildrenUnder18));
+      setHasUnder18(Boolean(activeWill.hasChildrenUnder18));
+      if (!activeWill.childrenAnswered) {
+        updateActiveWill({ childrenAnswered: true });
+      }
+    }
+  }, [activeWill?.id, activeWill?.hasChildrenUnder18, activeWill?.willIndex]);
   const [openChildIndex, setOpenChildIndex] = useState<number>(
     childAssignments.length > 0 ? childAssignments.length - 1 : 0
   );

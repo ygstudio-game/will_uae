@@ -57,6 +57,21 @@ export function Step2AboutYou({
     onNext();
   };
 
+  const handleRadioDetailsChange = (
+    isPartner: boolean,
+    field: "married" | "children",
+    value: boolean
+  ) => {
+    onUpdateApplicantDetails(isPartner, field, value);
+    if (errorMsg) setErrorMsg(null);
+    setTimeout(() => {
+      const nextBtn = document.getElementById("pre-step2-next-btn");
+      if (nextBtn && state.fullName.trim()) {
+        nextBtn.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    }, 120);
+  };
+
   const renderRadioQuestion = (
     label: string,
     isPartner: boolean,
@@ -74,7 +89,7 @@ export function Step2AboutYou({
             type="radio"
             name={`${isPartner ? "partner" : "primary"}-${field}`}
             checked={currentValue === true}
-            onChange={() => onUpdateApplicantDetails(isPartner, field, true)}
+            onChange={() => handleRadioDetailsChange(isPartner, field, true)}
           />
           <span>Yes</span>
         </label>
@@ -83,7 +98,7 @@ export function Step2AboutYou({
             type="radio"
             name={`${isPartner ? "partner" : "primary"}-${field}`}
             checked={currentValue === false}
-            onChange={() => onUpdateApplicantDetails(isPartner, field, false)}
+            onChange={() => handleRadioDetailsChange(isPartner, field, false)}
           />
           <span>No</span>
         </label>
@@ -201,6 +216,7 @@ export function Step2AboutYou({
           <span>Back</span>
         </button>
         <button
+          id="pre-step2-next-btn"
           type="button"
           className="btn primary"
           onClick={handleNextClick}

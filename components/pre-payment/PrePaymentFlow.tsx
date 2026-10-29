@@ -283,6 +283,7 @@ export function PrePaymentFlow({ onSuccess }: PrePaymentFlowProps) {
             state={state}
             onUpdatePackage={handleUpdatePackage}
             onUpdateApplicantEligibility={handleUpdateApplicantEligibility}
+            onOpenHelp={() => handleOpenModal("help")}
             onNext={() => handleGoToStep(2)}
           />
         )}
