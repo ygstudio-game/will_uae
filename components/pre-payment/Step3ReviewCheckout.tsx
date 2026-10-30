@@ -370,10 +370,10 @@ export function Step3ReviewCheckout({
                 {isCouples ? "Wills for Couples" : "Individual Will"}
               </span>
               <div className="premium-price flex items-baseline gap-2 my-2">
-                <span className="premium-price__currency text-base font-semibold text-[#625076]">
+                <span className="premium-price__currency text-base font-semibold text-[#625076] leading-none">
                   AED
                 </span>
-                <strong className="text-5xl font-serif font-normal text-[#432571]">
+                <strong className="text-5xl font-serif font-normal text-[#432571] leading-none [font-variant-numeric:lining-nums_tabular-nums]">
                   {feeAed.toLocaleString()}
                 </strong>
               </div>

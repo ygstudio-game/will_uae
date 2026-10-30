@@ -90,8 +90,8 @@ export function Step4Payment({
           <div className="saas-price-block">
             <span>Payable now to OWA</span>
             <div className="saas-price">
-              <span>AED</span>
-              <strong>{feeAed.toLocaleString()}</strong>
+              <span className="leading-none">AED</span>
+              <strong className="leading-none">{feeAed.toLocaleString()}</strong>
             </div>
             <p className="text-xs text-[#e5d7f2] mt-1">OWA service fee</p>
           </div>

@@ -123,6 +123,8 @@ export function Step1ChoosePackage({
     recommendation: string;
     actionLabel?: string;
     onAction?: () => void;
+    secondaryActionLabel?: string;
+    onSecondaryAction?: () => void;
     correctionField: keyof PrePaymentApplicant;
     isPartnerCorrection: boolean;
   }
@@ -157,15 +159,13 @@ export function Step1ChoosePackage({
       isPartnerCorrection: true,
     });
   } else if (isCouples && state.primaryApplicant.age21 === false && state.partnerApplicant.age21 === false) {
-    // Way 3: Both under 21
+    // Way 3: Both under 21 -> NA
     activeReplies.push({
       id: 3,
       badge: "ADJD Civil Family Court · Age Requirement",
-      title: "Minimum Age Requirement (Both Testators)",
-      text: "Both testators must be at least 21 years of age to register legal wills with the Abu Dhabi Judicial Department.",
-      recommendation: "Our team can assist you with preliminary family estate structuring and custody planning so your documents are ready for court submission when you reach 21.",
-      actionLabel: "Contact Legal Support",
-      onAction: onOpenHelp,
+      title: "Not Applicable · Minimum Age Requirement (Both Testators)",
+      text: "Under Abu Dhabi Civil Family Court Law No. 14 of 2021, both testators must be at least 21 years of age according to the Gregorian calendar to legally register a Will in the UAE.",
+      recommendation: "Not applicable under ADJD Civil Family Court regulations. Both testators must reach age 21 before an ADJD Non-Muslim Will can be registered.",
       correctionField: "age21",
       isPartnerCorrection: false,
     });
@@ -173,41 +173,37 @@ export function Step1ChoosePackage({
 
   // --- CRITERION 2: NON-UAE NATIONALITY ---
   if (state.primaryApplicant.nonUae === false && (!isCouples || state.partnerApplicant.nonUae !== false)) {
-    // Way 4: Primary is UAE national
+    // Way 4: Primary is UAE national -> NA
     activeReplies.push({
       id: 4,
       badge: "ADJD Jurisdiction · Nationality Scope",
-      title: "ADJD Non-Muslim Registry is for Expatriates (You)",
+      title: "Not Applicable · Expatriate Registry Scope (You)",
       text: "The ADJD Civil Family Court Non-Muslim Wills Registry is specifically established for expatriates and foreign nationals. For UAE citizens, inheritance is governed by the UAE Personal Status Law.",
-      recommendation: "Our licensed legal consultancy can advise you on Sharia-compliant estate planning and specialized family estate distribution in accordance with UAE law.",
-      actionLabel: "Request UAE National Consultation",
-      onAction: onOpenHelp,
+      recommendation: "Not applicable under ADJD Civil Family Court Non-Muslim jurisdiction. This registry exclusively covers non-UAE expatriate nationals.",
       correctionField: "nonUae",
       isPartnerCorrection: false,
     });
   } else if (isCouples && state.partnerApplicant.nonUae === false && state.primaryApplicant.nonUae !== false) {
-    // Way 5: Partner is UAE national
+    // Way 5: Partner is UAE national -> Deleted "+ partner guidance"
     activeReplies.push({
       id: 5,
       badge: "ADJD Jurisdiction · Nationality Scope",
       title: "Partner is a UAE Citizen",
       text: "The ADJD Non-Muslim Will regime applies to non-UAE citizens. If your partner is a UAE citizen, their estate is governed by the UAE Personal Status Law.",
-      recommendation: "You can proceed with an Individual Will (AED 999) for yourself as an expatriate, and our legal team can assist your partner with UAE national estate arrangements.",
+      recommendation: "You can proceed with an Individual Will (AED 999) for yourself as an expatriate.",
       actionLabel: "Proceed with Individual Will (AED 999)",
       onAction: () => onUpdatePackage("INDIVIDUAL"),
       correctionField: "nonUae",
       isPartnerCorrection: true,
     });
   } else if (isCouples && state.primaryApplicant.nonUae === false && state.partnerApplicant.nonUae === false) {
-    // Way 6: Both are UAE nationals
+    // Way 6: Both are UAE nationals -> Replaced family law consultancy with NA
     activeReplies.push({
       id: 6,
       badge: "ADJD Jurisdiction · Nationality Scope",
-      title: "Both Testators are UAE Citizens",
+      title: "Not Applicable · Both Testators are UAE Citizens",
       text: "The ADJD Non-Muslim Wills Registry exclusively registers wills for foreign non-UAE nationals. UAE citizens are subject to the UAE Personal Status Law.",
-      recommendation: "Please connect with our legal consultancy team for tailored Sharia-compliant estate planning and court-notarized inheritance documentation.",
-      actionLabel: "Contact Family Law Consultancy",
-      onAction: onOpenHelp,
+      recommendation: "Not applicable under ADJD Civil Family Court Non-Muslim jurisdiction. Both testators must be non-UAE expatriates to register a Non-Muslim Will.",
       correctionField: "nonUae",
       isPartnerCorrection: false,
     });
@@ -215,41 +211,46 @@ export function Step1ChoosePackage({
 
   // --- CRITERION 3: UAE ASSETS ---
   if (state.primaryApplicant.uaeAssets === false && (!isCouples || state.partnerApplicant.uaeAssets !== false)) {
-    // Way 7: Primary has no UAE assets
+    // Way 7: Primary has no UAE assets -> Replaced with "Still applicable cos bank accounts, cars, business all are assets"
     activeReplies.push({
       id: 7,
       badge: "ADJD Jurisdiction · UAE Assets",
-      title: "No Current Assets Owned in the UAE (You)",
-      text: "An ADJD Non-Muslim Will is registered with the Abu Dhabi Judicial Department to distribute and protect assets (real estate, bank accounts, business shares, vehicles) situated within the UAE.",
-      recommendation: "If you are in the process of purchasing real estate, opening UAE bank accounts, or moving funds to the UAE, our team can help you prepare your draft now so it is ready once assets are formalized.",
-      actionLabel: "Consult about Future Assets",
-      onAction: onOpenHelp,
+      title: "UAE Assets Clarification (You)",
+      text: "An ADJD Non-Muslim Will protects all types of assets situated in the United Arab Emirates, not only owned real estate property.",
+      recommendation: "Still applicable cos bank accounts, cars, business all are assets. In the UAE, personal bank accounts, end-of-service gratuity, vehicles, company shares, and personal belongings freeze upon death and require a registered Will to transfer smoothly.",
+      actionLabel: "I have bank accounts, cars, or other assets (Change to Yes)",
+      onAction: () => onUpdateApplicantEligibility(false, "uaeAssets", true),
       correctionField: "uaeAssets",
       isPartnerCorrection: false,
     });
   } else if (isCouples && state.partnerApplicant.uaeAssets === false && state.primaryApplicant.uaeAssets !== false) {
-    // Way 8: Partner has no UAE assets
+    // Way 8: Partner has no UAE assets -> Replaced with "Same as above"
     activeReplies.push({
       id: 8,
       badge: "ADJD Jurisdiction · UAE Assets",
-      title: "Your Partner Does Not Own Assets in the UAE",
-      text: "A UAE Will distributes assets located inside the Emirates. If your partner does not hold assets in the UAE, a separate Will may not be required for them.",
-      recommendation: "An Individual Will (AED 999) for your assets may be more suitable, or we can structure the couples package to protect prospective assets your partner plans to acquire in the UAE.",
-      actionLabel: "Switch to Individual Will (AED 999)",
-      onAction: () => onUpdatePackage("INDIVIDUAL"),
+      title: "UAE Assets Clarification (Partner)",
+      text: "A UAE Will protects all types of assets located inside the Emirates, not only owned real estate property.",
+      recommendation: "Still applicable cos bank accounts, cars, business all are assets. If your partner holds UAE bank accounts, vehicles, business shares, or personal effects, a Will remains fully applicable for them.",
+      actionLabel: "Partner has accounts/assets (Change to Yes)",
+      onAction: () => onUpdateApplicantEligibility(true, "uaeAssets", true),
+      secondaryActionLabel: "Switch to Individual Will (AED 999)",
+      onSecondaryAction: () => onUpdatePackage("INDIVIDUAL"),
       correctionField: "uaeAssets",
       isPartnerCorrection: true,
     });
   } else if (isCouples && state.primaryApplicant.uaeAssets === false && state.partnerApplicant.uaeAssets === false) {
-    // Way 9: Neither has UAE assets
+    // Way 9: Neither has UAE assets -> Replaced with "Same as above"
     activeReplies.push({
       id: 9,
       badge: "ADJD Jurisdiction · UAE Assets",
-      title: "No Current Assets in the UAE (Both Testators)",
-      text: "ADJD Non-Muslim Wills are designed specifically to protect and distribute assets situated within the United Arab Emirates.",
-      recommendation: "If you are relocating to the UAE, acquiring property, or setting up businesses here, our team can prepare your draft in advance ready for court registration when your assets are in place.",
-      actionLabel: "Inquire about Prospective Assets",
-      onAction: onOpenHelp,
+      title: "UAE Assets Clarification (Both Testators)",
+      text: "ADJD Non-Muslim Wills protect and distribute all assets situated within the United Arab Emirates, not only real estate property.",
+      recommendation: "Still applicable cos bank accounts, cars, business all are assets. If either of you holds UAE bank accounts, vehicles, company shares, end-of-service gratuity, or personal belongings, a Will is fully applicable to both testators.",
+      actionLabel: "We have accounts, cars, or other assets (Change both to Yes)",
+      onAction: () => {
+        onUpdateApplicantEligibility(false, "uaeAssets", true);
+        onUpdateApplicantEligibility(true, "uaeAssets", true);
+      },
       correctionField: "uaeAssets",
       isPartnerCorrection: false,
     });
@@ -460,8 +461,8 @@ export function Step1ChoosePackage({
                 {reply.recommendation}
               </div>
 
-              {reply.actionLabel && reply.onAction && (
-                <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
+                {reply.actionLabel && reply.onAction && (
                   <button
                     type="button"
                     onClick={reply.onAction}
@@ -470,8 +471,18 @@ export function Step1ChoosePackage({
                     <span>{reply.actionLabel}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
-                </div>
-              )}
+                )}
+                {reply.secondaryActionLabel && reply.onSecondaryAction && (
+                  <button
+                    type="button"
+                    onClick={reply.onSecondaryAction}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-transparent hover:bg-[#EFE7DC] text-[#21152F] border border-[#D5C7B5] text-xs font-semibold rounded-lg transition-all cursor-pointer"
+                  >
+                    <span>{reply.secondaryActionLabel}</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-[#6B5A79]" />
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>

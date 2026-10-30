@@ -364,11 +364,13 @@
 }
 
 .pre-package .pre-package-price-tag {
-  font-family: Georgia, serif;
+  font-family: var(--font-playfair), "Playfair Display", "Times New Roman", serif;
   font-size: 20px;
   color: #ffffff;
   margin-top: 6px;
   font-weight: 400;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "lnum" 1, "tnum" 1;
 }
 
 .pre-package .premium-package-detail {
@@ -747,18 +749,29 @@
   padding: 26px;
 }
 
+.cro-order .premium-price {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  line-height: 1;
+}
+
 .cro-order .premium-price strong {
   color: #432571;
-  font-family: Georgia, serif;
+  font-family: var(--font-playfair), "Playfair Display", "Times New Roman", serif;
   font-size: 48px;
-  line-height: 1.1;
+  line-height: 1;
   letter-spacing: -0.03em;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "lnum" 1, "tnum" 1;
 }
 
 .cro-order .premium-price__currency {
+  font-family: var(--font-inter), "Inter", sans-serif;
   font-size: 18px;
   font-weight: 600;
   color: #625076;
+  line-height: 1;
 }
 
 /* ---------------------------------------------------------
@@ -865,18 +878,24 @@
   align-items: baseline;
   gap: 8px;
   margin: 6px 0;
+  line-height: 1;
 }
 
 .saas-price span {
+  font-family: var(--font-inter), "Inter", sans-serif;
   font-size: 16px;
   color: #e5d7f2;
   font-weight: 600;
+  line-height: 1;
 }
 
 .saas-price strong {
-  font-family: Georgia, serif;
+  font-family: var(--font-playfair), "Playfair Display", "Times New Roman", serif;
   font-size: 46px;
   color: #ffffff;
+  line-height: 1;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "lnum" 1, "tnum" 1;
 }
 
 .saas-inclusions {
