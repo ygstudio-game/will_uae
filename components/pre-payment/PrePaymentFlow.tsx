@@ -213,11 +213,6 @@ export function PrePaymentFlow({ onSuccess }: PrePaymentFlowProps) {
       return;
     }
 
-    if (!state.termsAccepted) {
-      setPayError("You must accept the service terms to proceed.");
-      return;
-    }
-
     setPayError(null);
     setLoading(true);
 
@@ -251,24 +246,28 @@ export function PrePaymentFlow({ onSuccess }: PrePaymentFlowProps) {
         throw new Error(data.error || "Payment verification failed. Please try again.");
       }
 
-      // Clear draft upon successful payment & database creation
-      try {
-        localStorage.removeItem(DRAFT_STORAGE_KEY);
-      } catch (e) {
-        // ignore
-      }
-
-      await refreshUser();
-
-      if (onSuccess) {
-        onSuccess(data);
-      } else {
-        router.push(`/dashboard?appId=${data.applicationId}`);
-      }
+      return data;
     } catch (err: any) {
       setPayError(err.message || "An unexpected error occurred during checkout.");
+      throw err;
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePaymentConfirmed = async (data: any) => {
+    try {
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+    } catch (e) {
+      // ignore
+    }
+
+    await refreshUser();
+
+    if (onSuccess) {
+      onSuccess(data);
+    } else {
+      router.push(`/dashboard?appId=${data?.applicationId || ""}`);
     }
   };
 
@@ -321,13 +320,12 @@ export function PrePaymentFlow({ onSuccess }: PrePaymentFlowProps) {
         {state.step === 4 && (
           <Step4Payment
             state={state}
-            onToggleTerms={handleToggleTerms}
-            onOpenTerms={() => handleOpenModal("terms")}
-            onOpenPrivacy={() => handleOpenModal("privacy")}
             onOpenSample={() => handleOpenModal("sample")}
+            onOpenHelp={() => handleOpenModal("help")}
             onEditPackage={() => handleGoToStep(1)}
             onEditContact={() => handleGoToStep(3)}
             onPay={handlePay}
+            onPaymentConfirmed={handlePaymentConfirmed}
             loading={loading}
             error={payError}
           />

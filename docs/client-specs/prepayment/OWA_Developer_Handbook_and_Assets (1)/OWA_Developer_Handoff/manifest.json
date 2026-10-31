@@ -1,0 +1,165 @@
+{
+  "edition": "2026-10-31",
+  "files": [
+    {
+      "path": "ASSET_REGISTER.md",
+      "bytes": 1874,
+      "sha256": "d64f688ef1abc3d41674671825f2d5f6ef0186c859e0918f34d36e02688b93bb"
+    },
+    {
+      "path": "OWA_Developer_Handbook.html",
+      "bytes": 32377,
+      "sha256": "90b85e1eca1557905da12ee1623187b4858be0eac5e2db44091f9122b54d0bd4"
+    },
+    {
+      "path": "OWA_Developer_Handbook.md",
+      "bytes": 26763,
+      "sha256": "d87b3b1bb3fa043b17e2a099300baf391933c986119cca5c20d0b396b57e88a0"
+    },
+    {
+      "path": "README.md",
+      "bytes": 1741,
+      "sha256": "87b296fdb6526f9cd492980766460b81b3823635e8dd40964af65ecddc2b4ab9"
+    },
+    {
+      "path": "assets/brand/header-component.html",
+      "bytes": 1468,
+      "sha256": "4118d249cc52dc762aa6c10e5ee9e6ec946b1ff2333922ac0e003ad12fbae11b"
+    },
+    {
+      "path": "assets/brand/owa-wordmark-current.svg",
+      "bytes": 535,
+      "sha256": "9309d541d4d96fb767b98d0aef027369009a0a243ba148f999fddefbedf31c1c"
+    },
+    {
+      "path": "assets/css/design-tokens.css",
+      "bytes": 602,
+      "sha256": "7148572d367006a36c06d34ef99485fc2f9350f6bc1c77b82f633dbe354fc33f"
+    },
+    {
+      "path": "assets/css/satin-theme.css",
+      "bytes": 5884,
+      "sha256": "a83abe279be7db0fbdba4b2c89dd7ce98160dd42ee7b28a2a93b732e4d3f0d15"
+    },
+    {
+      "path": "assets/fonts/embedded-font-metadata.json",
+      "bytes": 2886,
+      "sha256": "821fcc14f034b76e127ff2d895f403c1b274b3f23a4c0608166c53c8e1bf70c6"
+    },
+    {
+      "path": "assets/fonts/fonts.css",
+      "bytes": 1108,
+      "sha256": "02b9b8ef972f47bff74dfd53a90493a83777dfeb7ecd34240454bdce8784fc32"
+    },
+    {
+      "path": "assets/fonts/inter-400.ttf",
+      "bytes": 324820,
+      "sha256": "1b08e7fc267a5c7e1d614100f604b83e7e8a0be241f0f288faa2b3ac93a683ba"
+    },
+    {
+      "path": "assets/fonts/inter-500.ttf",
+      "bytes": 325304,
+      "sha256": "8c883f63b2c4157d997319f2c8bc6995ed4357ef371940d31ca159004a4aae63"
+    },
+    {
+      "path": "assets/fonts/inter-600.ttf",
+      "bytes": 326048,
+      "sha256": "e7a1aaf7eda9f2fad4131725fa556265ec75ca7b2d756260173a040363e8d4f7"
+    },
+    {
+      "path": "assets/fonts/inter-700.ttf",
+      "bytes": 326468,
+      "sha256": "b37284b5701b6b168dfc770aa1a4ac492106422fd3ba76bc7641e37434e8019c"
+    },
+    {
+      "path": "assets/fonts/playfair-display-400.ttf",
+      "bytes": 123240,
+      "sha256": "1609a54fa3ad1abc8d0037132f73700333241ea0b65672079998e352f151dea7"
+    },
+    {
+      "path": "assets/fonts/playfair-display-600.ttf",
+      "bytes": 123672,
+      "sha256": "8ab6a1db2d7caeb46c742371da500d0f3de1dc6ec6bea2aef0106f678d7a1f8d"
+    },
+    {
+      "path": "assets/fonts/playfair-display-700.ttf",
+      "bytes": 123536,
+      "sha256": "adefc53e7b3d483f1fa5e85edd82b7689ca79db25a1f6786bd7949cdcfeec601"
+    },
+    {
+      "path": "assets/people/couples.jpg",
+      "bytes": 105019,
+      "sha256": "9c67d306573c97770986a02fe2ff88c2eb984411b21722e60b1338e6b9ca6c71"
+    },
+    {
+      "path": "assets/people/individual.jpg",
+      "bytes": 56481,
+      "sha256": "6a3a3372bb6cec37088b6cd5477d2dc62e75c3d3cff8baa1f67ccedda70c966f"
+    },
+    {
+      "path": "docs/QA_REPORT.md",
+      "bytes": 1223,
+      "sha256": "128dc2a7593e832157ce4f8a2b5412c88cb286c4ccc7c6e8c1a30e0377815751"
+    },
+    {
+      "path": "prototypes/OWA_Full_Journey_User_Test.html",
+      "bytes": 2689179,
+      "sha256": "f940faedc046d1163a7617f187aac7a09b1bb1dd9c18be52abcdedb8fcbdf2eb"
+    },
+    {
+      "path": "prototypes/OWA_PrePayment_Review.html",
+      "bytes": 2597638,
+      "sha256": "32690594cf45cb107781ea1b49a023423df25022b9d43524faeea80f1d608e97"
+    },
+    {
+      "path": "source/full-journey/app.js",
+      "bytes": 350202,
+      "sha256": "119fa022e32fb8c1892f2ad7f4df99d24d199e9df2cfc6fac66687b1e37af2c9"
+    },
+    {
+      "path": "source/full-journey/index.html",
+      "bytes": 538,
+      "sha256": "6da38343e1fcc257160d89c381541a0afecfe99eed1572b3b54bfb0f5698a66f"
+    },
+    {
+      "path": "source/full-journey/styles.css",
+      "bytes": 2339778,
+      "sha256": "aa3038d546f894262469a9f5d0ec5f50434a58b99f880df996ed9fc7bd95887f"
+    },
+    {
+      "path": "source/prepayment/app.js",
+      "bytes": 261647,
+      "sha256": "30b43d2ed9ed57d482489564be4798ecf6d07500922cc54bceeb50042610ee84"
+    },
+    {
+      "path": "source/prepayment/index.html",
+      "bytes": 389,
+      "sha256": "8082fe0ed6c8779fc64a2196b0e5ed6560e61ece31802fd0e4491760dd04fa40"
+    },
+    {
+      "path": "source/prepayment/styles.css",
+      "bytes": 2335642,
+      "sha256": "6c1ec54479e9a007c878247cd88ff65c10c116e84bd687c001ed733b1368bf10"
+    },
+    {
+      "path": "tests/full-journey.cjs",
+      "bytes": 5184,
+      "sha256": "2023556723b4f474cc917bed7a312b5e83279605bd680e247a507f7094bc52a2"
+    },
+    {
+      "path": "tests/nomod-check.cjs",
+      "bytes": 3353,
+      "sha256": "944cb9fcea2b211a5d9df72710717043314fda9a44f37e8b8bd0d70a7e667ae0"
+    },
+    {
+      "path": "tests/payment-recovery.cjs",
+      "bytes": 1990,
+      "sha256": "fa2c6276913030a637c8640c896c999d2843a2fe8205ec2c3a3b639357a47a34"
+    },
+    {
+      "path": "tests/prepayment.cjs",
+      "bytes": 6502,
+      "sha256": "ec9e201d290b2da125f8ccbb13868860ae855554b2da30ab0acf09199283a9d0"
+    }
+  ]
+}

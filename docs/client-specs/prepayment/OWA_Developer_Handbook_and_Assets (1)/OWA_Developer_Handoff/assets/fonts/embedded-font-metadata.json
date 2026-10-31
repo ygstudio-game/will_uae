@@ -1,0 +1,135 @@
+[
+  {
+    "file": "inter-400.ttf",
+    "family": "Inter",
+    "weight": "400",
+    "embedded_name_metadata": {
+      "0": [
+        "Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter)"
+      ],
+      "1": [
+        "Inter"
+      ],
+      "2": [
+        "Regular"
+      ],
+      "14": [
+        "https://openfontlicense.org"
+      ]
+    }
+  },
+  {
+    "file": "inter-500.ttf",
+    "family": "Inter",
+    "weight": "500",
+    "embedded_name_metadata": {
+      "0": [
+        "Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter)"
+      ],
+      "1": [
+        "Inter Medium"
+      ],
+      "2": [
+        "Regular"
+      ],
+      "14": [
+        "https://openfontlicense.org"
+      ]
+    }
+  },
+  {
+    "file": "inter-600.ttf",
+    "family": "Inter",
+    "weight": "600",
+    "embedded_name_metadata": {
+      "0": [
+        "Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter)"
+      ],
+      "1": [
+        "Inter SemiBold"
+      ],
+      "2": [
+        "Regular"
+      ],
+      "14": [
+        "https://openfontlicense.org"
+      ]
+    }
+  },
+  {
+    "file": "inter-700.ttf",
+    "family": "Inter",
+    "weight": "700",
+    "embedded_name_metadata": {
+      "0": [
+        "Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter)"
+      ],
+      "1": [
+        "Inter"
+      ],
+      "2": [
+        "Bold"
+      ],
+      "14": [
+        "https://openfontlicense.org"
+      ]
+    }
+  },
+  {
+    "file": "playfair-display-400.ttf",
+    "family": "Playfair Display",
+    "weight": "400",
+    "embedded_name_metadata": {
+      "0": [
+        "Copyright 2017 The Playfair Display Project Authors (https://github.com/clauseggers/Playfair-Display), with Reserved Font Name \"Playfair Display\"."
+      ],
+      "1": [
+        "Playfair Display"
+      ],
+      "2": [
+        "Regular"
+      ],
+      "14": [
+        "http://scripts.sil.org/OFL"
+      ]
+    }
+  },
+  {
+    "file": "playfair-display-600.ttf",
+    "family": "Playfair Display",
+    "weight": "600",
+    "embedded_name_metadata": {
+      "0": [
+        "Copyright 2017 The Playfair Display Project Authors (https://github.com/clauseggers/Playfair-Display), with Reserved Font Name \"Playfair Display\"."
+      ],
+      "1": [
+        "Playfair Display SemiBold"
+      ],
+      "2": [
+        "Regular"
+      ],
+      "14": [
+        "http://scripts.sil.org/OFL"
+      ]
+    }
+  },
+  {
+    "file": "playfair-display-700.ttf",
+    "family": "Playfair Display",
+    "weight": "700",
+    "embedded_name_metadata": {
+      "0": [
+        "Copyright 2017 The Playfair Display Project Authors (https://github.com/clauseggers/Playfair-Display), with Reserved Font Name \"Playfair Display\"."
+      ],
+      "1": [
+        "Playfair Display"
+      ],
+      "2": [
+        "Bold"
+      ],
+      "14": [
+        "http://scripts.sil.org/OFL"
+      ]
+    }
+  }
+]

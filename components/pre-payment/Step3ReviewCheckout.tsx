@@ -1,18 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  Check,
-  ArrowRight,
-  ArrowLeft,
-  FileText,
-  Languages,
-  LifeBuoy,
-  Scale,
-  AlertCircle,
-  KeyRound,
-  CheckCircle2,
-} from "lucide-react";
+import { ArrowRight, ArrowLeft } from "lucide-react";
 import {
   PrePaymentJourneyState,
   PrePaymentInclusionTab,
@@ -22,7 +11,7 @@ interface Step3ReviewCheckoutProps {
   state: PrePaymentJourneyState;
   onUpdateEmail: (email: string) => void;
   onUpdatePhone: (phone: string) => void;
-  onVerifyEmail: (verified: boolean) => void;
+  onVerifyEmail?: (verified: boolean) => void;
   onUpdateInclusionTab: (tab: PrePaymentInclusionTab) => void;
   onEditDetails: () => void;
   onEditPackage: () => void;
@@ -35,7 +24,6 @@ export function Step3ReviewCheckout({
   state,
   onUpdateEmail,
   onUpdatePhone,
-  onVerifyEmail,
   onUpdateInclusionTab,
   onEditDetails,
   onEditPackage,
@@ -44,109 +32,94 @@ export function Step3ReviewCheckout({
   onNext,
 }: Step3ReviewCheckoutProps) {
   const isCouples = state.packageType === "COUPLES";
-  const feeAed = isCouples ? 1799 : 999;
-  const courtFeeAed = isCouples ? 1900 : 950;
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const serviceFee = isCouples ? 1799 : 999;
+  const courtFee = isCouples ? 1900 : 950;
+  const packageTitle = isCouples ? "Wills for Couples" : "Individual Will";
 
-  const [otpInput, setOtpInput] = useState("");
-  const [otpError, setOtpError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<string[]>([]);
 
-  const handleVerifyOtp = () => {
-    if (otpInput.trim() === "123456") {
-      onVerifyEmail(true);
-      setOtpError(null);
-    } else {
-      setOtpError("Incorrect test code. For prototype mode, use 123456.");
+  const phoneKey = (p: string) => String(p || "").replace(/\D/g, "").replace(/^00/, "");
+
+  const getContactErrors = (): string[] => {
+    const e: string[] = [];
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email.trim())) {
+      e.push("Enter a valid email address.");
     }
+    const cleanPhone = "+" + phoneKey(state.phoneNumber);
+    if (!/^\+[1-9]\d{6,14}$/.test(cleanPhone)) {
+      e.push("Enter your phone number with country code, for example +971 50 000 0001.");
+    }
+    return e;
   };
 
-  const handleAutoFillAndVerify = () => {
-    setOtpInput("123456");
-    onVerifyEmail(true);
-    setOtpError(null);
-  };
-
-  const handleProceedClick = () => {
-    if (!state.email.trim() || !state.email.includes("@")) {
-      setErrorMsg("Please enter a valid email address for your receipt and login.");
+  const handleCheckoutAction = () => {
+    const errs = getContactErrors();
+    if (errs.length > 0) {
+      setErrors(errs);
+      const errBox = document.getElementById("pre-errors");
+      if (errBox) {
+        errBox.scrollIntoView({ behavior: "smooth", block: "center" });
+        errBox.focus();
+      }
       return;
     }
-    if (!state.phoneNumber.trim() || state.phoneNumber.trim().length < 7) {
-      setErrorMsg("Please enter a valid phone number with country code (e.g. +971 50 000 0001).");
-      return;
-    }
-
-    // Auto-verify email if user proceeds and hasn't verified yet
-    if (!state.isEmailVerified) {
-      onVerifyEmail(true);
-    }
-
-    setErrorMsg(null);
+    setErrors([]);
     onNext();
   };
 
   return (
     <div className="pre-step-3">
-      {/* Page Header */}
+      {/* Pagehead */}
       <div className="pagehead cro-checkout-head">
-        <div className="eyebrow text-[#5730A1] text-xs font-bold mb-1 tracking-wider">
-          STEP 3 OF 4 · REVIEW
-        </div>
-        <h1 className="font-serif text-3xl font-bold text-[#2c184b]">
-          Review {isCouples ? "your two Wills." : "your Will."}
-        </h1>
-        <p className="sub text-[#625975] text-sm mt-1">
+        <div className="eyebrow">STEP 3 OF 4 · REVIEW</div>
+        <h1>Review {isCouples ? "your two Wills." : "your Will."}</h1>
+        <p className="sub">
           Check your package and contact details. You’ll pay only the OWA service fee at checkout.
         </p>
-
-        <div className="flex flex-wrap gap-4 sm:gap-6 mt-3 text-xs text-[#005e53] font-medium">
-          <span className="inline-flex items-center gap-1.5">
-            <Check className="w-4 h-4 text-[#005e53]" />
-            No documents needed at checkout
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <Check className="w-4 h-4 text-[#005e53]" />
-            Save and return to your questionnaire
-          </span>
+        <div className="cro-mobile-price">
+          <strong>AED {serviceFee.toLocaleString("en-US")} payable to OWA</strong>
+          <button
+            id="mobile-checkout-action"
+            className="btn primary small"
+            onClick={handleCheckoutAction}
+          >
+            Continue to payment →
+          </button>
+        </div>
+        <div className="cro-assurance">
+          <span>✓ No documents needed at checkout</span>
+          <span>✓ Save and return to your questionnaire</span>
         </div>
       </div>
 
-      <div className="cro-checkout mt-6">
-        {/* Left Column: Review Inclusions & Contacts */}
-        <div className="space-y-6">
-          {/* Selected Package Header Card */}
-          <section className="card cro-included">
-            <div className="cardbody p-6">
-              <div className="cro-application">
-                <div>
-                  <span className="eyebrow text-[10px] text-[#5730A1] font-bold tracking-wider uppercase block">
-                    {isCouples ? "TWO SEPARATE WILLS" : "ONE INDIVIDUAL WILL"}
-                  </span>
-                  <h2>{isCouples ? "Wills for Couples" : "Individual Will"}</h2>
-                  <p className="small text-xs text-[#625975]">
-                    Prepared for {state.fullName || "you"}{isCouples ? " and your partner" : ""}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  className="link text-xs text-[#5730A1] hover:underline font-semibold bg-transparent border-0 cursor-pointer p-0"
-                  onClick={onEditDetails}
-                >
-                  Edit details
-                </button>
+      <div className="pre-checkout cro-checkout">
+        {/* Package Inclusions Card */}
+        <section className="card cro-included">
+          <div className="cardbody">
+            <div className="cro-application">
+              <div>
+                <span className="eyebrow">
+                  {isCouples ? "TWO SEPARATE WILLS" : "ONE INDIVIDUAL WILL"}
+                </span>
+                <h2>{packageTitle}</h2>
+                <p className="small muted">
+                  Prepared for {state.fullName || "you"}{isCouples ? " and your partner" : ""}
+                </p>
               </div>
+              <button className="link small" onClick={onEditDetails}>
+                Edit details
+              </button>
+            </div>
+            <hr className="divider" />
+            <h3>What is included:</h3>
 
-              <hr className="border-t border-[#E1DDEB] my-5" />
-
-              <h3 className="font-serif text-base font-bold text-[#241B35] mb-2">
-                What is included:
-              </h3>
-
-              {/* Inclusion Explorer Tabs */}
-              <div className="cro-benefit-tabs">
+            {/* Inclusion Explorer Tabs & Stage */}
+            <div className="cro-benefits">
+              <div className="cro-benefit-tabs" role="tablist" aria-label="Package inclusions">
                 <button
                   type="button"
                   className={state.activeInclusionTab === "guided" ? "active" : ""}
+                  aria-pressed={state.activeInclusionTab === "guided"}
                   onClick={() => onUpdateInclusionTab("guided")}
                 >
                   <span className="cro-tab-number">01</span>
@@ -155,6 +128,7 @@ export function Step3ReviewCheckout({
                 <button
                   type="button"
                   className={state.activeInclusionTab === "bilingual" ? "active" : ""}
+                  aria-pressed={state.activeInclusionTab === "bilingual"}
                   onClick={() => onUpdateInclusionTab("bilingual")}
                 >
                   <span className="cro-tab-number">02</span>
@@ -163,6 +137,7 @@ export function Step3ReviewCheckout({
                 <button
                   type="button"
                   className={state.activeInclusionTab === "support" ? "active" : ""}
+                  aria-pressed={state.activeInclusionTab === "support"}
                   onClick={() => onUpdateInclusionTab("support")}
                 >
                   <span className="cro-tab-number">03</span>
@@ -171,6 +146,7 @@ export function Step3ReviewCheckout({
                 <button
                   type="button"
                   className={state.activeInclusionTab === "court" ? "active" : ""}
+                  aria-pressed={state.activeInclusionTab === "court"}
                   onClick={() => onUpdateInclusionTab("court")}
                 >
                   <span className="cro-tab-number">04</span>
@@ -178,238 +154,243 @@ export function Step3ReviewCheckout({
                 </button>
               </div>
 
-              {/* Dynamic Tab Body */}
               <div className="cro-benefit-stage">
                 {state.activeInclusionTab === "guided" && (
-                  <div>
-                    <strong className="block text-[#5730A1] uppercase tracking-wider text-[11px] font-bold mb-1">
-                      Six-Section Questionnaire
-                    </strong>
-                    Structured questionnaire with auto-save. Guides you through personal
-                    details, children guardianship, executors, and primary and substitute beneficiaries.
-                  </div>
+                  <section className="cro-benefit-panel">
+                    <svg viewBox="0 0 250 158" role="img" aria-label="Illustration of step-by-step guided questionnaire">
+                      <rect width="250" height="158" rx="12" fill="#efe9f7" />
+                      <rect x="24" y="24" width="202" height="110" rx="6" fill="white" stroke="#d4c7e4" />
+                      <rect x="42" y="44" width="72" height="9" rx="4.5" fill="#3c2a58" />
+                      <rect x="42" y="66" width="166" height="6" rx="3" fill="#cfc2df" />
+                      <rect x="42" y="79" width="138" height="6" rx="3" fill="#e5ddf0" />
+                      <circle cx="51" cy="108" r="9" fill="#1b8574" />
+                      <path d="m47 108 3 3 6-7" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                      <circle cx="81" cy="108" r="9" fill="#4d2786" />
+                      <circle cx="111" cy="108" r="9" fill="#eae1f5" />
+                      <circle cx="141" cy="108" r="9" fill="#eae1f5" />
+                    </svg>
+                    <div>
+                      <span className="eyebrow">QUESTIONNAIRE</span>
+                      <strong>Step-by-step questions</strong>
+                      <p>A structured questionnaire with auto-save. Answer questions about your family, executors and how your estate should be distributed.</p>
+                    </div>
+                  </section>
                 )}
+
                 {state.activeInclusionTab === "bilingual" && (
-                  <div>
-                    <strong className="block text-[#5730A1] uppercase tracking-wider text-[11px] font-bold mb-1">
-                      Certified Side-by-Side Draft
-                    </strong>
-                    Statutory bilingual draft matching the official ADJD court form (English on left,
-                    Arabic on right). Names are phonetically transliterated for court compliance.
-                  </div>
+                  <section className="cro-benefit-panel">
+                    <svg viewBox="0 0 250 158" role="img" aria-label="Illustration of an English and Arabic draft side by side">
+                      <rect width="250" height="158" rx="12" fill="#efe9f7" />
+                      <rect x="36" y="14" width="178" height="132" rx="5" fill="white" stroke="#d4c7e4" />
+                      <rect x="53" y="27" width="68" height="8" rx="4" fill="#3c2a58" />
+                      <rect x="128" y="27" width="68" height="8" rx="4" fill="#3c2a58" />
+                      <path d="M125 44v86" stroke="#ddd2e9" />
+                      <path d="M53 50h58M53 63h57M53 76h48M53 89h57M53 102h52M53 115h40M139 50h57M139 63h57M147 76h49M139 89h57M143 102h53M156 115h40" stroke="#b6a8ca" strokeWidth="4" strokeLinecap="round" />
+                    </svg>
+                    <div>
+                      <span className="eyebrow">ENGLISH + ARABIC</span>
+                      <strong>Your Will in English and Arabic</strong>
+                      <p>A bilingual draft prepared using the ADJD Will template, with your details and choices. You can review the generated draft after completing the questionnaire.</p>
+                    </div>
+                  </section>
                 )}
+
                 {state.activeInclusionTab === "support" && (
-                  <div>
-                    <strong className="block text-[#5730A1] uppercase tracking-wider text-[11px] font-bold mb-1">
-                      In-App Support & OCR
-                    </strong>
-                    Assistance with document uploads (Emirates ID and passport scans) and built-in
-                    support ticket conversation directly with legal specialists.
-                  </div>
+                  <section className="cro-benefit-panel">
+                    <svg viewBox="0 0 250 158" role="img" aria-label="Illustration of a document and in-app support conversation">
+                      <rect width="250" height="158" rx="12" fill="#efe9f7" />
+                      <rect x="28" y="20" width="112" height="116" rx="7" fill="white" stroke="#d4c7e4" />
+                      <path d="M45 47h69M45 61h69M45 75h50M45 90h63" stroke="#c3b4d6" strokeWidth="5" strokeLinecap="round" />
+                      <rect x="117" y="64" width="100" height="52" rx="10" fill="#38254d" />
+                      <path d="m134 116-13 13 2-14" fill="#38254d" />
+                      <circle cx="146" cy="90" r="4" fill="#efe3fd" />
+                      <circle cx="167" cy="90" r="4" fill="#efe3fd" />
+                      <circle cx="188" cy="90" r="4" fill="#efe3fd" />
+                    </svg>
+                    <div>
+                      <span className="eyebrow">HELP AFTER PAYMENT</span>
+                      <strong>Help with documents and questions</strong>
+                      <p>In-app support tickets and document assistance are included after payment.</p>
+                    </div>
+                  </section>
                 )}
+
                 {state.activeInclusionTab === "court" && (
-                  <div>
-                    <strong className="block text-[#5730A1] uppercase tracking-wider text-[11px] font-bold mb-1">
-                      Application Review & Submission
-                    </strong>
-                    Complete application verification by the OWA team before submission to the ADJD
-                    Non-Muslim Wills Registry. ADJD handles the final registration decision.
-                  </div>
+                  <section className="cro-benefit-panel">
+                    <svg viewBox="0 0 250 158" role="img" aria-label="Document reviewed and submitted to ADJD">
+                      <rect x="42" y="12" width="164" height="134" rx="3" fill="#fff" stroke="#b9c1cd" />
+                      <path d="M64 39h121M64 52h97M64 69h121M64 82h107M64 99h82" stroke="#c8ced6" strokeWidth="4" strokeLinecap="round" />
+                      <circle cx="174" cy="111" r="19" fill="#e7ecea" />
+                      <path d="m165 111 6 6 12-14" fill="none" stroke="#245c4a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <div>
+                      <span className="eyebrow">AFTER REVIEW AND COURT PAYMENT</span>
+                      <strong>ADJD court submission</strong>
+                      <p>OWA prepares and submits your completed application to ADJD after review and direct payment of the court fee. ADJD handles the registration decision.</p>
+                    </div>
+                  </section>
                 )}
               </div>
-
-              <button
-                type="button"
-                className="draft-preview-link mt-2"
-                onClick={onOpenSample}
-              >
-                <span>See a sample bilingual Will</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </section>
-
-          {/* Contact Details Card */}
-          <section id="checkout-contact" className="card cro-contact">
-            <div className="p-6 border-b border-[#E1DDEB]">
-              <span className="eyebrow text-[10px] text-[#5730A1] font-bold tracking-wider uppercase block">
-                YOUR CONTACT DETAILS
-              </span>
-              <h3 className="text-base font-bold text-[#241B35] mt-1">
-                Where should we send your receipt?
-              </h3>
-            </div>
-            <div className="p-6">
-              <p className="text-xs text-[#625975] mb-4">
-                Enter your email and phone number for your receipt and application. You can verify your email when you return to the paid questionnaire.
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="field">
-                  <label htmlFor="checkout-email" className="font-semibold text-xs text-[#241B35] block mb-1">
-                    Email address *
-                  </label>
-                  <input
-                    id="checkout-email"
-                    type="email"
-                    autoComplete="email"
-                    placeholder="you@example.com"
-                    value={state.email}
-                    onChange={(e) => {
-                      onUpdateEmail(e.target.value);
-                      if (state.isEmailVerified) onVerifyEmail(false);
-                    }}
-                    className="w-full p-2.5 border border-[#DCD5E8] rounded-lg text-sm"
-                  />
-                </div>
-                <div className="field">
-                  <label htmlFor="checkout-phone" className="font-semibold text-xs text-[#241B35] block mb-1">
-                    Phone number *
-                  </label>
-                  <input
-                    id="checkout-phone"
-                    type="tel"
-                    autoComplete="tel"
-                    placeholder="+971 50 000 0001"
-                    value={state.phoneNumber}
-                    onChange={(e) => onUpdatePhone(e.target.value)}
-                    className="w-full p-2.5 border border-[#DCD5E8] rounded-lg text-sm"
-                  />
-                  <span className="hint text-[11px] text-[#625975] mt-1 block">
-                    Include your country code.
-                  </span>
-                </div>
-              </div>
-
-              {/* Email OTP Verification Box */}
-              {state.email.trim().includes("@") && (
-                <div className="mt-4">
-                  {state.isEmailVerified ? (
-                    <div className="flex items-center gap-2 p-3 bg-[#EDF5F0] border border-[#BCD4C7] rounded-md text-xs text-[#005E53] font-medium">
-                      <CheckCircle2 className="w-4 h-4 text-[#005E53] flex-shrink-0" />
-                      <span>Email verified for this application (Test session active).</span>
-                    </div>
-                  ) : (
-                    <div className="p-4 bg-[#F8F5FA] border border-[#E1DDEB] rounded-lg text-xs">
-                      <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                        <span className="font-bold text-[#241B35] flex items-center gap-1.5">
-                          <KeyRound className="w-3.5 h-3.5 text-[#5730A1]" />
-                          Email verification
-                        </span>
-                        <span className="px-2 py-0.5 bg-[#EEE7FB] border border-[#8B6DB4] text-[#5730A1] font-mono text-[11px] font-bold rounded">
-                          PROTOTYPE OTP: 123456
-                        </span>
-                      </div>
-                      <p className="text-[#625975] mb-3 leading-relaxed">
-                        Testing mode: enter <strong>123456</strong> to verify your email address.
-                      </p>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <input
-                          type="text"
-                          maxLength={6}
-                          placeholder="123456"
-                          value={otpInput}
-                          onChange={(e) => {
-                            setOtpInput(e.target.value);
-                            setOtpError(null);
-                          }}
-                          className="w-32 tracking-widest text-center font-mono font-bold text-sm bg-white border border-[#DCD5E8] rounded px-3 py-1.5 text-[#241B35]"
-                        />
-                        <button
-                          type="button"
-                          className="btn primary text-xs py-1.5 px-3 min-h-[36px]"
-                          onClick={handleVerifyOtp}
-                        >
-                          Verify code
-                        </button>
-                        <button
-                          type="button"
-                          className="btn text-xs py-1.5 px-3 min-h-[36px]"
-                          onClick={handleAutoFillAndVerify}
-                        >
-                          Auto-fill 123456
-                        </button>
-                      </div>
-                      {otpError && (
-                        <div className="text-xs text-[#9F3431] mt-2 font-medium">
-                          {otpError}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {errorMsg && (
-                <div className="flex items-center gap-2 p-3 bg-[#FFF2F1] border border-[#EDC8C5] rounded text-xs text-[#9F3431] mt-3">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                  <span>{errorMsg}</span>
-                </div>
-              )}
-            </div>
-          </section>
-        </div>
-
-        {/* Right Column: Sticky Order Summary Card */}
-        <aside className="cro-order-wrap">
-          <div className="cro-order">
-            <div className="flex items-center justify-between pb-3 border-b border-[#E1DDEB]">
-              <span className="eyebrow text-[11px] text-[#5730A1] font-bold uppercase tracking-wider">
-                YOUR ORDER
-              </span>
-              <button
-                type="button"
-                className="text-xs text-[#5730A1] hover:underline font-semibold bg-transparent border-0 cursor-pointer"
-                onClick={onEditPackage}
-              >
-                Change
-              </button>
             </div>
 
-            <div className="mt-4">
-              <span className="text-xs text-[#625975] block">
-                {isCouples ? "Wills for Couples" : "Individual Will"}
-              </span>
-              <div className="premium-price flex items-baseline gap-2 my-2">
-                <span className="premium-price__currency text-base font-semibold text-[#625076] leading-none">
-                  AED
-                </span>
-                <strong className="text-5xl font-serif font-normal text-[#432571] leading-none [font-variant-numeric:lining-nums_tabular-nums]">
-                  {feeAed.toLocaleString()}
-                </strong>
-              </div>
-              <p className="text-xs text-[#625975]">
-                OWA service fee · covers {isCouples ? "two Wills" : "one Will"} in English and Arabic
-              </p>
-            </div>
+            <button
+              type="button"
+              className="link draft-preview-link"
+              onClick={onOpenSample}
+            >
+              See a sample bilingual Will <ArrowRight className="icon inline w-4 h-4 ml-1" aria-hidden="true" />
+            </button>
+          </div>
+        </section>
 
-            <div className="mt-6 pt-4 border-t border-[#E1DDEB]">
-              <button
-                type="button"
-                className="btn primary w-full text-sm font-semibold flex items-center justify-center gap-2"
-                onClick={handleProceedClick}
-              >
-                <span>Continue to payment</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-
-              <p className="text-[11.5px] leading-relaxed text-[#625975] mt-4">
-                ADJD court fee: <strong>AED {courtFeeAed.toLocaleString()} {isCouples ? "for two Wills" : "per Will"}</strong>, paid directly to ADJD later (not charged by OWA).
-              </p>
+        {/* Contact Details Card */}
+        <section id="checkout-contact" className="card cro-contact">
+          <div className="cardhead">
+            <div>
+              <span className="eyebrow">YOUR CONTACT DETAILS</span>
+              <h3>Where should we send your receipt?</h3>
             </div>
           </div>
+          <div className="cardbody">
+            <p className="small muted cro-contact-intro">
+              Enter your email and phone number for your receipt and application. You can verify your email when you return to the paid questionnaire.
+            </p>
+            <div className="grid2">
+              <label className="field">
+                Email address *
+                <input
+                  id="checkout-email"
+                  type="email"
+                  autoComplete="email"
+                  aria-required="true"
+                  placeholder="you@example.com"
+                  value={state.email}
+                  onChange={(e) => {
+                    onUpdateEmail(e.target.value);
+                    if (errors.length > 0) setErrors([]);
+                  }}
+                />
+              </label>
+              <label className="field">
+                Phone number *
+                <input
+                  type="tel"
+                  autoComplete="tel"
+                  aria-required="true"
+                  placeholder="+971 50 000 0001"
+                  value={state.phoneNumber}
+                  onChange={(e) => {
+                    onUpdatePhone(e.target.value);
+                    if (errors.length > 0) setErrors([]);
+                  }}
+                />
+                <span className="hint">Include your country code. OWA may contact you about your application.</span>
+              </label>
+            </div>
+          </div>
+        </section>
+
+        {/* Order Wrap Aside */}
+        <aside className="cro-order-wrap">
+          <div className="card cro-order">
+            <div className="cardbody">
+              <div className="spread">
+                <span className="eyebrow">PAYABLE TO OWA TODAY</span>
+                <button className="link small" onClick={onEditPackage}>
+                  Change package
+                </button>
+              </div>
+              <div className="pre-price premium-price">
+                <span className="premium-price__currency">AED</span>
+                <strong>{serviceFee.toLocaleString("en-US")}</strong>
+              </div>
+              <p className="cro-package-label">
+                {packageTitle} · {isCouples ? "two Wills" : "one Will"}
+              </p>
+              <div id="checkout-action-slot">
+                <button
+                  id="checkout-action"
+                  className="btn primary pre-pay-button"
+                  onClick={handleCheckoutAction}
+                >
+                  <span>Continue to payment</span>
+                  <ArrowRight className="icon inline w-4 h-4 ml-1" aria-hidden="true" />
+                </button>
+                <p id="checkout-action-hint" className="cro-cta-hint">
+                  Continue to the payment screen; no card details are collected here.
+                </p>
+              </div>
+              <div className="cro-payment-steps">
+                <span>1 Review details</span>
+                <span>2 Payment</span>
+                <span>3 Questionnaire</span>
+              </div>
+              <p className="cro-demo-note">Payment is completed on Nomod. Only the OWA service fee is collected.</p>
+              <details className="cro-prototype-terms">
+                <summary>About this test</summary>
+                <p>
+                  This preview links to live Nomod checkout. Application access is not activated automatically. Service and refund terms must be finalized for production.
+                </p>
+              </details>
+            </div>
+          </div>
+          <p className="cro-court-line">
+            ADJD court fee: AED {courtFee.toLocaleString("en-US")}{isCouples ? " for two Wills" : " per Will"}, paid directly to ADJD later (not charged by OWA).
+          </p>
         </aside>
+
+        {/* Questions FAQ */}
+        <section className="cro-questions">
+          <h3>Before you continue</h3>
+          <div className="pre-faq">
+            <details>
+              <summary>Do I need my documents now?</summary>
+              <p>
+                No uploads are needed at checkout. You’ll add identity documents and addresses in the questionnaire. Required details and documents must be complete before your draft can be generated.
+              </p>
+            </details>
+            <details>
+              <summary>Can I finish the questionnaire later?</summary>
+              <p>
+                Yes. Save your progress and return through email sign-in. This testing file stores intake only on this browser.
+              </p>
+            </details>
+            <details>
+              <summary>What happens after I pay?</summary>
+              <p>
+                Your questionnaire and in-app support become available. Complete the required details and documents to generate your draft{isCouples ? "; both Wills must be complete" : ""}. OWA then reviews the application before submission.
+              </p>
+            </details>
+          </div>
+          <button className="link small pre-gap" onClick={onOpenHelp}>
+            Still have a question? Get help →
+          </button>
+        </section>
       </div>
 
-      {/* Back button */}
-      <div className="mt-8">
-        <button
-          type="button"
-          className="btn"
-          onClick={onEditDetails}
+      {/* Error alert box */}
+      {errors.length > 0 && (
+        <div
+          id="pre-errors"
+          className="errorbox show pre-gap"
+          role="alert"
+          tabIndex={-1}
         >
-          <ArrowLeft className="w-4 h-4 mr-1 inline" />
-          <span>Back to details</span>
+          <strong>Please check:</strong>
+          <ul>
+            {errors.map((err, i) => (
+              <li key={i}>{err}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Bottom Actions */}
+      <div className="actions">
+        <button className="link small" onClick={onEditDetails}>
+          ← Back to your details
         </button>
+        <span className="savehint">Saved on this browser</span>
       </div>
     </div>
   );

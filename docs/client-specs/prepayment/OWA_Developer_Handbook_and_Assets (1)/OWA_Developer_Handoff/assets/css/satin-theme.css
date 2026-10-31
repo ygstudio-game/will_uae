@@ -1,0 +1,55 @@
+/* Reference palette: violet satin, deep teal and sea-glass green. */
+.pre-main{--purple:#5730a1;--ink:#241b35;--line:#e1ddeb}
+.cro-header{background:#21152f;border-color:#443158}
+.pre-main .pre-intro{border-radius:20px;background:radial-gradient(ellipse at 95% 5%,#ddcffc 0,transparent 60%),#f0ebf8;border-color:#e6dff0;min-height:150px}
+.pre-main .pre-intro h1{color:#2c184b!important}
+.pre-intro-art{opacity:.8}
+.pre-main .card,.pre-main .cro-questions{border-radius:16px;border-color:#e3deeb;box-shadow:0 6px 28px #29144408}
+.pre-main button.pre-package{border:2px solid transparent;border-radius:21px;overflow:hidden;background:radial-gradient(ellipse at 10% -15%,#b29add 0,transparent 53%),linear-gradient(153deg,transparent 22%,#ffffff24 26%,transparent 34%,#13023966 43%,transparent 59%),linear-gradient(117deg,#4f2489,#3e0d86 53%,#7351b2);color:#fff;box-shadow:0 12px 28px #3b1a6f18}
+.pre-main button.pre-package.couples{background:radial-gradient(ellipse at 0% 2%,#83c5d2 0,transparent 51%),linear-gradient(153deg,transparent 20%,#d3ffff36 25%,transparent 33%,#00333d66 43%,transparent 61%),linear-gradient(120deg,#147e95,#00607a 52%,#2e9d9f)}
+.pre-main button.pre-package:hover{border-color:#bea6e7;box-shadow:0 13px 32px #3b1a6f28}
+.pre-main button.pre-package.selected{border-color:#c6f0d2;box-shadow:0 0 0 2px #523282,0 14px 30px #30185322;background:radial-gradient(ellipse at 10% -15%,#b29add 0,transparent 53%),linear-gradient(153deg,transparent 22%,#ffffff24 26%,transparent 34%,#13023966 43%,transparent 59%),linear-gradient(117deg,#4f2489,#3e0d86 53%,#7351b2)}
+.pre-main button.pre-package.couples.selected{background:radial-gradient(ellipse at 0% 2%,#83c5d2 0,transparent 51%),linear-gradient(153deg,transparent 20%,#d3ffff36 25%,transparent 33%,#00333d66 43%,transparent 61%),linear-gradient(120deg,#147e95,#00607a 52%,#2e9d9f)}
+.pre-package .cardbody{display:grid;grid-template-columns:minmax(0,1fr) 132px;grid-template-rows:1fr auto;gap:12px 18px;min-height:240px;padding:24px!important}
+.pre-package-photo{display:block;grid-column:2;grid-row:1 / span 2;border-radius:13px;overflow:hidden;align-self:stretch;border:1px solid #ffffff55;background:#ffffff15;min-height:185px}
+.pre-package-photo img{display:block;width:100%;height:100%;max-height:220px;object-fit:cover;object-position:50% 32%}
+.pre-package.couples .pre-package-photo img{object-position:50% 45%}
+.pre-package .pre-package-count{color:#e6d9fa!important;letter-spacing:.1em;line-height:1.5}
+.pre-package.couples .pre-package-count{color:#d7f6f9!important}
+.pre-package .pre-package-name{color:#fff;font:500 26px/1.16 Arial,sans-serif;margin-top:9px;letter-spacing:-.035em}
+.pre-package .premium-package-detail{color:#f0e7fa;font-size:13px;line-height:1.6}
+.pre-package.couples .premium-package-detail{color:#e0f7f8}
+.pre-package .choice-indicator{border-color:#ffffff90;background:#ffffff15;width:22px;height:22px}
+.pre-package.selected .choice-indicator{background:#d1f5dc;border-color:#d1f5dc;color:#225f46}
+.pre-package .pre-package-action{grid-column:1;color:white;background:#ffffff17;border:1px solid #ffffff60;border-radius:20px;width:max-content;max-width:100%;padding:8px 13px;font-size:11px;line-height:1.4;align-self:end}
+.pre-package.selected .pre-package-action{background:#d1f5dc;color:#225840;border-color:#d1f5dc}
+.pre-scope-heading{background:#f1ecf8;border-radius:14px 14px 0 0}
+.pre-main .pre-radio{border-radius:11px;background:#fff}
+.pre-main .pre-radio.selected{background:#ede5fb;border-color:#7657aa}
+.pre-main .pre-about-note{background:radial-gradient(ellipse at 0% 0%,#8fc9b2 0,transparent 57%),linear-gradient(145deg,transparent 22%,#b3f7db3b 29%,#003e3266 45%,transparent 67%),linear-gradient(125deg,#2d8978,#005e53 60%,#319f88)!important;border-radius:17px!important}
+.pre-main .pre-about-note p{color:#e4fff4!important}
+.cro-application{border-radius:13px;background:#f0eafa}
+.cro-benefit-tabs button{border-radius:11px}
+.cro-benefit-tabs button.active{background:#eee7fb;border-color:#8b6db4}
+.cro-benefit-stage{border-radius:14px;background:#f7f5fb}
+.cro-order{border-top:1px solid #ddd2ed!important;box-shadow:0 10px 32px #3b20521c!important}
+.cro-order .premium-price strong{color:#432571}
+.saas-checkout{border-radius:20px;border-color:#ded6e9;box-shadow:0 16px 45px #2a174215}
+.saas-order{background:radial-gradient(ellipse at 0% 0%,#9276bd 0,transparent 44%),linear-gradient(150deg,transparent 19%,#c9b2f025 24%,transparent 32%,#16082d88 40%,transparent 55%),linear-gradient(125deg,#452277,#38116f 62%,#674295)}
+.saas-order-top button,.saas-label{color:#ede0ff}
+.saas-order-name{color:#e0d1ee}
+.saas-price-block>span,.saas-price-block p,.saas-price>span,.saas-court{color:#e5d7f2}
+.saas-inclusions li{color:#f2e9fc}
+.saas-price-block,.saas-court{border-color:#ffffff35}
+.saas-product-icon{border-radius:14px;border-color:#ffffff50;background:#ffffff16}
+.saas-customer,.saas-method{border-radius:12px}
+.saas-pay-cta,.pre-main .btn.primary{border-radius:10px}
+.saas-next{background:#eff8f3;border:1px solid #d7eadd;border-radius:10px;padding:12px;color:#36765c}
+.saas-next strong{color:#21583f}.saas-next p>span{color:#426951}
+@media(max-width:1000px){.pre-package .cardbody{grid-template-columns:minmax(0,1fr) 104px;gap:12px;min-height:245px;padding:20px!important}.pre-package .pre-package-name{font-size:23px}}
+@media(max-width:720px){
+ .pre-package .cardbody{grid-template-columns:minmax(0,1fr) 116px;min-height:220px;padding:20px!important}
+ .pre-package-photo{min-height:170px}.pre-package .pre-package-name{font-size:25px}
+ .pre-main .pre-intro{border-radius:17px}
+}
+@media(max-width:390px){.pre-package .cardbody{grid-template-columns:minmax(0,1fr) 89px;gap:10px;padding:16px!important}.pre-package .pre-package-name{font-size:22px}.pre-package .premium-package-detail{font-size:12px}.pre-package .pre-package-action{font-size:10px;padding:7px 10px}}

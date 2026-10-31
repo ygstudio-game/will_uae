@@ -1,0 +1,12 @@
+/* Reference tokens. Complete prototype CSS remains authoritative. */
+:root {
+ --owa-header:#21152f; --owa-ink:#241b35; --owa-border:#e1ddeb;
+ --owa-violet:#5730a1; --owa-violet-deep:#3e0d86;
+ --owa-teal:#00607a; --owa-green:#005e53;
+ --owa-selected:#d1f5dc; --owa-surface:#ffffff; --owa-lavender:#f0ebf8;
+ --owa-radius-card:16px; --owa-radius-package:21px; --owa-radius-control:10px;
+ --owa-space-1:4px; --owa-space-2:8px; --owa-space-3:12px;
+ --owa-space-4:16px; --owa-space-5:24px; --owa-space-6:32px;
+ --owa-font-body:Inter,Arial,sans-serif;
+ --owa-font-heading:'Playfair Display',Georgia,serif;
+}
