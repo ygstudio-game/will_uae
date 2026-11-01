@@ -27,6 +27,7 @@ export interface PrePaymentJourneyState {
   activeInclusionTab: PrePaymentInclusionTab;
   activeModal: PrePaymentModalType;
   isEmailVerified: boolean;
+  applicationId?: string;
   errors: string[];
 }
 

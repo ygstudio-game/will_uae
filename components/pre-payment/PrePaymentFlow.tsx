@@ -246,6 +246,13 @@ export function PrePaymentFlow({ onSuccess }: PrePaymentFlowProps) {
         throw new Error(data.error || "Payment verification failed. Please try again.");
       }
 
+      if (data.applicationId) {
+        saveDraft({
+          ...state,
+          applicationId: data.applicationId,
+        });
+      }
+
       return data;
     } catch (err: any) {
       setPayError(err.message || "An unexpected error occurred during checkout.");

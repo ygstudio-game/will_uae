@@ -38,24 +38,32 @@ export function Step4Payment({
   const packageTitle = isCouples ? "Wills for Couples" : "Individual Will";
   const nomodUrl = isCouples ? NOMOD_LINKS.COUPLES : NOMOD_LINKS.INDIVIDUAL;
 
+  const [activeAppId, setActiveAppId] = useState<string | null>(state.applicationId || null);
   const [hasOpenedNomod, setHasOpenedNomod] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
   const [pollStatusText, setPollStatusText] = useState<string | null>(null);
   const [simulating, setSimulating] = useState(false);
   const pollTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Poll for payment completion when Nomod checkout is opened
+  // Keep activeAppId in sync if state.applicationId updates
   useEffect(() => {
-    if (!hasOpenedNomod || !state.email) return;
+    if (state.applicationId && state.applicationId !== activeAppId) {
+      setActiveAppId(state.applicationId);
+    }
+  }, [state.applicationId, activeAppId]);
+
+  // Poll for payment completion ONLY when Nomod checkout is opened AND we have activeAppId
+  useEffect(() => {
+    if (!hasOpenedNomod || !activeAppId) return;
 
     let attempts = 0;
-    const maxAttempts = 40; // 2 minutes (every 3 seconds)
+    const maxAttempts = 60; // 3 minutes (every 3 seconds)
 
     const checkStatus = async () => {
       try {
         attempts++;
         const res = await fetch(
-          `/api/checkout/status?email=${encodeURIComponent(state.email.trim().toLowerCase())}`
+          `/api/checkout/status?applicationId=${encodeURIComponent(activeAppId)}`
         );
         const data = await res.json();
         if (data.success && data.paid) {
@@ -70,6 +78,7 @@ export function Step4Payment({
 
         if (attempts >= maxAttempts) {
           setIsPolling(false);
+          setPollStatusText("Waiting for payment. If you already completed checkout, click 'Check status'.");
           if (pollTimerRef.current) clearInterval(pollTimerRef.current);
         }
       } catch (err) {
@@ -83,23 +92,35 @@ export function Step4Payment({
     return () => {
       if (pollTimerRef.current) clearInterval(pollTimerRef.current);
     };
-  }, [hasOpenedNomod, state.email, onPaymentConfirmed]);
+  }, [hasOpenedNomod, activeAppId, onPaymentConfirmed]);
 
   const handleNomodHandoff = async () => {
     setHasOpenedNomod(true);
-    // Initialize or save application intent in background
+    setPollStatusText("Nomod checkout opened. Waiting for payment...");
+    // Initialize or save application intent in background and capture applicationId
     if (onPay) {
-      await onPay();
+      try {
+        const initRes = await onPay();
+        if (initRes?.applicationId) {
+          setActiveAppId(initRes.applicationId);
+        }
+      } catch (e) {
+        console.warn("Could not pre-init application intent:", e);
+      }
     }
   };
 
   const handleManualCheckStatus = async () => {
-    if (!state.email) return;
+    if (!activeAppId) {
+      setPollStatusText("Please click the 'Pay AED ...' button above to open Nomod checkout first.");
+      setTimeout(() => setPollStatusText(null), 4000);
+      return;
+    }
     setIsPolling(true);
     setPollStatusText("Checking status with Nomod...");
     try {
       const res = await fetch(
-        `/api/checkout/status?email=${encodeURIComponent(state.email.trim().toLowerCase())}`
+        `/api/checkout/status?applicationId=${encodeURIComponent(activeAppId)}`
       );
       const data = await res.json();
       if (data.success && data.paid) {
@@ -108,7 +129,7 @@ export function Step4Payment({
           onPaymentConfirmed(data);
         }
       } else {
-        setPollStatusText("No completed payment found yet. Please complete checkout on Nomod.");
+        setPollStatusText("No completed payment received for this session yet. Complete checkout on Nomod.");
         setTimeout(() => setPollStatusText(null), 4000);
       }
     } catch {
@@ -123,10 +144,20 @@ export function Step4Payment({
     setSimulating(true);
     try {
       // 1. Ensure initial checkout application exists
-      const initRes = await onPay();
-      const appId = initRes?.applicationId;
+      let appId = activeAppId;
+      if (!appId) {
+        const initRes = await onPay();
+        appId = initRes?.applicationId;
+        if (appId) {
+          setActiveAppId(appId);
+        }
+      }
 
-      // 2. Trigger webhook
+      if (!appId) {
+        throw new Error("Could not initialize application for simulation.");
+      }
+
+      // 2. Trigger webhook for this specific application
       const webhookRes = await fetch("/api/webhooks/nomod", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

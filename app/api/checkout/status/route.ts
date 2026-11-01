@@ -45,7 +45,11 @@ export async function GET(req: NextRequest) {
       });
 
       if (account && account.applications.length > 0) {
-        application = account.applications[0];
+        const latest = account.applications[0];
+        const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+        if (latest.createdAt >= thirtyMinutesAgo) {
+          application = latest;
+        }
       }
     }
 

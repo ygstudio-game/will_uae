@@ -51,21 +51,36 @@ export function Navbar() {
 
         {/* Desktop Navigation Links (hidden on /start) */}
         {!isStartPage && (
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-white/80">
-            <Link href="/dashboard" className="hover:text-court-tan transition-colors flex items-center gap-1.5">
+          <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+            <Link
+              href="/dashboard"
+              className="text-white/90 hover:text-white hover:text-court-tan transition-colors flex items-center gap-1.5"
+            >
               <FileText className="w-4 h-4 text-court-bronze" />
               <span>Overview</span>
             </Link>
-            <Link href="/wizard/details" className="hover:text-court-tan transition-colors">
+            <Link
+              href="/wizard/details"
+              className="text-white/90 hover:text-white hover:text-court-tan transition-colors"
+            >
               My questionnaire
             </Link>
-            <Link href="/dashboard/people" className="hover:text-court-tan transition-colors">
+            <Link
+              href="/dashboard/people"
+              className="text-white/90 hover:text-white hover:text-court-tan transition-colors"
+            >
               My people
             </Link>
-            <Link href="/dashboard/support" className="hover:text-court-tan transition-colors">
+            <Link
+              href="/dashboard/support"
+              className="text-white/90 hover:text-white hover:text-court-tan transition-colors"
+            >
               Support
             </Link>
-            <Link href="/admin" className="hover:text-court-tan transition-colors text-[#A37E44] font-semibold">
+            <Link
+              href="/admin"
+              className="text-[#D4B896] hover:text-white transition-colors font-semibold"
+            >
               Admin Portal
             </Link>
           </nav>
