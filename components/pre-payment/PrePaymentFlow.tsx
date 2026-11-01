@@ -332,11 +332,22 @@ export function PrePaymentFlow({ onSuccess }: PrePaymentFlowProps) {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-[#E5E0D8] py-6 px-8 text-center text-xs text-[#64748B] bg-white">
-        <div className="max-w-[1160px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-          <span>Online Wills Advisor · Non-Muslim Will Preparation Platform</span>
-          <span>Official ADJD Civil Family Court statutory template ADJD-NM1221-06-01</span>
+      {/* Footer matching prototype */}
+      <footer className="pre-footer">
+        <div className="style-footer-top">
+          <div>
+            <h2 className="style-footer-title">Online Wills Advisor</h2>
+            <p>A guided way to prepare your Will, with bilingual drafting and support for your application.</p>
+          </div>
+          <div className="style-footer-links">
+            <button type="button" onClick={() => handleOpenModal("sample")}>Sample Will</button>
+            <button type="button" onClick={() => handleOpenModal("help")}>Get help</button>
+            <button type="button" onClick={() => handleOpenModal("privacy")}>Privacy Policy</button>
+            <button type="button" onClick={() => handleOpenModal("terms")}>Service Terms</button>
+          </div>
+        </div>
+        <div className="style-footer-note">
+          Pre-payment review · Use fictional details. Payments and verification are simulated. This prototype does not generate a court-ready Will.
         </div>
       </footer>
 

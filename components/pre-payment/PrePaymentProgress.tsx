@@ -29,33 +29,21 @@ export function PrePaymentProgress({
         return (
           <li
             key={s.id}
-            className={`${isActive ? "active font-bold text-[#0B1528]" : "text-[#64748B]"} ${
-              isDone ? "done font-semibold text-[#0B1528]" : ""
-            }`}
+            className={`${isActive ? "active" : ""} ${isDone ? "done" : ""}`}
             aria-current={isActive ? "step" : undefined}
           >
+            <span>{isDone ? "✓" : s.id}</span>
             {canClick ? (
               <button
                 type="button"
                 onClick={() => onStepClick(s.id)}
-                className="flex items-center gap-2.5 hover:opacity-80 transition-opacity text-left bg-transparent border-0 p-0 cursor-pointer text-inherit font-inherit"
+                className="link"
+                style={{ padding: 0, border: 0, background: "none", color: "inherit", font: "inherit", cursor: "pointer", textAlign: "left" }}
               >
-                <span className="step-num">
-                  <Check className="w-3.5 h-3.5 stroke-[2.5]" aria-hidden="true" />
-                </span>
-                <span className="step-label">{s.label}</span>
+                {s.label}
               </button>
             ) : (
-              <div className="flex items-center gap-2.5">
-                <span className="step-num">
-                  {isDone ? (
-                    <Check className="w-3.5 h-3.5 stroke-[2.5]" aria-hidden="true" />
-                  ) : (
-                    s.id
-                  )}
-                </span>
-                <span className="step-label">{s.label}</span>
-              </div>
+              s.label
             )}
           </li>
         );

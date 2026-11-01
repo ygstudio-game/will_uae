@@ -114,8 +114,8 @@ export function Step3ReviewCheckout({
             <h3>What is included:</h3>
 
             {/* Inclusion Explorer Tabs & Stage */}
-            <div className="cro-benefits">
-              <div className="cro-benefit-tabs" role="tablist" aria-label="Package inclusions">
+            <div className="cro-benefit-explorer">
+              <div className="cro-benefit-tabs" role="tablist" aria-label="Explore what is included">
                 <button
                   type="button"
                   className={state.activeInclusionTab === "guided" ? "active" : ""}
@@ -150,29 +150,30 @@ export function Step3ReviewCheckout({
                   onClick={() => onUpdateInclusionTab("court")}
                 >
                   <span className="cro-tab-number">04</span>
-                  <span>Court filing</span>
+                  <span>ADJD submission</span>
                 </button>
               </div>
 
               <div className="cro-benefit-stage">
                 {state.activeInclusionTab === "guided" && (
                   <section className="cro-benefit-panel">
-                    <svg viewBox="0 0 250 158" role="img" aria-label="Illustration of step-by-step guided questionnaire">
+                    <svg viewBox="0 0 250 158" role="img" aria-label="Illustration of the guided questionnaire with saved sections">
                       <rect width="250" height="158" rx="12" fill="#efe9f7" />
-                      <rect x="24" y="24" width="202" height="110" rx="6" fill="white" stroke="#d4c7e4" />
-                      <rect x="42" y="44" width="72" height="9" rx="4.5" fill="#3c2a58" />
-                      <rect x="42" y="66" width="166" height="6" rx="3" fill="#cfc2df" />
-                      <rect x="42" y="79" width="138" height="6" rx="3" fill="#e5ddf0" />
-                      <circle cx="51" cy="108" r="9" fill="#1b8574" />
-                      <path d="m47 108 3 3 6-7" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" />
-                      <circle cx="81" cy="108" r="9" fill="#4d2786" />
-                      <circle cx="111" cy="108" r="9" fill="#eae1f5" />
-                      <circle cx="141" cy="108" r="9" fill="#eae1f5" />
+                      <rect x="22" y="17" width="206" height="124" rx="9" fill="white" stroke="#ded3ec" />
+                      <rect x="22" y="17" width="206" height="29" rx="9" fill="#302342" />
+                      <circle cx="40" cy="31" r="4" fill="#d7c4eb" />
+                      <rect x="52" y="28" width="91" height="6" rx="3" fill="#d7c4eb" />
+                      <rect x="39" y="60" width="84" height="6" rx="3" fill="#4c3a62" />
+                      <rect x="39" y="74" width="170" height="8" rx="4" fill="#eee9f3" />
+                      <rect x="39" y="90" width="170" height="8" rx="4" fill="#eee9f3" />
+                      <rect x="39" y="108" width="112" height="8" rx="4" fill="#eee9f3" />
+                      <circle cx="194" cy="112" r="13" fill="#e6f4e9" />
+                      <path d="m188 112 4 4 8-9" fill="none" stroke="#357956" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                     <div>
-                      <span className="eyebrow">QUESTIONNAIRE</span>
-                      <strong>Step-by-step questions</strong>
-                      <p>A structured questionnaire with auto-save. Answer questions about your family, executors and how your estate should be distributed.</p>
+                      <span className="eyebrow">SIX SECTIONS · SAVE AS YOU GO</span>
+                      <strong>Make your wishes clear, step by step</strong>
+                      <p>A six-section questionnaire guides your beneficiaries, executors and guardians where needed. Progress saves automatically.</p>
                     </div>
                   </section>
                 )}

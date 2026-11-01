@@ -49,129 +49,135 @@ export function Navbar() {
           </div>
         </Link>
 
-        {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-white/80">
-          <Link href="/dashboard" className="hover:text-court-tan transition-colors flex items-center gap-1.5">
-            <FileText className="w-4 h-4 text-court-bronze" />
-            <span>Overview</span>
-          </Link>
-          <Link href="/wizard/details" className="hover:text-court-tan transition-colors">
-            My questionnaire
-          </Link>
-          <Link href="/dashboard/people" className="hover:text-court-tan transition-colors">
-            My people
-          </Link>
-          <Link href="/dashboard/support" className="hover:text-court-tan transition-colors">
-            Support
-          </Link>
-          <Link href="/admin" className="hover:text-court-tan transition-colors text-[#A37E44] font-semibold">
-            Admin Portal
-          </Link>
-        </nav>
+        {/* Desktop Navigation Links (hidden on /start) */}
+        {!isStartPage && (
+          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-white/80">
+            <Link href="/dashboard" className="hover:text-court-tan transition-colors flex items-center gap-1.5">
+              <FileText className="w-4 h-4 text-court-bronze" />
+              <span>Overview</span>
+            </Link>
+            <Link href="/wizard/details" className="hover:text-court-tan transition-colors">
+              My questionnaire
+            </Link>
+            <Link href="/dashboard/people" className="hover:text-court-tan transition-colors">
+              My people
+            </Link>
+            <Link href="/dashboard/support" className="hover:text-court-tan transition-colors">
+              Support
+            </Link>
+            <Link href="/admin" className="hover:text-court-tan transition-colors text-[#A37E44] font-semibold">
+              Admin Portal
+            </Link>
+          </nav>
+        )}
 
         {/* Right CTA / Auth state */}
-        <div className="hidden sm:flex items-center gap-3">
-          {isStartPage ? (
-            /* Blended Start Page Header Actions */
-            <div className="flex items-center gap-4">
-              <div className="hidden lg:flex items-center gap-1.5 text-xs text-[#A599B5]">
-                <span>A question before you continue?</span>
+        {isStartPage ? (
+          /* Clean Start Page Header Actions matching prototype */
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="hidden sm:flex items-center gap-1.5 text-xs text-[#c4ccda]">
+              <span>A question before you continue?</span>
+              <button
+                type="button"
+                onClick={() => triggerModal("help")}
+                className="text-white hover:underline font-semibold flex items-center gap-1 transition-colors cursor-pointer bg-transparent border-0"
+              >
+                <span>Get help</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => triggerModal("resume")}
+              className="bg-transparent hover:bg-white/10 text-white border border-white/30 text-xs font-semibold px-3 py-1.5 rounded transition-all duration-200 cursor-pointer"
+            >
+              Resume application
+            </button>
+            {user && (
+              <div className="flex items-center gap-2 pl-3 border-l border-white/20">
+                <Link
+                  href="/dashboard"
+                  className="w-7 h-7 rounded-full bg-court-bronze text-white text-[11px] flex items-center justify-center font-bold"
+                  title={`Dashboard (${user.name || user.email})`}
+                >
+                  {user.name ? user.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
+                </Link>
                 <button
                   type="button"
-                  onClick={() => triggerModal("help")}
-                  className="text-[#e0d1ee] hover:text-white font-semibold flex items-center gap-1 transition-colors cursor-pointer bg-transparent border-0"
+                  onClick={handleSignOut}
+                  className="p-1.5 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
+                  title="Sign Out"
                 >
-                  <span>Get help</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <LogOut className="w-4 h-4" />
                 </button>
               </div>
-              <button
-                type="button"
-                onClick={() => triggerModal("resume")}
-                className="bg-white hover:bg-[#F3EEFA] text-[#21152F] text-xs font-semibold px-4 py-2 rounded-lg shadow-sm transition-all duration-200 cursor-pointer border-0"
-              >
-                Resume application
-              </button>
-              {user && (
-                <div className="flex items-center gap-2 pl-3 border-l border-white/20">
-                  <Link
-                    href="/dashboard"
-                    className="w-7 h-7 rounded-full bg-court-bronze text-white text-[11px] flex items-center justify-center font-bold"
-                    title={`Dashboard (${user.name || user.email})`}
-                  >
+            )}
+          </div>
+        ) : (
+          <div className="hidden sm:flex items-center gap-3">
+            {user ? (
+              /* Standard logged-in state on other pages */
+              <div className="flex items-center gap-3">
+                <Link
+                  href="/dashboard"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-xs text-white transition-colors border border-white/15"
+                  title="Go to Dashboard"
+                >
+                  <div className="w-6 h-6 rounded-full bg-court-bronze text-white text-[11px] flex items-center justify-center font-bold">
                     {user.name ? user.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={handleSignOut}
-                    className="p-1.5 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
-                    title="Sign Out"
-                  >
-                    <LogOut className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : user ? (
-            /* Standard logged-in state on other pages */
-            <div className="flex items-center gap-3">
-              <Link
-                href="/dashboard"
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-xs text-white transition-colors border border-white/15"
-                title="Go to Dashboard"
-              >
-                <div className="w-6 h-6 rounded-full bg-court-bronze text-white text-[11px] flex items-center justify-center font-bold">
-                  {user.name ? user.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
-                </div>
-                <span className="font-medium max-w-[130px] truncate">{user.name || user.email}</span>
-              </Link>
-              <Link
-                href="/dashboard"
-                className="text-xs uppercase tracking-wider font-semibold bg-court-bronze hover:bg-court-bronze-dark text-white px-3.5 py-2 rounded-md shadow-sm transition-all duration-200 flex items-center gap-1.5"
-              >
-                <LayoutDashboard className="w-3.5 h-3.5" />
-                <span>Dashboard</span>
-              </Link>
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
-                title="Sign Out"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            </div>
-          ) : (
-            /* Standard logged-out state on other pages */
-            <>
-              <Link
-                href="/auth/signin"
-                className="text-xs uppercase tracking-wider font-medium text-white/80 hover:text-white px-3 py-2 transition-colors"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/start"
-                className="text-xs uppercase tracking-wider font-semibold bg-court-bronze hover:bg-court-bronze-dark text-white px-4 py-2 rounded-md shadow-sm transition-all duration-200 flex items-center gap-1.5"
-              >
-                <span>Start Will</span>
-              </Link>
-            </>
-          )}
-        </div>
+                  </div>
+                  <span className="font-medium max-w-[130px] truncate">{user.name || user.email}</span>
+                </Link>
+                <Link
+                  href="/dashboard"
+                  className="text-xs uppercase tracking-wider font-semibold bg-court-bronze hover:bg-court-bronze-dark text-white px-3.5 py-2 rounded-md shadow-sm transition-all duration-200 flex items-center gap-1.5"
+                >
+                  <LayoutDashboard className="w-3.5 h-3.5" />
+                  <span>Dashboard</span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
+                  title="Sign Out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              /* Standard logged-out state on other pages */
+              <>
+                <Link
+                  href="/auth/signin"
+                  className="text-xs uppercase tracking-wider font-medium text-white/80 hover:text-white px-3 py-2 transition-colors"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/start"
+                  className="text-xs uppercase tracking-wider font-semibold bg-court-bronze hover:bg-court-bronze-dark text-white px-4 py-2 rounded-md shadow-sm transition-all duration-200 flex items-center gap-1.5"
+                >
+                  <span>Start Will</span>
+                </Link>
+              </>
+            )}
+          </div>
+        )}
 
-        {/* Mobile menu hamburger */}
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden p-2 text-white/80 hover:text-white focus:outline-none"
-          aria-label="Toggle Menu"
-        >
-          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+        {/* Mobile menu hamburger (hidden on /start) */}
+        {!isStartPage && (
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 text-white/80 hover:text-white focus:outline-none"
+            aria-label="Toggle Menu"
+          >
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        )}
       </div>
 
       {/* Mobile dropdown */}
-      {mobileMenuOpen && (
+      {!isStartPage && mobileMenuOpen && (
         <div
           className={`md:hidden ${
             isStartPage ? "bg-[#21152F] border-t border-[#443158]" : "bg-obsidian-dark border-t border-white/10"
