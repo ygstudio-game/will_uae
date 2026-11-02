@@ -3,12 +3,14 @@ import crypto from "crypto";
 export const NOMOD_CONFIG = {
   MERCHANT_NAME: "Juris Zone Corporate Services Provider (CSP) CO. LLC",
   URLS: {
-    INDIVIDUAL: "https://pay.nomodapp.com/en/l/3de8ba889b5942b8",
-    COUPLES: "https://pay.nomodapp.com/en/l/d5c977670ef34c97",
+    INDIVIDUAL: process.env.NEXT_PUBLIC_NOMOD_URL_INDIVIDUAL || "https://pay.nomodapp.com/en/l/3de8ba889b5942b8",
+    COUPLES: process.env.NEXT_PUBLIC_NOMOD_URL_COUPLES || "https://pay.nomodapp.com/en/l/d5c977670ef34c97",
+    TEST_1_AED: process.env.NEXT_PUBLIC_NOMOD_URL_TEST || "https://pay.nomodapp.com/en/l/a45add7431954cf8",
   },
   SERVICE_FEES_AED: {
     INDIVIDUAL: 999.0,
     COUPLES: 1799.0,
+    TEST_1_AED: 1.0,
   },
   COURT_FEES_AED: {
     INDIVIDUAL: 950.0,
@@ -16,7 +18,13 @@ export const NOMOD_CONFIG = {
   },
 };
 
-export function getNomodCheckoutUrl(packageType: "INDIVIDUAL" | "COUPLES"): string {
+export function getNomodCheckoutUrl(
+  packageType: "INDIVIDUAL" | "COUPLES",
+  isTestMode: boolean = false
+): string {
+  if (isTestMode) {
+    return NOMOD_CONFIG.URLS.TEST_1_AED;
+  }
   return packageType === "COUPLES" ? NOMOD_CONFIG.URLS.COUPLES : NOMOD_CONFIG.URLS.INDIVIDUAL;
 }
 

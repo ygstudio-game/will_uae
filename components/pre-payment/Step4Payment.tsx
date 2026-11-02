@@ -17,8 +17,9 @@ interface Step4PaymentProps {
 }
 
 const NOMOD_LINKS = {
-  INDIVIDUAL: "https://pay.nomodapp.com/en/l/3de8ba889b5942b8",
-  COUPLES: "https://pay.nomodapp.com/en/l/d5c977670ef34c97",
+  INDIVIDUAL: process.env.NEXT_PUBLIC_NOMOD_URL_INDIVIDUAL || "https://pay.nomodapp.com/en/l/3de8ba889b5942b8",
+  COUPLES: process.env.NEXT_PUBLIC_NOMOD_URL_COUPLES || "https://pay.nomodapp.com/en/l/d5c977670ef34c97",
+  TEST_1_AED: process.env.NEXT_PUBLIC_NOMOD_URL_TEST || "https://pay.nomodapp.com/en/l/a45add7431954cf8",
 };
 
 export function Step4Payment({
@@ -36,7 +37,11 @@ export function Step4Payment({
   const serviceFee = isCouples ? 1799 : 999;
   const courtFee = isCouples ? 1900 : 950;
   const packageTitle = isCouples ? "Wills for Couples" : "Individual Will";
-  const nomodUrl = isCouples ? NOMOD_LINKS.COUPLES : NOMOD_LINKS.INDIVIDUAL;
+  const standardNomodUrl = isCouples ? NOMOD_LINKS.COUPLES : NOMOD_LINKS.INDIVIDUAL;
+
+  const [is1AedTestMode, setIs1AedTestMode] = useState<boolean>(true); // Default to true for testing with Biswa's 1 AED link
+  const payableAmount = is1AedTestMode ? 1 : serviceFee;
+  const nomodUrl = is1AedTestMode ? NOMOD_LINKS.TEST_1_AED : standardNomodUrl;
 
   const [activeAppId, setActiveAppId] = useState<string | null>(state.applicationId || null);
   const [hasOpenedNomod, setHasOpenedNomod] = useState(false);
@@ -165,7 +170,7 @@ export function Step4Payment({
           event: "payment.succeeded",
           data: {
             id: `SIM-NOMOD-${Date.now().toString(36).toUpperCase()}`,
-            amount: serviceFee,
+            amount: payableAmount,
             currency: "AED",
             status: "paid",
             customer: {
@@ -302,9 +307,26 @@ export function Step4Payment({
               <span>Your answers are saved. You can try again below.</span>
             </div>
           )}
+          {/* 1 AED Testing Mode Toggle */}
+          <div className="flex items-center justify-between p-2.5 mb-3 rounded-lg bg-[#F8F5FC] border border-[#E2D7ED] text-xs">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="font-semibold text-[#4A2D7A]">Testing Mode (1 AED)</span>
+            </div>
+            <label className="flex items-center gap-1.5 cursor-pointer text-[#6243AD] font-medium hover:text-[#392750]">
+              <input
+                type="checkbox"
+                checked={is1AedTestMode}
+                onChange={(e) => setIs1AedTestMode(e.target.checked)}
+                className="w-3.5 h-3.5 accent-[#6243AD] cursor-pointer"
+              />
+              <span>Use 1 AED Test Link</span>
+            </label>
+          </div>
+
           <div className="saas-total">
-            <span>Payable now</span>
-            <strong>AED {serviceFee.toLocaleString("en-US")}</strong>
+            <span>Payable now {is1AedTestMode && <span className="text-xs font-normal text-emerald-700">(Test Mode)</span>}</span>
+            <strong>AED {payableAmount.toLocaleString("en-US")}</strong>
           </div>
 
           <a
@@ -314,7 +336,7 @@ export function Step4Payment({
             rel="noopener noreferrer"
             onClick={handleNomodHandoff}
           >
-            <span>Pay AED {serviceFee.toLocaleString("en-US")}</span>
+            <span>Pay AED {payableAmount.toLocaleString("en-US")}{is1AedTestMode ? " (Live Test)" : ""}</span>
             <ArrowRight className="icon inline w-4 h-4 ml-1" aria-hidden="true" />
           </a>
 
@@ -349,14 +371,24 @@ export function Step4Payment({
       </p>
 
       {/* Developer Test Controls */}
-      <div className="flex items-center justify-center gap-3 my-4">
+      <div className="flex flex-wrap items-center justify-center gap-4 my-4">
+        <a
+          href={NOMOD_LINKS.TEST_1_AED}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={handleNomodHandoff}
+          className="text-xs text-[#6243AD] hover:text-[#392750] underline font-medium cursor-pointer"
+        >
+          🧪 Open 1 AED Nomod Test Checkout directly
+        </a>
+        <span className="text-gray-300">|</span>
         <button
           type="button"
           onClick={handleSimulatePayment}
           disabled={simulating}
           className="text-xs text-[#8C6D41] hover:text-[#5A3F1A] underline font-medium cursor-pointer bg-transparent border-0"
         >
-          {simulating ? "Simulating payment..." : "⚡ Simulate test payment (Developer QA mode)"}
+          {simulating ? "Simulating payment..." : "⚡ Simulate test payment (Bypass Nomod)"}
         </button>
       </div>
 
@@ -395,8 +427,8 @@ export function Step4Payment({
       {/* Mobile Sticky Pay Bar */}
       <div className="saas-mobile-pay">
         <span>
-          <small>OWA service fee</small>
-          <strong>AED {serviceFee.toLocaleString("en-US")}</strong>
+          <small>OWA service fee{is1AedTestMode ? " (Test 1 AED)" : ""}</small>
+          <strong>AED {payableAmount.toLocaleString("en-US")}</strong>
         </span>
         <a
           className="btn primary"
@@ -405,7 +437,7 @@ export function Step4Payment({
           rel="noopener noreferrer"
           onClick={handleNomodHandoff}
         >
-          <span>Pay on Nomod</span>
+          <span>Pay AED {payableAmount.toLocaleString("en-US")} on Nomod</span>
           <ArrowRight className="icon inline w-4 h-4 ml-1" aria-hidden="true" />
         </a>
       </div>
