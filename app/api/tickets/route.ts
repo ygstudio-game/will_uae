@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/auth-otp";
 import { TicketStatus } from "@prisma/client";
+import { sendTicketAlertToSupport } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -76,16 +77,18 @@ export async function POST(req: NextRequest) {
     }
 
     let targetAppId = applicationId;
-    let existingApp = await prisma.application.findUnique({ where: { id: targetAppId } }).catch(() => null);
+    let existingApp = await prisma.application.findUnique({ where: { id: targetAppId }, include: { account: true } }).catch(() => null);
     if (!existingApp) {
       if (session) {
         existingApp = await prisma.application.findFirst({
           where: { accountId: session.accountId },
+          include: { account: true },
           orderBy: { createdAt: "desc" },
         });
       }
       if (!existingApp) {
         existingApp = await prisma.application.findFirst({
+          include: { account: true },
           orderBy: { createdAt: "desc" },
         });
       }
@@ -113,6 +116,17 @@ export async function POST(req: NextRequest) {
         replies: true,
       },
     });
+
+    // Alert support@onlinewillsadvisor.com via Hostinger SMTP (non-blocking)
+    const senderEmail = session?.email || existingApp?.account?.email || "";
+    sendTicketAlertToSupport({
+      ticketNumber: ticket.ticketNumber,
+      subject: ticket.subject,
+      message: initialMessage,
+      senderName: name,
+      senderEmail: senderEmail || undefined,
+      applicationId: targetAppId,
+    }).catch((err) => console.error("[Ticket Email Alert Error]:", err));
 
     // Audit event (non-blocking)
     await prisma.auditEvent.create({

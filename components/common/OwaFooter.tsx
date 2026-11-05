@@ -13,7 +13,7 @@ export function OwaFooter() {
               Operated by SP LEGAL FZ LLE, a legal consultancy licensed in Fujairah. A legal expert reviews every Will before we file it.
             </span>
             <span className="text-[13px] text-[#c9bfd8]">
-              Email: <a href="mailto:info@onlinewillsadvisor.com" className="text-white hover:underline">info@onlinewillsadvisor.com</a>
+              Email: <a href="mailto:support@onlinewillsadvisor.com" className="text-white hover:underline">support@onlinewillsadvisor.com</a>
             </span>
           </div>
 

@@ -34,6 +34,9 @@ use diffrerny color for tranlation name and english name
 
 remove the draw signature feature 
  
-change heading of 6 section to signature and verify then later show the darft of preview 
+[DONE] change heading of 6 section to "Signature and verify" then later show the draft of preview 
+[DONE] and remove the preview draft card on 6 section 
 
-and remove the preview darft card on 6 section 
+
+
+scroll to options on clicking card of /start page 

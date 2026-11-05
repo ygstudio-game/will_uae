@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyNomodSignature } from "@/lib/nomod";
+import { sendPaymentReceiptEmail, sendOnboardingWelcomeEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest) {
     if (applicationId) {
       targetApplication = await prisma.application.findUnique({
         where: { id: applicationId },
-        include: { payments: true },
+        include: { payments: true, account: true },
       });
     }
 
@@ -81,7 +82,7 @@ export async function POST(req: NextRequest) {
         include: {
           applications: {
             orderBy: { createdAt: "desc" },
-            include: { payments: true },
+            include: { payments: true, account: true },
           },
         },
       });
@@ -149,7 +150,28 @@ export async function POST(req: NextRequest) {
           },
         },
       });
+    }, {
+      timeout: 20000,
+      maxWait: 15000,
     });
+
+    // 4. Send Payment Confirmation & Onboarding Email (non-blocking)
+    const clientEmail = (targetApplication.account?.email || email || "").trim();
+    if (clientEmail) {
+      const clientName = targetApplication.account?.fullName || "Valued Client";
+      const paidAmount = amount > 0 ? amount : (targetApplication.packageType === "COUPLES" ? 1799 : 999);
+
+      sendPaymentReceiptEmail({
+        email: clientEmail,
+        name: clientName,
+        amountAed: paidAmount,
+        transactionRef: txId,
+        packageType: targetApplication.packageType,
+      }).catch((err) => console.error("[Nomod Webhook]: Error dispatching receipt email:", err));
+
+      sendOnboardingWelcomeEmail(clientEmail, clientName)
+        .catch((err) => console.error("[Nomod Webhook]: Error dispatching welcome email:", err));
+    }
 
     return NextResponse.json({
       success: true,

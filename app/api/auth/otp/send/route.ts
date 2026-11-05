@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateOtp } from "@/lib/auth-otp";
+import { sendOTPEmail } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,14 +30,27 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Generate OTP
+    // Generate 6-digit OTP in database (15-min expiry)
     const code = await generateOtp(account.id);
 
-    console.log(`[AUTH-OTP] Security Code for ${cleanEmail}: ${code}`);
+    console.log(`[AUTH-OTP] Generated Security Code for ${cleanEmail}: ${code}`);
 
-    // In non-production or for demo testing, return code directly to simplify test flows
+    // Dispatch live email via Hostinger SMTP
+    const emailSent = await sendOTPEmail(cleanEmail, code);
+
+    if (!emailSent && process.env.NODE_ENV === "production") {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Failed to send verification email. Please check your address or try again shortly.",
+        },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({
       success: true,
+      emailSent,
       message: "A 6-digit verification code has been sent to your email.",
       debugCode: process.env.NODE_ENV !== "production" ? code : undefined,
     });

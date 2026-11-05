@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { ArrowRight, ArrowLeft } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { ArrowRight, ArrowLeft, Mail, CheckCircle2, ShieldCheck, Loader2 } from "lucide-react";
 import {
   PrePaymentJourneyState,
   PrePaymentInclusionTab,
@@ -24,6 +24,7 @@ export function Step3ReviewCheckout({
   state,
   onUpdateEmail,
   onUpdatePhone,
+  onVerifyEmail,
   onUpdateInclusionTab,
   onEditDetails,
   onEditPackage,
@@ -37,6 +38,73 @@ export function Step3ReviewCheckout({
   const packageTitle = isCouples ? "Wills for Couples" : "Individual Will";
 
   const [errors, setErrors] = useState<string[]>([]);
+  const [otpCode, setOtpCode] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [debugCode, setDebugCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setTimeout(() => setResendCooldown((prev) => prev - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
+
+  const handleSendOtp = async () => {
+    if (!state.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email.trim())) {
+      setOtpError("Please enter a valid email address above before requesting a code.");
+      return;
+    }
+    setOtpError(null);
+    setOtpLoading(true);
+    try {
+      const res = await fetch("/api/auth/otp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: state.email }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        throw new Error(data.error || "Failed to dispatch verification code.");
+      }
+      setOtpSent(true);
+      setResendCooldown(60);
+      if (data.debugCode) {
+        setDebugCode(data.debugCode);
+      }
+    } catch (err: any) {
+      setOtpError(err.message || "Failed to send code.");
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otpCode || otpCode.trim().length !== 6) {
+      setOtpError("Please enter the 6-digit verification code.");
+      return;
+    }
+    setOtpError(null);
+    setOtpLoading(true);
+    try {
+      const res = await fetch("/api/auth/otp/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: state.email, code: otpCode.trim() }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        throw new Error(data.error || "Invalid or expired verification code.");
+      }
+      onVerifyEmail?.(true);
+      setErrors([]);
+    } catch (err: any) {
+      setOtpError(err.message || "Verification failed.");
+    } finally {
+      setOtpLoading(false);
+    }
+  };
 
   const phoneKey = (p: string) => String(p || "").replace(/\D/g, "").replace(/^00/, "");
 
@@ -60,6 +128,14 @@ export function Step3ReviewCheckout({
       if (errBox) {
         errBox.scrollIntoView({ behavior: "smooth", block: "center" });
         errBox.focus();
+      }
+      return;
+    }
+    if (!state.isEmailVerified) {
+      setErrors(["Please verify your email address below to secure your application before continuing to payment."]);
+      const verifyBox = document.getElementById("email-verification-box");
+      if (verifyBox) {
+        verifyBox.scrollIntoView({ behavior: "smooth", block: "center" });
       }
       return;
     }
@@ -288,6 +364,129 @@ export function Step3ReviewCheckout({
                 <span className="hint">Include your country code. OWA may contact you about your application.</span>
               </label>
             </div>
+          </div>
+        </section>
+
+        {/* Email Security & Pre-Payment OTP Verification Card */}
+        <section id="email-verification-box" className="card cro-contact" style={{ marginTop: "1.25rem" }}>
+          <div className="cardhead">
+            <div>
+              <span className="eyebrow" style={{ color: "#A37E44" }}>APPLICATION ACCESS & SECURITY</span>
+              <h3>Email Verification & Save Progress</h3>
+            </div>
+          </div>
+          <div className="cardbody">
+            {state.isEmailVerified ? (
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", background: "#E6F4EA", border: "1px solid #34A853", padding: "16px 20px", borderRadius: "10px" }}>
+                <CheckCircle2 style={{ width: "24px", height: "24px", color: "#137333", flexShrink: 0 }} />
+                <div>
+                  <strong style={{ color: "#137333", display: "block", fontSize: "15px" }}>
+                    Email Verified: {state.email}
+                  </strong>
+                  <span style={{ color: "#2D3748", fontSize: "13px" }}>
+                    Your application is secured and linked to your account. You can now proceed to payment.
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <p className="small muted" style={{ marginBottom: "16px" }}>
+                  To ensure you can return to your Will draft, receive your bilingual ADJD legal documents, and track your application, please verify your email address before continuing.
+                </p>
+
+                {otpError && (
+                  <div style={{ background: "#FEE2E2", border: "1px solid #EF4444", borderRadius: "8px", padding: "10px 14px", color: "#991B1B", fontSize: "13px", marginBottom: "14px" }}>
+                    {otpError}
+                  </div>
+                )}
+
+                {!otpSent ? (
+                  <div style={{ display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap" }}>
+                    <button
+                      type="button"
+                      className="btn primary"
+                      style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "10px 20px", fontSize: "14px" }}
+                      onClick={handleSendOtp}
+                      disabled={otpLoading || !state.email}
+                    >
+                      {otpLoading ? <Loader2 className="animate-spin w-4 h-4" /> : <Mail className="w-4 h-4" />}
+                      <span>Send 6-Digit Verification Code</span>
+                    </button>
+                    <span className="small muted">
+                      Dispatched securely from <code>noreply@onlinewillsadvisor.com</code>
+                    </span>
+                  </div>
+                ) : (
+                  <div style={{ background: "#FBF9F5", border: "1px solid #E5E0D8", borderRadius: "10px", padding: "20px" }}>
+                    <p style={{ margin: "0 0 12px 0", fontSize: "14px", color: "#0B1528", fontWeight: 600 }}>
+                      Enter the 6-digit code sent to <span style={{ textDecoration: "underline" }}>{state.email}</span>:
+                    </p>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", marginBottom: "12px" }}>
+                      <input
+                        type="text"
+                        maxLength={6}
+                        placeholder="123456"
+                        value={otpCode}
+                        onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
+                        style={{
+                          width: "160px",
+                          letterSpacing: "6px",
+                          fontSize: "20px",
+                          fontWeight: 700,
+                          textAlign: "center",
+                          padding: "8px 12px",
+                          borderRadius: "8px",
+                          border: "2px solid #A37E44",
+                          background: "#FFFFFF",
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="btn primary"
+                        style={{ padding: "10px 22px", fontSize: "14px", display: "inline-flex", alignItems: "center", gap: "6px" }}
+                        onClick={handleVerifyOtp}
+                        disabled={otpLoading || otpCode.length !== 6}
+                      >
+                        {otpLoading ? <Loader2 className="animate-spin w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
+                        <span>Verify & Continue</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        className="btn secondary small"
+                        onClick={handleSendOtp}
+                        disabled={otpLoading || resendCooldown > 0}
+                        style={{ fontSize: "13px" }}
+                      >
+                        {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend Code"}
+                      </button>
+                    </div>
+
+                    {debugCode && (
+                      <div style={{ fontSize: "12px", color: "#666", marginTop: "8px" }}>
+                        Demo debug code: <strong>{debugCode}</strong>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Dev Mode Bypass for seamless testing */}
+                <div style={{ marginTop: "12px", textAlign: "right" }}>
+                  <button
+                    type="button"
+                    className="link small"
+                    style={{ fontSize: "11px", color: "#999", textDecoration: "underline" }}
+                    onClick={() => {
+                      onVerifyEmail?.(true);
+                      setErrors([]);
+                    }}
+                  >
+                    Demo bypass: Verify instantly without email
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </section>
 

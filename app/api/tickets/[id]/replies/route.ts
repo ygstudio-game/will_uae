@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/auth-otp";
 import { TicketStatus } from "@prisma/client";
+import { sendTicketReplyToUser, sendTicketAlertToSupport } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,13 @@ export async function POST(
 
     const ticket = await prisma.ticket.findUnique({
       where: { id: params.id },
+      include: {
+        application: {
+          include: {
+            account: true,
+          },
+        },
+      },
     });
 
     if (!ticket) {
@@ -71,6 +79,27 @@ export async function POST(
         replies: { orderBy: { createdAt: "asc" } },
       },
     });
+
+    // Dispatch email notifications based on sender role (non-blocking)
+    if (senderRole === "ADMIN" && ticket.application?.account?.email) {
+      sendTicketReplyToUser({
+        userEmail: ticket.application.account.email,
+        userName: ticket.application.account.fullName || "Valued Client",
+        ticketNumber: ticket.ticketNumber,
+        subject: ticket.subject,
+        replyMessage: message.trim(),
+        senderRole,
+      }).catch((err) => console.error("[Ticket Reply Email Error]:", err));
+    } else if (senderRole === "CUSTOMER") {
+      sendTicketAlertToSupport({
+        ticketNumber: ticket.ticketNumber,
+        subject: `Re: ${ticket.subject}`,
+        message: message.trim(),
+        senderName: name,
+        senderEmail: session?.email || ticket.application?.account?.email || undefined,
+        applicationId: ticket.applicationId,
+      }).catch((err) => console.error("[Ticket Follow-Up Alert Error]:", err));
+    }
 
     const formattedTicket = {
       ...updatedTicket,
