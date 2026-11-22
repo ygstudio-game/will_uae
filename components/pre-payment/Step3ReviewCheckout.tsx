@@ -126,7 +126,7 @@ export function Step3ReviewCheckout({
     const errs = getContactErrors();
     if (errs.length > 0) {
       setErrors(errs);
-      const errBox = document.getElementById("pre-errors");
+      const errBox = document.getElementById("pre-errors") || document.getElementById("checkout-email");
       if (errBox) {
         errBox.scrollIntoView({ behavior: "smooth", block: "center" });
         errBox.focus();
@@ -135,6 +135,10 @@ export function Step3ReviewCheckout({
     }
     if (!state.isEmailVerified) {
       setErrors(["Please verify your email address below to secure your application before continuing to payment."]);
+      const emailInput = document.getElementById("checkout-email");
+      if (emailInput && !otpSent) {
+        emailInput.focus();
+      }
       const verifyBox = document.getElementById("email-verification-box");
       if (verifyBox) {
         verifyBox.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -323,8 +327,8 @@ export function Step3ReviewCheckout({
         </section>
 
         {/* Unified Contact Details & Email Security Card */}
-        <section id="email-verification-box" className="card cro-contact">
-          <div className="cardhead">
+        <section id="email-verification-box" className="card cro-contact" style={{ borderRadius: "16px", overflow: "hidden" }}>
+          <div className="cardhead" style={{ borderTop: "3px solid #A37E44", borderTopLeftRadius: "16px", borderTopRightRadius: "16px" }}>
             <div>
               <span className="eyebrow" style={{ color: "#A37E44" }}>APPLICATION ACCESS & SECURITY</span>
               <h3>Contact Details & Email Verification</h3>
@@ -465,7 +469,7 @@ export function Step3ReviewCheckout({
                       </button>
                     </div>
 
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", marginBottom: "12px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", marginBottom: "12px" }}>
                       <input
                         type="text"
                         maxLength={6}
@@ -473,21 +477,23 @@ export function Step3ReviewCheckout({
                         value={otpCode}
                         onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
                         style={{
-                          width: "160px",
-                          letterSpacing: "6px",
-                          fontSize: "20px",
+                          width: "150px",
+                          height: "46px",
+                          letterSpacing: "5px",
+                          fontSize: "18px",
                           fontWeight: 700,
                           textAlign: "center",
-                          padding: "8px 12px",
+                          padding: "0 10px",
                           borderRadius: "8px",
                           border: "2px solid #A37E44",
                           background: "#FFFFFF",
+                          outline: "none",
                         }}
                       />
                       <button
                         type="button"
                         className="btn primary"
-                        style={{ padding: "10px 22px", fontSize: "14px", display: "inline-flex", alignItems: "center", gap: "6px" }}
+                        style={{ height: "46px", padding: "0 22px", fontSize: "14px", display: "inline-flex", alignItems: "center", gap: "6px", borderRadius: "8px" }}
                         onClick={handleVerifyOtp}
                         disabled={otpLoading || otpCode.length !== 6}
                       >
@@ -500,7 +506,7 @@ export function Step3ReviewCheckout({
                         className="btn secondary small"
                         onClick={handleSendOtp}
                         disabled={otpLoading || resendCooldown > 0}
-                        style={{ fontSize: "13px" }}
+                        style={{ height: "46px", fontSize: "13px", padding: "0 16px", borderRadius: "8px" }}
                       >
                         {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend Code"}
                       </button>
@@ -558,11 +564,13 @@ export function Step3ReviewCheckout({
                   className="btn primary pre-pay-button"
                   onClick={handleCheckoutAction}
                 >
-                  <span>Continue to payment</span>
+                  <span>{state.isEmailVerified ? "Continue to payment" : "Verify Email to Continue"}</span>
                   <ArrowRight className="icon inline w-4 h-4 ml-1" aria-hidden="true" />
                 </button>
                 <p id="checkout-action-hint" className="cro-cta-hint">
-                  Continue to the payment screen; no card details are collected here.
+                  {state.isEmailVerified
+                    ? "Continue to the payment screen; no card details are collected here."
+                    : "Verify your email to unlock payment and save your application progress."}
                 </p>
                 {errors.length > 0 && (
                   <div className="mt-3 p-2.5 rounded bg-red-50 border border-red-200 text-xs text-red-700 text-left">

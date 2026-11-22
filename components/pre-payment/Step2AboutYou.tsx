@@ -141,9 +141,9 @@ export function Step2AboutYou({
               <span className="hint">Use your name as shown on your passport.</span>
             </label>
 
-            <div className="grid2 pre-gap">
-              <section>
-                <h3>You</h3>
+            <div className="grid2 pre-gap" style={{ gap: "16px" }}>
+              <section style={{ background: "#FAF8F5", border: "1px solid #EBE6DF", borderRadius: "12px", padding: "18px 20px" }}>
+                <h3 style={{ fontFamily: "Georgia, serif", fontSize: "20px", color: "#0B1528", marginBottom: "12px" }}>You</h3>
                 {renderRadioQuestion(
                   "Are you married or in a partnership?",
                   false,
@@ -159,8 +159,8 @@ export function Step2AboutYou({
               </section>
 
               {isCouples && (
-                <section>
-                  <h3>Your partner</h3>
+                <section style={{ background: "#FAF8F5", border: "1px solid #EBE6DF", borderRadius: "12px", padding: "18px 20px" }}>
+                  <h3 style={{ fontFamily: "Georgia, serif", fontSize: "20px", color: "#0B1528", marginBottom: "12px" }}>Your partner</h3>
                   {renderRadioQuestion(
                     "Is your partner married or in a partnership?",
                     true,
