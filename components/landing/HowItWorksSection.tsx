@@ -79,11 +79,11 @@ export function HowItWorksSection() {
 
             <div className="pt-2">
               <Link
-                href="/wizard/1"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-md bg-obsidian hover:bg-obsidian-light text-white font-semibold text-xs uppercase tracking-wider transition-colors"
+                href="/start"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-[#d83a3a] hover:bg-[#c22e2e] text-white font-semibold text-xs uppercase tracking-wider transition-colors shadow-sm"
               >
                 <span>Begin Preparation</span>
-                <ArrowRight className="w-4 h-4 text-court-tan" />
+                <ArrowRight className="w-4 h-4 text-white" />
               </Link>
             </div>
           </div>

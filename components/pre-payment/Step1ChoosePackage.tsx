@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import {
   PrePaymentJourneyState,
   PrePaymentPackageType,
@@ -28,6 +28,7 @@ export function Step1ChoosePackage({
   onNext,
 }: Step1ChoosePackageProps) {
   const isCouples = state.packageType === "COUPLES";
+  const isIndividual = state.packageType === "INDIVIDUAL";
   const [errors, setErrors] = useState<string[]>([]);
 
   const getScopeErrors = (): string[] => {
@@ -67,6 +68,12 @@ export function Step1ChoosePackage({
   const handleSelectPackage = (pkg: PrePaymentPackageType) => {
     onUpdatePackage(pkg);
     setErrors([]);
+    setTimeout(() => {
+      const scopeEl = document.getElementById("pre-scope") || document.querySelector(".pre-scope");
+      if (scopeEl) {
+        scopeEl.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 60);
   };
 
   const handleRadioChange = (
@@ -159,15 +166,15 @@ export function Step1ChoosePackage({
         <button
           type="button"
           data-package-choice="individual"
-          className={`card pre-package individual ${!isCouples && state.packageType === "INDIVIDUAL" ? "selected" : ""}`}
-          aria-pressed={!isCouples && state.packageType === "INDIVIDUAL"}
+          className={`card pre-package individual ${isIndividual ? "selected" : ""}`}
+          aria-pressed={isIndividual}
           onClick={() => handleSelectPackage("INDIVIDUAL")}
         >
           <span className="cardbody">
             <span className="pre-package-photo" aria-hidden="true">
               <img
-                src="/assets/people/individual.jpg"
-                alt=""
+                src="/assets/people/individual-pro.jpg"
+                alt="Individual Will"
                 width="600"
                 height="800"
                 decoding="async"
@@ -180,7 +187,9 @@ export function Step1ChoosePackage({
                   <span className="pre-package-name">Individual Will</span>
                 </span>
                 <span className="choice-indicator" aria-hidden="true">
-                  ✓
+                  {isIndividual && (
+                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+                  )}
                 </span>
               </span>
               <span className="premium-package-detail">
@@ -188,7 +197,7 @@ export function Step1ChoosePackage({
               </span>
             </span>
             <span className="pre-package-action">
-              {!isCouples && state.packageType === "INDIVIDUAL" ? "Selected" : "Choose this option"}{" "}
+              {isIndividual ? "Selected" : "Choose this option"}{" "}
               <ArrowRight className="icon inline w-4 h-4 ml-1" aria-hidden="true" />
             </span>
           </span>
@@ -205,8 +214,8 @@ export function Step1ChoosePackage({
           <span className="cardbody">
             <span className="pre-package-photo" aria-hidden="true">
               <img
-                src="/assets/people/couples.jpg"
-                alt=""
+                src="/assets/people/couples-pro.jpg"
+                alt="Wills for Couples"
                 width="600"
                 height="800"
                 decoding="async"
@@ -219,7 +228,9 @@ export function Step1ChoosePackage({
                   <span className="pre-package-name">Wills for Couples</span>
                 </span>
                 <span className="choice-indicator" aria-hidden="true">
-                  ✓
+                  {isCouples && (
+                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+                  )}
                 </span>
               </span>
               <span className="premium-package-detail">
@@ -236,7 +247,7 @@ export function Step1ChoosePackage({
 
       {/* 02 Confirm a few essentials */}
       {state.packageType && (
-        <div className="card pre-gap pre-scope">
+        <div id="pre-scope" className="card pre-gap pre-scope">
           <div className="pre-scope-heading">
             <span>02</span>
             <strong>Confirm a few essentials</strong>

@@ -20,8 +20,9 @@ import { Step2AboutYou } from "./Step2AboutYou";
 import { Step3ReviewCheckout } from "./Step3ReviewCheckout";
 import { Step4Payment } from "./Step4Payment";
 import { PrePaymentModals } from "./PrePaymentModals";
+import { OwaFooter } from "@/components/common/OwaFooter";
 
-const DRAFT_STORAGE_KEY = "owa_prepayment_draft_v1";
+const DRAFT_STORAGE_KEY = "owa_prepayment_draft_v2";
 
 interface PrePaymentFlowProps {
   onSuccess?: (data: any) => void;
@@ -48,6 +49,13 @@ export function PrePaymentFlow({ onSuccess }: PrePaymentFlowProps) {
             activeModal: null, // Always close modal on load
           }));
         }
+      }
+
+      // Sync step from URL parameter if present
+      const params = new URLSearchParams(window.location.search);
+      const stepParam = parseInt(params.get("step") || "0", 10);
+      if (stepParam >= 1 && stepParam <= 4) {
+        setState((prev) => ({ ...prev, step: stepParam as 1 | 2 | 3 | 4 }));
       }
     } catch (e) {
       console.warn("Failed to restore saved pre-payment draft from localStorage", e);
@@ -189,7 +197,12 @@ export function PrePaymentFlow({ onSuccess }: PrePaymentFlowProps) {
       ...state,
       step,
     });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("step", String(step));
+      window.history.pushState(null, "", url.toString());
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   const handleResumeEmail = (lookupEmail: string) => {
@@ -339,24 +352,8 @@ export function PrePaymentFlow({ onSuccess }: PrePaymentFlowProps) {
         )}
       </main>
 
-      {/* Footer matching prototype */}
-      <footer className="pre-footer">
-        <div className="style-footer-top">
-          <div>
-            <h2 className="style-footer-title">Online Wills Advisor</h2>
-            <p>A guided way to prepare your Will, with bilingual drafting and support for your application.</p>
-          </div>
-          <div className="style-footer-links">
-            <button type="button" onClick={() => handleOpenModal("sample")}>Sample Will</button>
-            <button type="button" onClick={() => handleOpenModal("help")}>Get help</button>
-            <button type="button" onClick={() => handleOpenModal("privacy")}>Privacy Policy</button>
-            <button type="button" onClick={() => handleOpenModal("terms")}>Service Terms</button>
-          </div>
-        </div>
-        <div className="style-footer-note">
-          Pre-payment review · Use fictional details. Payments and verification are simulated. This prototype does not generate a court-ready Will.
-        </div>
-      </footer>
+      {/* Footer matching OWA official specification (no dead links) */}
+      <OwaFooter />
 
       {/* Interactive Modals */}
       <PrePaymentModals

@@ -16,6 +16,7 @@ export function SectionF_ReviewDraft() {
     copyWillToPartnerWill,
     saveCurrentSectionToDb,
     addOrUpdatePerson,
+    isSectionComplete,
   } = useOwaStore();
 
   const [agreed, setAgreed] = useState(false);
@@ -31,7 +32,7 @@ export function SectionF_ReviewDraft() {
   const partnerWill = application?.wills.find((w) => w.willIndex === otherWillIndex);
 
   // Section Checks
-  const isSectionAOk = Boolean(testator?.fullName && testator?.passportNumber && testator?.dob && testator?.address);
+  const isSectionAOk = isSectionComplete("details") || Boolean(testator?.fullName && testator?.passportNumber && testator?.dob && testator?.address);
 
   const childrenAssignments = activeWill?.roleAssignments.filter((ra) => ra.role === "CHILD") || [];
   const isChildrenAnswered = Boolean(activeWill?.childrenAnswered || childrenAssignments.length > 0);
@@ -210,7 +211,7 @@ export function SectionF_ReviewDraft() {
                 Children
               </Link>
               <span className="text-[11px] text-[#6c6478] block">
-                {childrenAssignments.length > 0 ? `${childrenAssignments.length} child listed` : "No children"}
+                {childrenAssignments.length === 1 ? "1 child listed" : childrenAssignments.length > 1 ? `${childrenAssignments.length} children listed` : "No children"}
               </span>
             </div>
           </div>
@@ -274,7 +275,7 @@ export function SectionF_ReviewDraft() {
                 Roles & names
               </a>
               <span className="text-[11px] text-[#6c6478] block">
-                {peopleList.length} people appointed & transliterated
+                {peopleList.length === 1 ? "1 person appointed & transliterated" : `${peopleList.length} people appointed & transliterated`}
               </span>
             </div>
           </div>
@@ -293,7 +294,7 @@ export function SectionF_ReviewDraft() {
             </p>
           </div>
           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[#FAF7EE] text-[#8A6233] border border-[#e2d5be]">
-            {peopleList.length} persons appointed
+            {peopleList.length === 1 ? "1 person appointed" : `${peopleList.length} persons appointed`}
           </span>
         </div>
 

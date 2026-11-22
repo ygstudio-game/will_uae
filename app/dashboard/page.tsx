@@ -27,6 +27,7 @@ import { ApplicationStatus } from "@prisma/client";
 import { OwaSectionId } from "@/types/owa";
 import { OwaFooter } from "@/components/common/OwaFooter";
 import { CustomerSubNav } from "@/components/navigation/CustomerSubNav";
+import { useAuth } from "@/context/AuthContext";
 
 const CHECKLIST_SECTIONS: { id: OwaSectionId; title: string; subtitle: string }[] = [
   {
@@ -111,6 +112,7 @@ const STAGE_LABELS: Record<ApplicationStatus, { label: string; desc: string; pil
 
 function DashboardContent() {
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const searchParams = useSearchParams();
   const paymentNotification = searchParams.get("payment");
 
@@ -129,11 +131,23 @@ function DashboardContent() {
   useEffect(() => {
     const rawAppId = searchParams.get("appId") || searchParams.get("applicationId") || applicationId;
     const appIdToLoad = rawAppId && !rawAppId.startsWith("draft-") ? rawAppId : null;
+
+    if (!authLoading && !user && !appIdToLoad) {
+      router.push("/auth/signin?redirect=/dashboard");
+      return;
+    }
+
     if (appIdToLoad) {
       fetch(`/api/applications/${appIdToLoad}`)
-        .then((res) => res.json())
+        .then((res) => {
+          if (res.status === 401) {
+            router.push("/auth/signin?redirect=/dashboard");
+            return null;
+          }
+          return res.json();
+        })
         .then((data) => {
-          if (data.success && data.application) {
+          if (data?.success && data.application) {
             setAppData(data.application);
           }
         })
@@ -141,16 +155,22 @@ function DashboardContent() {
         .finally(() => setLoading(false));
     } else {
       fetch("/api/applications/current")
-        .then((res) => res.json())
+        .then((res) => {
+          if (res.status === 401) {
+            router.push("/auth/signin?redirect=/dashboard");
+            return null;
+          }
+          return res.json();
+        })
         .then((data) => {
-          if (data.success && data.application) {
+          if (data?.success && data.application) {
             setAppData(data.application);
           }
         })
         .catch((err) => console.error("Failed to load current application:", err))
         .finally(() => setLoading(false));
     }
-  }, [applicationId, searchParams]);
+  }, [applicationId, searchParams, user, authLoading, router]);
 
   const activeApp = appData || application;
   const stage = (activeApp?.status as ApplicationStatus) || "IN_PROGRESS";
@@ -167,6 +187,11 @@ function DashboardContent() {
   const payments = activeApp?.payments || [];
   const initialPayment = payments.find((p: any) => p.milestone === "INITIAL_SERVICE_FEE");
   const courtPayment = payments.find((p: any) => p.milestone === "COURT_FEE");
+  const isOwaFeePaid = Boolean(
+    initialPayment?.status === "COMPLETED" ||
+    activeApp?.isPaid ||
+    activeApp?.payments?.some((p: any) => p.status === "COMPLETED")
+  );
   const isCourtFeePaid = Boolean(
     courtPayment?.status === "COMPLETED" ||
     primaryWill?.courtPaymentVerified ||
@@ -230,7 +255,7 @@ function DashboardContent() {
               Your Will, one step at a time.
             </h1>
             <p className="text-xs sm:text-sm text-gray-500 mt-1 max-w-xl">
-              Welcome back, {testatorName.split(" ")[0]}. Everything you need to prepare your{" "}
+              {testatorName && testatorName !== "You" ? `Welcome back, ${testatorName.split(" ")[0]}.` : "Welcome back to your workspace."} Everything you need to prepare your{" "}
               {isCouples ? "two Wills" : "Will"} is here.
             </p>
           </div>
@@ -294,10 +319,16 @@ function DashboardContent() {
               <div className="relative z-10 space-y-4">
                 {/* Badges */}
                 <div className="flex flex-wrap items-center gap-2.5">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-[#EDF5F0] text-[#366D58]">
-                    <Check className="w-3.5 h-3.5 text-[#366D58]" />
-                    OWA fee paid
-                  </span>
+                  {isOwaFeePaid ? (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-[#EDF5F0] text-[#366D58]">
+                      <Check className="w-3.5 h-3.5 text-[#366D58]" />
+                      OWA fee paid
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-[#FFF4E5] text-[#95652B] border border-[#F2D7B2]">
+                      Payment pending
+                    </span>
+                  )}
                   <span className="text-xs text-gray-500 font-medium">
                     {isCouples ? "Couples package" : "Individual package"}
                   </span>
@@ -362,9 +393,15 @@ function DashboardContent() {
                       {completedCount} of 6 sections complete
                       {isCouples && ` · ${testatorName.split(" ")[0]}'s Will`}
                     </span>
-                    <span className="text-[11px] text-[#366D58] font-semibold flex items-center gap-1">
-                      ✓ Saved to Abu Dhabi Civil Registry
-                    </span>
+                    {stage === "SUBMITTED_TO_ADJD" || stage === "REGISTRATION_COMPLETED" ? (
+                      <span className="text-[11px] text-[#366D58] font-semibold flex items-center gap-1">
+                        ✓ Saved to Abu Dhabi Civil Registry
+                      </span>
+                    ) : (
+                      <span className="text-[11px] text-gray-500 font-medium flex items-center gap-1">
+                        ✓ Draft progress saved
+                      </span>
+                    )}
                   </div>
                   <div className="h-1.5 w-full bg-[#E6DFED] rounded-full overflow-hidden">
                     <div
@@ -437,10 +474,14 @@ function DashboardContent() {
                   LATEST DRAFT · VERSION {currentWill?.version || 1} · View-Only
                 </div>
                 <h3 className="font-serif text-lg font-bold text-[#29213F]">
-                  Your bilingual court draft is ready
+                  {completedCount >= 5 || stage !== "IN_PROGRESS"
+                    ? "Your bilingual court draft is ready"
+                    : `Draft in preparation (${completedCount} of 6 sections complete)`}
                 </h3>
                 <p className="text-xs text-gray-500 leading-relaxed max-w-md">
-                  View your choices formatted in the statutory Abu Dhabi Civil Family Court side-by-side template (English LTR / Arabic RTL).
+                  {completedCount >= 5 || stage !== "IN_PROGRESS"
+                    ? "View your choices formatted in the statutory Abu Dhabi Civil Family Court side-by-side template (English LTR / Arabic RTL)."
+                    : "Complete your questionnaire to review your final bilingual Abu Dhabi Civil Family Court Will draft."}
                 </p>
               </div>
 
@@ -451,7 +492,7 @@ function DashboardContent() {
                     className="px-4 py-2.5 bg-white border border-[#E4DFEE] hover:border-[#6243AD] text-[#6243AD] text-xs font-bold rounded-lg shadow-2xs inline-flex items-center gap-1.5 transition-all"
                   >
                     <Eye className="w-3.5 h-3.5" />
-                    <span>View draft →</span>
+                    <span>{completedCount >= 5 ? "View court draft →" : "Preview draft →"}</span>
                   </Link>
                 )}
               </div>
@@ -515,9 +556,18 @@ function DashboardContent() {
                 </strong>
               </div>
 
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#EDF5F0] text-[#366D58]">
-                ✓ Paid · receipt verified
-              </span>
+              {isOwaFeePaid ? (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#EDF5F0] text-[#366D58]">
+                  ✓ Paid · receipt verified
+                </span>
+              ) : (
+                <Link
+                  href="/start?step=4"
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FFF4E5] text-[#95652B] border border-[#F2D7B2] hover:underline"
+                >
+                  Pending · Complete payment →
+                </Link>
+              )}
 
               <hr className="border-t border-[#E4DFEE] my-2" />
 

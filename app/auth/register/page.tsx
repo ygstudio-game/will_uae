@@ -163,7 +163,7 @@ export default function RegisterPage() {
               className="mt-0.5 rounded border-gray-300 text-court-bronze focus:ring-court-bronze h-4 w-4"
             />
             <span className="leading-relaxed">
-              I certify that I am <strong>21 years of age or older</strong>, a non-Muslim expatriate, and legally competent to make a testamentary disposition in the UAE.
+              I certify that I am <strong>21 years of age or older</strong>, a non-Muslim expatriate, and legally competent to execute an Abu Dhabi Civil Court Will (ADJD form <code>ADJD-NM1221-06-01</code>) under Law No. 14 of 2021.
             </span>
           </label>
         </div>

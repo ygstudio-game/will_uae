@@ -1,4 +1,4 @@
-export type PrePaymentPackageType = "INDIVIDUAL" | "COUPLES";
+export type PrePaymentPackageType = "INDIVIDUAL" | "COUPLES" | null;
 
 export type PrePaymentPaymentStatus = "unpaid" | "pending" | "paid" | "failed";
 
@@ -41,7 +41,7 @@ export const DEFAULT_APPLICANT: PrePaymentApplicant = {
 
 export const DEFAULT_PREPAYMENT_STATE: PrePaymentJourneyState = {
   step: 1,
-  packageType: "INDIVIDUAL",
+  packageType: null,
   primaryApplicant: { ...DEFAULT_APPLICANT },
   partnerApplicant: { ...DEFAULT_APPLICANT },
   fullName: "",

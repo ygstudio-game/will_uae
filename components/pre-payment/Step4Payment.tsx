@@ -39,7 +39,7 @@ export function Step4Payment({
   const packageTitle = isCouples ? "Wills for Couples" : "Individual Will";
   const standardNomodUrl = isCouples ? NOMOD_LINKS.COUPLES : NOMOD_LINKS.INDIVIDUAL;
 
-  const [is1AedTestMode, setIs1AedTestMode] = useState<boolean>(true); // Default to true for testing with Biswa's 1 AED link
+  const [is1AedTestMode, setIs1AedTestMode] = useState<boolean>(false); // Production default: real package pricing
   const payableAmount = is1AedTestMode ? 1 : serviceFee;
   const nomodUrl = is1AedTestMode ? NOMOD_LINKS.TEST_1_AED : standardNomodUrl;
 
@@ -307,22 +307,24 @@ export function Step4Payment({
               <span>Your answers are saved. You can try again below.</span>
             </div>
           )}
-          {/* 1 AED Testing Mode Toggle */}
-          <div className="flex items-center justify-between p-2.5 mb-3 rounded-lg bg-[#F8F5FC] border border-[#E2D7ED] text-xs">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="font-semibold text-[#4A2D7A]">Testing Mode (1 AED)</span>
+          {/* 1 AED Testing Mode Toggle (Dev Only) */}
+          {process.env.NODE_ENV !== "production" && (
+            <div className="flex items-center justify-between p-2.5 mb-3 rounded-lg bg-[#F8F5FC] border border-[#E2D7ED] text-xs">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="font-semibold text-[#4A2D7A]">Testing Mode (1 AED)</span>
+              </div>
+              <label className="flex items-center gap-1.5 cursor-pointer text-[#6243AD] font-medium hover:text-[#392750]">
+                <input
+                  type="checkbox"
+                  checked={is1AedTestMode}
+                  onChange={(e) => setIs1AedTestMode(e.target.checked)}
+                  className="w-3.5 h-3.5 accent-[#6243AD] cursor-pointer"
+                />
+                <span>Use 1 AED Test Link</span>
+              </label>
             </div>
-            <label className="flex items-center gap-1.5 cursor-pointer text-[#6243AD] font-medium hover:text-[#392750]">
-              <input
-                type="checkbox"
-                checked={is1AedTestMode}
-                onChange={(e) => setIs1AedTestMode(e.target.checked)}
-                className="w-3.5 h-3.5 accent-[#6243AD] cursor-pointer"
-              />
-              <span>Use 1 AED Test Link</span>
-            </label>
-          </div>
+          )}
 
           <div className="saas-total">
             <span>Payable now {is1AedTestMode && <span className="text-xs font-normal text-emerald-700">(Test Mode)</span>}</span>
@@ -367,30 +369,32 @@ export function Step4Payment({
       </div>
 
       <p className="small muted nomod-handoff-note">
-        Already paid? Keep your Nomod receipt. This preview cannot verify payment or unlock your application automatically.
+        Already paid? Your questionnaire unlocks automatically upon payment receipt. If needed, click &lsquo;Check status&rsquo; or sign in with your email.
       </p>
 
-      {/* Developer Test Controls */}
-      <div className="flex flex-wrap items-center justify-center gap-4 my-4">
-        <a
-          href={NOMOD_LINKS.TEST_1_AED}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={handleNomodHandoff}
-          className="text-xs text-[#6243AD] hover:text-[#392750] underline font-medium cursor-pointer"
-        >
-          🧪 Open 1 AED Nomod Test Checkout directly
-        </a>
-        <span className="text-gray-300">|</span>
-        <button
-          type="button"
-          onClick={handleSimulatePayment}
-          disabled={simulating}
-          className="text-xs text-[#8C6D41] hover:text-[#5A3F1A] underline font-medium cursor-pointer bg-transparent border-0"
-        >
-          {simulating ? "Simulating payment..." : "⚡ Simulate test payment (Bypass Nomod)"}
-        </button>
-      </div>
+      {/* Developer Test Controls (Dev Only) */}
+      {process.env.NODE_ENV !== "production" && (
+        <div className="flex flex-wrap items-center justify-center gap-4 my-4">
+          <a
+            href={NOMOD_LINKS.TEST_1_AED}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={handleNomodHandoff}
+            className="text-xs text-[#6243AD] hover:text-[#392750] underline font-medium cursor-pointer"
+          >
+            🧪 Open 1 AED Nomod Test Checkout directly
+          </a>
+          <span className="text-gray-300">|</span>
+          <button
+            type="button"
+            onClick={handleSimulatePayment}
+            disabled={simulating}
+            className="text-xs text-[#8C6D41] hover:text-[#5A3F1A] underline font-medium cursor-pointer bg-transparent border-0"
+          >
+            {simulating ? "Simulating payment..." : "⚡ Simulate test payment (Bypass Nomod)"}
+          </button>
+        </div>
+      )}
 
       {/* Footer Navigation */}
       <div className="saas-checkout-foot">

@@ -34,14 +34,14 @@ export function Step2AboutYou({
       e.push("Enter your full name as shown on your passport.");
     }
     if (state.primaryApplicant.married === null) {
-      e.push("You: answer the marriage question.");
+      e.push("You: answer whether you are married or in a partnership.");
     }
     if (state.primaryApplicant.children === null) {
       e.push("You: answer the children-under-18 question.");
     }
     if (isCouples) {
       if (state.partnerApplicant.married === null) {
-        e.push("Your partner: answer the marriage question.");
+        e.push("Your partner: answer whether they are married or in a partnership.");
       }
       if (state.partnerApplicant.children === null) {
         e.push("Your partner: answer the children-under-18 question.");
@@ -145,7 +145,7 @@ export function Step2AboutYou({
               <section>
                 <h3>You</h3>
                 {renderRadioQuestion(
-                  "Are you married?",
+                  "Are you married or in a partnership?",
                   false,
                   "married",
                   state.primaryApplicant.married
@@ -162,7 +162,7 @@ export function Step2AboutYou({
                 <section>
                   <h3>Your partner</h3>
                   {renderRadioQuestion(
-                    "Is your partner married?",
+                    "Is your partner married or in a partnership?",
                     true,
                     "married",
                     state.partnerApplicant.married

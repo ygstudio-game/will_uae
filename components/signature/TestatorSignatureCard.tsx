@@ -33,11 +33,11 @@ export function TestatorSignatureCard({
           <div className="flex items-center gap-2">
             <PenTool className="w-4 h-4 text-[#A37E44]" />
             <h3 className="text-sm font-bold text-[#0B1528] uppercase tracking-wider">
-              Testator Digital Signature (Clause 14 & Attestation)
+              Your Signature (Court Attestation)
             </h3>
           </div>
           <p className="text-xs text-gray-500 mt-1">
-            Provide your authentic signature. It will be embedded directly onto the official Abu Dhabi Civil Court will document.
+            Provide your authentic signature. It will appear on the execution section of your official Abu Dhabi Civil Court will document.
           </p>
         </div>
 

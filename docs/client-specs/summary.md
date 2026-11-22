@@ -39,4 +39,9 @@ remove the draw signature feature
 
 
 
+
+use footer and headr same as orginal website and dont put any links and other hyperlink  and  use proffeionsl phtoo on the first page on card like indiviusal and fgroup will and fix the check mark on that card 
+remove the homepage 
+and do select that cards of indivisual and group will on first page let user select them manully 
+
 scroll to options on clicking card of /start page 

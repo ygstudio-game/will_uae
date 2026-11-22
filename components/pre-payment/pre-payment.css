@@ -886,8 +886,9 @@ button.pre-package{display:block;appearance:none;width:100%;text-align:left;font
 .pre-package .pre-package-name{color:#fff;font:500 26px/1.16 Arial,sans-serif;margin-top:9px;letter-spacing:-.035em}
 .pre-package .premium-package-detail{color:#f0e7fa;font-size:13px;line-height:1.6}
 .pre-package.couples .premium-package-detail{color:#e0f7f8}
-.pre-package .choice-indicator{border-color:#ffffff90;background:#ffffff15;width:22px;height:22px}
-.pre-package.selected .choice-indicator{background:#d1f5dc;border-color:#d1f5dc;color:#225f46}
+.pre-package .choice-indicator{display:flex;align-items:center;justify-content:center;border:1.5px solid #ffffff90;background:#ffffff15;width:24px;height:24px;border-radius:50%;transition:all .18s ease;margin-left:8px}
+.pre-package.selected .choice-indicator{background:#fff;border-color:#fff;color:#3e0d86;box-shadow:0 2px 8px #00000030}
+.pre-package.couples.selected .choice-indicator{background:#fff;border-color:#fff;color:#00607a;box-shadow:0 2px 8px #00000030}
 .pre-package .pre-package-action{grid-column:1;color:white;background:#ffffff17;border:1px solid #ffffff60;border-radius:20px;width:max-content;max-width:100%;padding:8px 13px;font-size:11px;line-height:1.4;align-self:end}
 .pre-package.selected .pre-package-action{background:#d1f5dc;color:#225840;border-color:#d1f5dc}
 .pre-scope-heading{background:#f1ecf8;border-radius:14px 14px 0 0}

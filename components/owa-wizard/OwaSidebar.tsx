@@ -50,7 +50,7 @@ export function OwaSidebar({ currentSection }: OwaSidebarProps) {
     application?.account?.fullName?.trim() ||
     user?.name?.trim() ||
     user?.email?.split("@")[0] ||
-    "Your Name";
+    "Your Will";
 
   const handleStepClick = async (targetSection: OwaSectionId) => {
     if (targetSection === currentSection || isNavigatingSection) return;

@@ -1,154 +1,168 @@
 import React from "react";
 import Link from "next/link";
-import { ArrowRight, FileText, Check, ShieldCheck, Scale } from "lucide-react";
+import { ArrowRight, Check, ShieldCheck, Scale, FileText } from "lucide-react";
 
 export function HeroSection() {
   return (
-    <section className="relative bg-obsidian text-white pt-16 pb-20 sm:pt-24 sm:pb-28 border-b border-court-tan/20">
-      <div className="container mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 xl:gap-14 items-center">
+    <section className="relative bg-[#160826] text-white pt-16 pb-20 sm:pt-22 sm:pb-26 border-b border-white/10 overflow-hidden">
+      {/* Subtle background ambient purple glow */}
+      <div
+        className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-[#66388f]/20 rounded-full blur-[120px] pointer-events-none"
+        aria-hidden="true"
+      />
+
+      <div className="max-w-[1240px] mx-auto px-4 sm:px-6 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-10 items-center">
           {/* Left Column: Authoritative Editorial Statement */}
-          <div className="lg:col-span-7 space-y-6 sm:space-y-8">
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-serif font-bold text-white tracking-tight leading-[1.12]">
-              Official Non-Muslim Will for Abu Dhabi Civil Family Court
+          <div className="lg:col-span-7 space-y-6 sm:space-y-7">
+            {/* Eyebrow badge */}
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs text-[#E8D8B0] font-medium tracking-wide">
+              <span>Online UAE Will for Expats</span>
+            </div>
+
+            {/* Official Heading from Page 1 */}
+            <h1 className="text-3xl sm:text-5xl lg:text-[54px] font-serif font-bold text-white tracking-tight leading-[1.12]">
+              Create Your Non-Sharia Will Online and Register It Remotely With ADJD or DIFC
             </h1>
 
+            {/* Official Subheading from Page 1 */}
             <p className="text-base sm:text-lg text-white/80 font-sans leading-relaxed max-w-xl">
-              Prepare, review, and print a legally binding bilingual Will governed by Abu Dhabi Law No. 14 of 2021. Secure your UAE real estate, bank accounts, and designate minor guardians under secular civil jurisdiction.
+              Online Wills Advisor is a digital will-writing service that helps individuals and couples prepare Will drafts and submit them to the relevant UAE authorities for registration.
             </p>
 
-            {/* Direct Action Group */}
+            {/* Direct Action Group - ALL CTAs LINK TO THE START URL */}
             <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 sm:gap-4">
               <Link
                 href="/start"
-                className="inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-md bg-court-bronze hover:bg-court-bronze-dark text-white font-semibold text-sm tracking-wide transition-colors"
+                className="inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-full bg-[#d83a3a] hover:bg-[#c22e2e] text-white font-semibold text-sm shadow-md transition-all duration-150 active:scale-[0.98]"
               >
-                <span>Start Your Will (From AED 999)</span>
+                <span>Start My Will Now (From AED 999)</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
 
               <Link
-                href="/dashboard"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-md bg-white/5 hover:bg-white/10 text-white/90 hover:text-white border border-white/20 font-medium text-sm transition-colors"
+                href="/start"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-white/10 hover:bg-white/15 text-white/90 hover:text-white border border-white/20 font-medium text-sm transition-colors"
               >
-                <FileText className="w-4 h-4 text-court-tan" />
-                <span>Resume Saved Draft</span>
+                <span>Choose Package</span>
+                <ArrowRight className="w-4 h-4 text-[#E8D8B0]" />
               </Link>
             </div>
 
-            {/* Plain-Spoken Legal Ground Truth Metrics */}
-            <div className="pt-6 sm:pt-8 border-t border-white/10 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Key Trust Metrics */}
+            <div className="pt-6 sm:pt-7 border-t border-white/10 grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-1">
-                <div className="text-xs font-semibold text-court-tan uppercase tracking-wider flex items-center gap-1.5">
+                <div className="text-xs font-semibold text-[#E8D8B0] uppercase tracking-wider flex items-center gap-1.5">
                   <Scale className="w-3.5 h-3.5 text-court-bronze" />
-                  <span>Law No. 14 of 2021</span>
+                  <span>Abu Dhabi & DIFC</span>
                 </div>
                 <p className="text-xs text-white/70 leading-normal">
-                  Civil family court secular inheritance and estate laws.
+                  Non-Muslim secular civil estate inheritance laws.
                 </p>
               </div>
 
               <div className="space-y-1">
-                <div className="text-xs font-semibold text-court-tan uppercase tracking-wider flex items-center gap-1.5">
+                <div className="text-xs font-semibold text-[#E8D8B0] uppercase tracking-wider flex items-center gap-1.5">
                   <ShieldCheck className="w-3.5 h-3.5 text-court-bronze" />
-                  <span>ADJD-NM0723-07-03</span>
+                  <span>Bilingual Court Ready</span>
                 </div>
                 <p className="text-xs text-white/70 leading-normal">
-                  Official statutory bilingual 8-page court form template.
+                  English LTR & Arabic RTL synchronized court clauses.
                 </p>
               </div>
 
               <div className="space-y-1">
-                <div className="text-xs font-semibold text-court-tan uppercase tracking-wider flex items-center gap-1.5">
+                <div className="text-xs font-semibold text-[#E8D8B0] uppercase tracking-wider flex items-center gap-1.5">
                   <Check className="w-3.5 h-3.5 text-court-bronze" />
                   <span>100% Online Filing</span>
                 </div>
                 <p className="text-xs text-white/70 leading-normal">
-                  Remote video attestation with Abu Dhabi Judicial notary.
+                  Remote notary video attestation from home.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Right Column: Physical Court Document Artifact */}
-          <div className="lg:col-span-5">
-            <div className="bg-white rounded-lg border border-court-tan/40 text-obsidian p-6 sm:p-7 shadow-2xl relative">
-              {/* Official Court Document Header */}
-              <div className="border-b-2 border-court-bronze/30 pb-4 mb-5 flex items-start justify-between">
-                <div>
-                  <div className="font-serif text-sm font-bold text-obsidian tracking-wide">
-                    دائرة القضاء - أبوظبي
-                  </div>
-                  <div className="text-[11px] font-sans font-semibold text-gray-700 tracking-wider uppercase">
-                    Abu Dhabi Judicial Department
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="inline-block text-[10px] font-mono bg-court-tan/20 text-court-bronze-dark px-2 py-0.5 rounded border border-court-bronze/30 font-semibold">
-                    FORM ADJD-NM0723-07-03
+          {/* Right Column: Visual Artifact with Document Preview & Family Portrait (Page 3 of PDF) */}
+          <div className="lg:col-span-5 relative">
+            <div className="relative rounded-2xl bg-[#231238] border border-white/15 p-6 shadow-2xl overflow-hidden">
+              {/* Document Sample Preview Header */}
+              <div className="flex items-center justify-between pb-3 mb-4 border-b border-white/15">
+                <span className="px-3 py-1 rounded-full bg-white/10 border border-white/20 text-[11px] font-medium text-[#E8D8B0]">
+                  BILINGUAL SAMPLE · English + Arabic
+                </span>
+                <span className="text-[10px] text-white/60 tracking-wider uppercase font-mono">
+                  ADJD & DIFC Ready
+                </span>
+              </div>
+
+              {/* Simulated Dual-Column Document Form */}
+              <div className="bg-white/95 text-[#0B1528] rounded-lg p-5 shadow-inner space-y-3 font-serif text-[11px] leading-relaxed">
+                <div className="text-center pb-2 border-b border-gray-200">
+                  <strong className="block text-[12px] tracking-wide text-obsidian uppercase font-sans">
+                    The Last Will and Testament
+                  </strong>
+                  <span className="text-[11px] text-gray-600 font-serif" dir="rtl">
+                    الوصية الأخيرة والإرادة المدنية
                   </span>
-                  <div className="text-[10px] text-gray-600 mt-1">
-                    Civil Family Court
-                  </div>
                 </div>
-              </div>
 
-              {/* Title Preamble */}
-              <div className="text-center py-2 mb-4 bg-alabaster border border-court-border rounded">
-                <div className="font-serif font-bold text-xs text-obsidian tracking-wide">
-                  LAST WILL AND TESTAMENT
-                </div>
-                <div className="font-serif text-xs text-gray-800" dir="rtl">
-                  الوصية الأخيرة والإرادة
-                </div>
-              </div>
-
-              {/* Dual-Column Preview Snippet */}
-              <div className="space-y-3.5 text-[11px] leading-relaxed">
-                {/* Section One */}
-                <div className="grid grid-cols-2 gap-3 pb-3 border-b border-gray-100">
-                  <div className="text-gray-700">
-                    <span className="font-bold text-obsidian block mb-0.5">Section One: Revocation</span>
+                <div className="grid grid-cols-2 gap-3 text-gray-700">
+                  <div>
+                    <span className="font-bold text-[#0B1528] block mb-0.5 font-sans text-[10px] uppercase">
+                      Declaration
+                    </span>
                     I hereby revoke all previous testamentary dispositions and wills made by me...
                   </div>
-                  <div className="text-gray-700 font-serif" dir="rtl">
-                    <span className="font-bold text-obsidian block mb-0.5">البند الأول: الإلغاء</span>
+                  <div dir="rtl" className="text-right">
+                    <span className="font-bold text-[#0B1528] block mb-0.5 font-sans text-[10px] uppercase">
+                      إقرار
+                    </span>
                     أنا الموقع أدناه بموجب هذه الوثيقة ألغي جميع التصرفات والوصايا السابقة...
                   </div>
                 </div>
 
-                {/* Section Two */}
-                <div className="grid grid-cols-2 gap-3 pb-3 border-b border-gray-100">
-                  <div className="text-gray-700">
-                    <span className="font-bold text-obsidian block mb-0.5">Section Two: Executors</span>
-                    I appoint my spouse as Primary Executor and Trustee of this my Will...
+                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-gray-100 text-gray-700">
+                  <div>
+                    <span className="font-bold text-[#0B1528] block mb-0.5 font-sans text-[10px] uppercase">
+                      Executors & Assets
+                    </span>
+                    I appoint my spouse and substitute executor to administer my UAE estate...
                   </div>
-                  <div className="text-gray-700 font-serif" dir="rtl">
-                    <span className="font-bold text-obsidian block mb-0.5">البند الثاني: الوصي المنفذ</span>
-                    أعين زوجي/زوجتي منفذاً رئيسياً ووصياً على هذه الوصية...
-                  </div>
-                </div>
-
-                {/* Section Three */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="text-gray-700">
-                    <span className="font-bold text-obsidian block mb-0.5">Section Three: Guardianship</span>
-                    I appoint permanent guardians for my minor children residing in the UAE...
-                  </div>
-                  <div className="text-gray-700 font-serif" dir="rtl">
-                    <span className="font-bold text-obsidian block mb-0.5">البند الثالث: الوصاية على القصر</span>
-                    أعين أوصياء دائمين على أطفالي القصر المقيمين في دولة الإمارات...
+                  <div dir="rtl" className="text-right">
+                    <span className="font-bold text-[#0B1528] block mb-0.5 font-sans text-[10px] uppercase">
+                      المنفذ والأموال
+                    </span>
+                    أعين زوجي كمنفذ ووصي لإدارة كافة أصولي داخل دولة الإمارات...
                   </div>
                 </div>
               </div>
 
-              {/* Official Attestation Strip */}
-              <div className="mt-5 pt-3 border-t border-dashed border-gray-200 flex items-center justify-between text-[10px] text-gray-600">
-                <span className="flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-court-bronze inline-block" />
-                  Bilingual English LTR & Arabic RTL
-                </span>
-                <span className="font-mono text-gray-600">Court Verified · 8 Pages</span>
+              {/* Floating Pills and Family Photo matching Page 3 */}
+              <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                <div className="flex flex-col gap-2">
+                  <div className="px-3 py-2 rounded-lg bg-white/10 border border-white/15 text-xs text-white">
+                    <span className="text-[10px] text-[#E8D8B0] uppercase tracking-wider block font-semibold">
+                      YOUR CHOICES
+                    </span>
+                    <span>Name beneficiaries and guardians</span>
+                  </div>
+                  <div className="px-3 py-2 rounded-lg bg-white/10 border border-white/15 text-xs text-white">
+                    <span className="text-[10px] text-[#E8D8B0] uppercase tracking-wider block font-semibold">
+                      REGISTRATION
+                    </span>
+                    <span>Remotely registered</span>
+                  </div>
+                </div>
+
+                {/* Photo matching Page 3 */}
+                <div className="rounded-xl overflow-hidden border border-white/20 h-28 shadow-lg">
+                  <img
+                    src="/assets/people/couples-pro.jpg"
+                    alt="Expatriate family in the UAE"
+                    className="w-full h-full object-cover object-top"
+                  />
+                </div>
               </div>
             </div>
           </div>

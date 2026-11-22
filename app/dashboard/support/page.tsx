@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import {
   MessageSquare,
   Plus,
@@ -42,6 +43,8 @@ const TOPIC_PRESETS: Record<string, { subject: string; message: string }> = {
 };
 
 function CustomerSupportContent() {
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const searchParams = useSearchParams();
   const topicParam = searchParams.get("topic");
 
@@ -63,6 +66,12 @@ function CustomerSupportContent() {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!authLoading && !user && (!application?.id || application.id.startsWith("draft-"))) {
+      router.push("/auth/signin?redirect=/dashboard/support");
+    }
+  }, [authLoading, user, application?.id, router]);
 
   const fetchTickets = async (silent = false, customMsg?: string) => {
     if (!silent) {

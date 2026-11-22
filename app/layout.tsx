@@ -3,7 +3,7 @@ import "./globals.css";
 import { Navbar } from "@/components/Navbar";
 
 export const metadata: Metadata = {
-  title: "UAE Non-Muslim Will Preparation | ADJD Civil Family Court",
+  title: "Online Wills Advisor – UAE Will Writing & Registration for Expats",
   description:
     "Prepare, verify, and generate court-ready Abu Dhabi Judicial Department (ADJD) Non-Muslim bilingual Last Will & Testament.",
 };

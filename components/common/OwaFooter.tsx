@@ -1,52 +1,33 @@
 import React from "react";
-import Link from "next/link";
 
 export function OwaFooter() {
   return (
-    <footer className="bg-[#281b40] text-[#d9d0e6] text-[14px] border-t border-[#382852] no-print">
-      <div className="max-w-[1200px] mx-auto px-6 py-10 flex flex-col gap-6">
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-8 md:gap-12">
-          {/* Brand & Legal Consultancy Disclosure */}
-          <div className="max-w-[440px] flex flex-col gap-2">
-            <b className="font-serif text-[18px] text-white tracking-tight">Online Wills Advisor</b>
-            <span className="text-[13.5px] leading-relaxed text-[#c9bfd8]">
-              Operated by SP LEGAL FZ LLE, a legal consultancy licensed in Fujairah. A legal expert reviews every Will before we file it.
-            </span>
-            <span className="text-[13px] text-[#c9bfd8]">
-              Email: <a href="mailto:support@onlinewillsadvisor.com" className="text-white hover:underline">support@onlinewillsadvisor.com</a>
-            </span>
-          </div>
-
-          {/* 2-Column Navigation Grid */}
-          <nav className="grid grid-cols-2 gap-x-10 gap-y-2 text-[13.5px]" aria-label="Footer Navigation">
-            <Link href="/dashboard" className="text-white hover:underline transition-colors">
-              How it works
-            </Link>
-            <Link href="/wizard/review" className="text-white hover:underline transition-colors">
-              Sample Will
-            </Link>
-            <Link href="/dashboard" className="text-white hover:underline transition-colors">
-              UAE Wills guide
-            </Link>
-            <Link href="/dashboard" className="text-white hover:underline transition-colors">
-              About us
-            </Link>
-            <Link href="/dashboard" className="text-white hover:underline transition-colors">
-              Privacy policy
-            </Link>
-            <Link href="/dashboard/support" className="text-white hover:underline transition-colors">
-              Contact support
-            </Link>
-            <Link href="/handbook" className="text-white hover:underline transition-colors">
-              Developer Handbook
-            </Link>
-          </nav>
+    <footer className="bg-[#170a24] text-white/80 text-[13px] border-t border-[#311a45] no-print relative overflow-hidden">
+      {/* Subtle top ambient glow */}
+      <div 
+        className="h-[1.5px] w-full bg-gradient-to-r from-transparent via-[#764294]/50 to-transparent" 
+        aria-hidden="true" 
+      />
+      
+      <div className="max-w-[1240px] mx-auto px-6 py-10 flex flex-col gap-6">
+        {/* Top Row: Brand */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <span className="font-serif text-[22px] sm:text-[24px] text-white font-normal tracking-tight">
+            Online Wills Advisor
+          </span>
         </div>
 
-        {/* Legal Disclaimer & Copyright */}
-        <small className="block pt-4 border-t border-[#45375c] text-[13px] text-[#c9bfd8] leading-relaxed">
-          You complete ADJD&apos;s civil Will template on this platform. ADJD reviews, notarises and registers your Will. This is general information, not legal advice about your estate. © 2026 Online Wills Advisor.
-        </small>
+        {/* Bottom Row: Legal Disclaimer & Copyright */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pt-6 border-t border-white/10 text-[12px] sm:text-[12.5px] text-[#a496b6] leading-relaxed">
+          <p className="max-w-[560px] m-0">
+            Online Wills Advisor is operated by SP LEGAL FZ LLE, a licensed legal consultancy providing legal guidance on Will preparation and UAE succession matters. ADJD or DIFC decide eligibility and complete formal registration.
+          </p>
+
+          <div className="flex flex-col md:items-end gap-1 shrink-0 text-white/60">
+            <span>© 2026 Online Wills Advisor, operated by SP LEGAL FZ LLE</span>
+            <span>Trade licence no. 19510/2025</span>
+          </div>
+        </div>
       </div>
     </footer>
   );

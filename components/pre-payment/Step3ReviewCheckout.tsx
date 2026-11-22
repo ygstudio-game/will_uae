@@ -113,9 +113,11 @@ export function Step3ReviewCheckout({
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email.trim())) {
       e.push("Enter a valid email address.");
     }
-    const cleanPhone = "+" + phoneKey(state.phoneNumber);
-    if (!/^\+[1-9]\d{6,14}$/.test(cleanPhone)) {
-      e.push("Enter your phone number with country code, for example +971 50 000 0001.");
+    if (state.phoneNumber && state.phoneNumber.trim()) {
+      const cleanPhone = "+" + phoneKey(state.phoneNumber);
+      if (!/^\+[1-9]\d{6,14}$/.test(cleanPhone)) {
+        e.push("Enter a valid phone number with country code (e.g. +971 50 000 0001), or leave blank.");
+      }
     }
     return e;
   };
@@ -320,94 +322,122 @@ export function Step3ReviewCheckout({
           </div>
         </section>
 
-        {/* Contact Details Card */}
-        <section id="checkout-contact" className="card cro-contact">
-          <div className="cardhead">
-            <div>
-              <span className="eyebrow">YOUR CONTACT DETAILS</span>
-              <h3>Where should we send your receipt?</h3>
-            </div>
-          </div>
-          <div className="cardbody">
-            <p className="small muted cro-contact-intro">
-              Enter your email and phone number for your receipt and application. You can verify your email when you return to the paid questionnaire.
-            </p>
-            <div className="grid2">
-              <label className="field">
-                Email address *
-                <input
-                  id="checkout-email"
-                  type="email"
-                  autoComplete="email"
-                  aria-required="true"
-                  placeholder="you@example.com"
-                  value={state.email}
-                  onChange={(e) => {
-                    onUpdateEmail(e.target.value);
-                    if (errors.length > 0) setErrors([]);
-                  }}
-                />
-              </label>
-              <label className="field">
-                Phone number *
-                <input
-                  type="tel"
-                  autoComplete="tel"
-                  aria-required="true"
-                  placeholder="+971 50 000 0001"
-                  value={state.phoneNumber}
-                  onChange={(e) => {
-                    onUpdatePhone(e.target.value);
-                    if (errors.length > 0) setErrors([]);
-                  }}
-                />
-                <span className="hint">Include your country code. OWA may contact you about your application.</span>
-              </label>
-            </div>
-          </div>
-        </section>
-
-        {/* Email Security & Pre-Payment OTP Verification Card */}
-        <section id="email-verification-box" className="card cro-contact" style={{ marginTop: "1.25rem" }}>
+        {/* Unified Contact Details & Email Security Card */}
+        <section id="email-verification-box" className="card cro-contact">
           <div className="cardhead">
             <div>
               <span className="eyebrow" style={{ color: "#A37E44" }}>APPLICATION ACCESS & SECURITY</span>
-              <h3>Email Verification & Save Progress</h3>
+              <h3>Contact Details & Email Verification</h3>
             </div>
           </div>
           <div className="cardbody">
+            <p className="small muted cro-contact-intro" style={{ marginBottom: "1.25rem" }}>
+              Enter your email address to secure your application, save your progress, and receive your official bilingual ADJD Will documents.
+            </p>
+
+            {otpError && (
+              <div style={{ background: "#FEE2E2", border: "1px solid #EF4444", borderRadius: "8px", padding: "10px 14px", color: "#991B1B", fontSize: "13px", marginBottom: "16px" }}>
+                {otpError}
+              </div>
+            )}
+
             {state.isEmailVerified ? (
-              <div style={{ display: "flex", alignItems: "center", gap: "12px", background: "#E6F4EA", border: "1px solid #34A853", padding: "16px 20px", borderRadius: "10px" }}>
-                <CheckCircle2 style={{ width: "24px", height: "24px", color: "#137333", flexShrink: 0 }} />
-                <div>
-                  <strong style={{ color: "#137333", display: "block", fontSize: "15px" }}>
-                    Email Verified: {state.email}
-                  </strong>
-                  <span style={{ color: "#2D3748", fontSize: "13px" }}>
-                    Your application is secured and linked to your account. You can now proceed to payment.
-                  </span>
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "16px", background: "#E6F4EA", border: "1px solid #34A853", padding: "16px 20px", borderRadius: "10px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                    <CheckCircle2 style={{ width: "24px", height: "24px", color: "#137333", flexShrink: 0 }} />
+                    <div>
+                      <strong style={{ color: "#137333", display: "block", fontSize: "15px" }}>
+                        Email Verified: {state.email}
+                      </strong>
+                      <span style={{ color: "#2D3748", fontSize: "13px" }}>
+                        Your application is secured and linked to your account. You can now proceed to payment.
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn primary"
+                    style={{ whiteSpace: "nowrap" }}
+                    onClick={handleCheckoutAction}
+                  >
+                    <span>Proceed to payment</span>
+                    <ArrowRight className="icon inline w-4 h-4 ml-1" aria-hidden="true" />
+                  </button>
+                </div>
+
+                <div className="grid2">
+                  <label className="field">
+                    Email address
+                    <input
+                      type="email"
+                      value={state.email}
+                      disabled
+                      style={{ background: "#F8F5FC", color: "#555" }}
+                    />
+                  </label>
+                  <label className="field">
+                    Phone number (optional)
+                    <input
+                      type="tel"
+                      autoComplete="tel"
+                      placeholder="+971 50 000 0001"
+                      value={state.phoneNumber}
+                      onChange={(e) => {
+                        onUpdatePhone(e.target.value);
+                        if (errors.length > 0) setErrors([]);
+                      }}
+                    />
+                    <span className="hint">Include country code. OWA may contact you about your application.</span>
+                  </label>
                 </div>
               </div>
             ) : (
-              <div>
-                <p className="small muted" style={{ marginBottom: "16px" }}>
-                  To ensure you can return to your Will draft, receive your bilingual ADJD legal documents, and track your application, please verify your email address before continuing.
-                </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                <div className="grid2">
+                  <label className="field">
+                    Email address *
+                    <input
+                      id="checkout-email"
+                      type="email"
+                      autoComplete="email"
+                      aria-required="true"
+                      placeholder="you@example.com"
+                      value={state.email}
+                      disabled={otpSent}
+                      onChange={(e) => {
+                        onUpdateEmail(e.target.value);
+                        if (errors.length > 0) setErrors([]);
+                        setOtpError(null);
+                      }}
+                    />
+                    <span className="hint">We&apos;ll send a 6-digit verification code to this address.</span>
+                  </label>
 
-                {otpError && (
-                  <div style={{ background: "#FEE2E2", border: "1px solid #EF4444", borderRadius: "8px", padding: "10px 14px", color: "#991B1B", fontSize: "13px", marginBottom: "14px" }}>
-                    {otpError}
-                  </div>
-                )}
+                  <label className="field">
+                    Phone number (optional)
+                    <input
+                      type="tel"
+                      autoComplete="tel"
+                      placeholder="+971 50 000 0001"
+                      value={state.phoneNumber}
+                      onChange={(e) => {
+                        onUpdatePhone(e.target.value);
+                        if (errors.length > 0) setErrors([]);
+                      }}
+                    />
+                    <span className="hint">Include country code. OWA may contact you about your application.</span>
+                  </label>
+                </div>
 
                 {!otpSent ? (
-                  <div style={{ display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap", marginTop: "4px" }}>
                     <button
                       type="button"
                       className="btn primary"
-                      style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "10px 20px", fontSize: "14px" }}
+                      style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "10px 22px", fontSize: "14px" }}
                       onClick={handleSendOtp}
-                      disabled={otpLoading || !state.email}
+                      disabled={otpLoading || !state.email || !state.email.includes("@")}
                     >
                       {otpLoading ? <Loader2 className="animate-spin w-4 h-4" /> : <Mail className="w-4 h-4" />}
                       <span>Send 6-Digit Verification Code</span>
@@ -418,9 +448,22 @@ export function Step3ReviewCheckout({
                   </div>
                 ) : (
                   <div style={{ background: "#FBF9F5", border: "1px solid #E5E0D8", borderRadius: "10px", padding: "20px" }}>
-                    <p style={{ margin: "0 0 12px 0", fontSize: "14px", color: "#0B1528", fontWeight: 600 }}>
-                      Enter the 6-digit code sent to <span style={{ textDecoration: "underline" }}>{state.email}</span>:
-                    </p>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "8px" }}>
+                      <p style={{ margin: 0, fontSize: "14px", color: "#0B1528", fontWeight: 600 }}>
+                        Enter the 6-digit code sent to <span style={{ textDecoration: "underline" }}>{state.email}</span>:
+                      </p>
+                      <button
+                        type="button"
+                        className="link small"
+                        onClick={() => {
+                          setOtpSent(false);
+                          setOtpCode("");
+                          setOtpError(null);
+                        }}
+                      >
+                        Change email
+                      </button>
+                    </div>
 
                     <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", marginBottom: "12px" }}>
                       <input
@@ -470,21 +513,6 @@ export function Step3ReviewCheckout({
                     )}
                   </div>
                 )}
-
-                {/* Dev Mode Bypass for seamless testing */}
-                <div style={{ marginTop: "12px", textAlign: "right" }}>
-                  <button
-                    type="button"
-                    className="link small"
-                    style={{ fontSize: "11px", color: "#999", textDecoration: "underline" }}
-                    onClick={() => {
-                      onVerifyEmail?.(true);
-                      setErrors([]);
-                    }}
-                  >
-                    Demo bypass: Verify instantly without email
-                  </button>
-                </div>
               </div>
             )}
           </div>
@@ -507,6 +535,23 @@ export function Step3ReviewCheckout({
               <p className="cro-package-label">
                 {packageTitle} · {isCouples ? "two Wills" : "one Will"}
               </p>
+
+              {/* All-inclusive transparent breakdown */}
+              <div className="my-3 p-3 rounded-lg bg-[#FAF7F2] border border-[#E5E0D8] text-xs space-y-1.5 text-left">
+                <div className="flex justify-between text-gray-600">
+                  <span>OWA preparation & review fee:</span>
+                  <span className="font-semibold text-gray-900">AED {serviceFee.toLocaleString("en-US")}</span>
+                </div>
+                <div className="flex justify-between text-gray-600">
+                  <span>ADJD court registry fee (later):</span>
+                  <span className="font-semibold text-gray-900">AED {courtFee.toLocaleString("en-US")}</span>
+                </div>
+                <div className="pt-1.5 border-t border-[#E5E0D8] flex justify-between font-bold text-[#0B1528]">
+                  <span>Total all-inclusive:</span>
+                  <span className="text-[#8C6D41]">AED {(serviceFee + courtFee).toLocaleString("en-US")}</span>
+                </div>
+              </div>
+
               <div id="checkout-action-slot">
                 <button
                   id="checkout-action"
@@ -519,19 +564,14 @@ export function Step3ReviewCheckout({
                 <p id="checkout-action-hint" className="cro-cta-hint">
                   Continue to the payment screen; no card details are collected here.
                 </p>
+                {errors.length > 0 && (
+                  <div className="mt-3 p-2.5 rounded bg-red-50 border border-red-200 text-xs text-red-700 text-left">
+                    {errors.map((err, i) => (
+                      <div key={i} className="py-0.5">• {err}</div>
+                    ))}
+                  </div>
+                )}
               </div>
-              <div className="cro-payment-steps">
-                <span>1 Review details</span>
-                <span>2 Payment</span>
-                <span>3 Questionnaire</span>
-              </div>
-              <p className="cro-demo-note">Payment is completed on Nomod. Only the OWA service fee is collected.</p>
-              <details className="cro-prototype-terms">
-                <summary>About this test</summary>
-                <p>
-                  This preview links to live Nomod checkout. Application access is not activated automatically. Service and refund terms must be finalized for production.
-                </p>
-              </details>
             </div>
           </div>
           <p className="cro-court-line">
@@ -552,7 +592,7 @@ export function Step3ReviewCheckout({
             <details>
               <summary>Can I finish the questionnaire later?</summary>
               <p>
-                Yes. Save your progress and return through email sign-in. This testing file stores intake only on this browser.
+                Yes. Save your progress and return through email sign-in. Your progress is saved securely to your account so you can return at any time.
               </p>
             </details>
             <details>

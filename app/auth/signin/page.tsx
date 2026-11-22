@@ -59,7 +59,7 @@ export default function SignInPage() {
               : "text-gray-600 hover:text-gray-900"
           }`}
         >
-          Passwordless Email OTP (OWA Standard)
+          Email Code (Passwordless)
         </button>
         <button
           type="button"
@@ -70,7 +70,7 @@ export default function SignInPage() {
               : "text-gray-600 hover:text-gray-900"
           }`}
         >
-          Password Login
+          Password
         </button>
       </div>
 

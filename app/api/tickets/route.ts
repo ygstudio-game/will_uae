@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (isAdmin) {
-      // Admin sees all tickets
+      // Admin sees all tickets (or filtered by appId)
       if (appId && !appId.startsWith("draft-")) {
         whereClause.applicationId = appId;
       }
@@ -32,6 +32,9 @@ export async function GET(req: NextRequest) {
         whereClause.application = { accountId: session.accountId };
       } else if (appId && !appId.startsWith("draft-")) {
         whereClause.applicationId = appId;
+      } else {
+        // Return empty array if not authenticated and no valid application ID
+        return NextResponse.json({ success: true, tickets: [] });
       }
     }
 
@@ -86,14 +89,13 @@ export async function POST(req: NextRequest) {
           orderBy: { createdAt: "desc" },
         });
       }
-      if (!existingApp) {
-        existingApp = await prisma.application.findFirst({
-          include: { account: true },
-          orderBy: { createdAt: "desc" },
-        });
-      }
       if (existingApp) {
         targetAppId = existingApp.id;
+      } else {
+        return NextResponse.json(
+          { success: false, error: "Valid application or authenticated session required to submit an inquiry" },
+          { status: 401 }
+        );
       }
     }
 

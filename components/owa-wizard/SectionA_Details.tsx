@@ -783,7 +783,7 @@ export function SectionA_Details() {
               className="w-full min-h-[48px] px-3.5 py-2.5 rounded-lg border border-[#cfc6da] text-[15px] text-[#231a30] focus:outline-none focus:border-[#382852] focus:ring-2 focus:ring-[#d7b48b]/30 bg-white transition-all"
             />
             <p className="text-[13px] text-[#6c6478] mt-1.5">
-              You must be over 21 to make an ADJD civil Will.
+              You must be over 21 to make an ADJD civil Will (format: DD/MM/YYYY).
             </p>
           </div>
 

@@ -64,8 +64,8 @@ export function LegalFeaturesSection() {
 
             <div className="pt-8 mt-8 border-t border-court-border">
               <Link
-                href="/wizard/1?type=individual"
-                className="w-full inline-flex items-center justify-center gap-2 py-3.5 rounded-md bg-obsidian hover:bg-obsidian-light text-white text-xs font-semibold uppercase tracking-wider transition-colors"
+                href="/start"
+                className="w-full inline-flex items-center justify-center gap-2 py-3.5 rounded-full bg-[#d83a3a] hover:bg-[#c22e2e] text-white text-xs font-semibold uppercase tracking-wider transition-colors shadow-sm"
               >
                 <span>Draft Individual Will</span>
               </Link>
@@ -118,8 +118,8 @@ export function LegalFeaturesSection() {
 
             <div className="pt-8 mt-8 border-t border-court-border">
               <Link
-                href="/wizard/1?type=mirror"
-                className="w-full inline-flex items-center justify-center gap-2 py-3.5 rounded-md bg-court-bronze hover:bg-court-bronze-dark text-white text-xs font-semibold uppercase tracking-wider transition-colors"
+                href="/start"
+                className="w-full inline-flex items-center justify-center gap-2 py-3.5 rounded-full bg-[#d83a3a] hover:bg-[#c22e2e] text-white text-xs font-semibold uppercase tracking-wider transition-colors shadow-sm"
               >
                 <span>Draft Mirror Wills</span>
               </Link>
@@ -128,7 +128,7 @@ export function LegalFeaturesSection() {
         </div>
 
         {/* Intestate Risk Alert Banner: Authoritative Legal Note */}
-        <div className="mt-12 p-6 rounded-lg bg-obsidian text-white border border-court-tan/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+        <div className="mt-12 p-6 rounded-xl bg-[#160826] text-white border border-white/15 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div className="flex items-start gap-3.5 max-w-2xl">
             <ShieldAlert className="w-5 h-5 text-court-tan flex-shrink-0 mt-0.5" />
             <div className="space-y-1">
@@ -142,10 +142,10 @@ export function LegalFeaturesSection() {
           </div>
 
           <Link
-            href="/wizard/1"
+            href="/start"
             className="flex-shrink-0 inline-flex items-center gap-2 text-xs font-semibold text-court-tan hover:text-white uppercase tracking-wider transition-colors"
           >
-            <span>Review Statutory Rules</span>
+            <span>Protect Your Estate</span>
             <FileText className="w-3.5 h-3.5" />
           </Link>
         </div>
