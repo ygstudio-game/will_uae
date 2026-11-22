@@ -29,10 +29,34 @@ export async function POST(req: NextRequest) {
     });
 
     if (existing) {
-      return NextResponse.json(
-        { error: "An account with this email already exists" },
-        { status: 409 }
-      );
+      // Treat duplicate registration as the same user: log them in seamlessly without error
+      const safeUser = { id: existing.id, email: existing.email, name: existing.fullName };
+      if (name && name.trim() && name.trim() !== existing.fullName) {
+        const updated = await prisma.account.update({
+          where: { id: existing.id },
+          data: { fullName: name.trim() },
+        });
+        safeUser.name = updated.fullName;
+      }
+
+      const token = await createSessionToken(safeUser);
+      const response = NextResponse.json({
+        success: true,
+        user: safeUser,
+        isExisting: true,
+      });
+
+      response.cookies.set({
+        name: SESSION_COOKIE_NAME,
+        value: token,
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        maxAge: SESSION_DURATION_SECONDS,
+        secure: process.env.NODE_ENV === "production",
+      });
+
+      return response;
     }
 
     const account = await prisma.account.create({

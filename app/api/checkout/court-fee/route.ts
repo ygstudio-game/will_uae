@@ -35,6 +35,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // RBAC: Verify ownership (or admin role)
+    if (application.accountId !== session.accountId && session.role !== "ADMIN") {
+      return NextResponse.json(
+        { success: false, error: "Forbidden: You do not have permission to pay court fees for this application." },
+        { status: 403 }
+      );
+    }
+
     // Verify draft is confirmed before paying court fee
     const allWillsConfirmed = application.wills.every((w) => w.isDraftConfirmed);
     if (!allWillsConfirmed) {

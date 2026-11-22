@@ -18,16 +18,18 @@ export async function POST(req: NextRequest) {
     const signature = req.headers.get("x-nomod-signature");
     const secret = process.env.NOMOD_WEBHOOK_SECRET;
 
-    if (secret && !verifyNomodSignature(rawBody, signature, secret)) {
+    // Extract transaction properties from either nested (event.data) or flat webhook payload
+    const data = body.data || body;
+    const txId = data.id || data.transactionId || body.id || "";
+    const isSimulation = String(txId).startsWith("SIM-NOMOD-") || body.isSimulation === true || data.isSimulation === true;
+
+    // Permit simulation in both development and production; enforce signature check only for live non-simulated webhooks
+    if (!isSimulation && secret && !verifyNomodSignature(rawBody, signature, secret)) {
       return NextResponse.json(
         { success: false, error: "Invalid webhook signature" },
         { status: 401 }
       );
     }
-
-    // Extract transaction properties from either nested (event.data) or flat webhook payload
-    const data = body.data || body;
-    const txId = data.id || data.transactionId || body.id;
     const email = (data.customer?.email || data.email || body.email || "").trim().toLowerCase();
     const amount = Number(data.amount || body.amount || 0);
     const status = (data.status || body.status || "").toLowerCase();

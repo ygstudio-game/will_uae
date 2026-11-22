@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/auth-otp";
+import { getAdminSession } from "@/lib/auth";
 import { TicketStatus } from "@prisma/client";
 import { sendTicketAlertToSupport } from "@/lib/email";
 
@@ -10,10 +11,12 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const isAdmin = searchParams.get("admin") === "true";
     const statusFilter = searchParams.get("status") as TicketStatus | null;
     const appId = searchParams.get("applicationId");
 
+    // Secure RBAC: verify actual admin session rather than query flag
+    const adminSession = await getAdminSession(req);
+    const isAdmin = !!adminSession;
     const session = await getCurrentSession();
 
     const whereClause: any = {};
@@ -22,12 +25,12 @@ export async function GET(req: NextRequest) {
     }
 
     if (isAdmin) {
-      // Admin sees all tickets (or filtered by appId)
+      // Verified administrator sees all tickets (or filtered by appId)
       if (appId && !appId.startsWith("draft-")) {
         whereClause.applicationId = appId;
       }
     } else {
-      // Customer sees their tickets
+      // Customer sees only their own tickets
       if (session) {
         whereClause.application = { accountId: session.accountId };
       } else if (appId && !appId.startsWith("draft-")) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentSession } from "@/lib/auth-otp";
+import { getAdminSession } from "@/lib/auth";
 import { normalizeRoleType } from "@/lib/roles";
 
 export const dynamic = "force-dynamic";
@@ -44,7 +45,8 @@ export async function GET(
 ) {
   try {
     const session = await getCurrentSession();
-    if (!session) {
+    const adminSession = await getAdminSession(req);
+    if (!session && !adminSession) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
@@ -55,6 +57,14 @@ export async function GET(
 
     if (!application) {
       return NextResponse.json({ success: false, error: "Application not found" }, { status: 404 });
+    }
+
+    // RBAC: Verify ownership (or verified administrator)
+    if (!adminSession && session && application.accountId !== session.accountId) {
+      return NextResponse.json(
+        { success: false, error: "Forbidden: You do not have permission to view this application." },
+        { status: 403 }
+      );
     }
 
     return NextResponse.json({ success: true, application });
@@ -71,7 +81,8 @@ export async function PATCH(
 ) {
   try {
     const session = await getCurrentSession();
-    if (!session) {
+    const adminSession = await getAdminSession(req);
+    if (!session && !adminSession) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
@@ -88,7 +99,7 @@ export async function PATCH(
       status,
     } = body;
 
-    // Check if application is locked due to court payment
+    // Check if application exists
     const currentApp = await prisma.application.findUnique({
       where: { id: params.id },
       include: { wills: true, persons: true },
@@ -96,6 +107,14 @@ export async function PATCH(
 
     if (!currentApp) {
       return NextResponse.json({ success: false, error: "Application not found" }, { status: 404 });
+    }
+
+    // RBAC: Verify ownership (or verified administrator)
+    if (!adminSession && session && currentApp.accountId !== session.accountId) {
+      return NextResponse.json(
+        { success: false, error: "Forbidden: You do not have permission to update this application." },
+        { status: 403 }
+      );
     }
 
     const isLocked =

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getCurrentSession } from "@/lib/auth-otp";
+import { getAdminSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +14,12 @@ interface RouteParams {
 // GET /api/wills/[id] - Fetch full will with all relations from OWA schema
 export async function GET(req: NextRequest, { params }: RouteParams) {
   try {
+    const session = await getCurrentSession();
+    const adminSession = await getAdminSession(req);
+    if (!session && !adminSession) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const will = await prisma.will.findUnique({
       where: { id: params.id },
       include: {
@@ -30,6 +38,14 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     if (!will) {
       return NextResponse.json({ error: "Will not found" }, { status: 404 });
+    }
+
+    // RBAC: Verify ownership (or verified administrator)
+    if (!adminSession && session && will.application.accountId !== session.accountId) {
+      return NextResponse.json(
+        { error: "Forbidden: You do not have permission to view this will." },
+        { status: 403 }
+      );
     }
 
     const testator = will.testatorPerson;
@@ -93,6 +109,29 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 // PATCH /api/wills/[id]
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
   try {
+    const session = await getCurrentSession();
+    const adminSession = await getAdminSession(req);
+    if (!session && !adminSession) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const currentWill = await prisma.will.findUnique({
+      where: { id: params.id },
+      include: { application: true },
+    });
+
+    if (!currentWill) {
+      return NextResponse.json({ error: "Will not found" }, { status: 404 });
+    }
+
+    // RBAC: Verify ownership (or verified administrator)
+    if (!adminSession && session && currentWill.application.accountId !== session.accountId) {
+      return NextResponse.json(
+        { error: "Forbidden: You do not have permission to update this will." },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const { domicileCountry, isDraftConfirmed } = body;
 
