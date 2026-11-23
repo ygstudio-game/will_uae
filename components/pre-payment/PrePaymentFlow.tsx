@@ -243,7 +243,7 @@ export function PrePaymentFlow({ onSuccess }: PrePaymentFlowProps) {
             testatorAge21: state.primaryApplicant.age21 ?? true,
             nonUaeNational: state.primaryApplicant.nonUae ?? true,
             uaeAssets: state.primaryApplicant.uaeAssets ?? true,
-            married: state.primaryApplicant.married ?? false,
+            married: state.primaryApplicant.married ?? (isCouples ? true : false),
             childrenUnder18: state.primaryApplicant.children ?? false,
             partnerAge21: isCouples ? (state.partnerApplicant.age21 ?? true) : null,
             partnerNonUae: isCouples ? (state.partnerApplicant.nonUae ?? true) : null,
