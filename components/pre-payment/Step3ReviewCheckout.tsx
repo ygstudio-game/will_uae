@@ -372,7 +372,22 @@ export function Step3ReviewCheckout({
 
                 <div className="grid2">
                   <label className="field">
-                    Email address
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span>Email address (verified)</span>
+                      <button
+                        type="button"
+                        className="link small"
+                        style={{ fontSize: "12px", color: "#A37E44", fontWeight: 600, textDecoration: "underline" }}
+                        onClick={() => {
+                          onVerifyEmail?.(false);
+                          setOtpSent(false);
+                          setOtpCode("");
+                          setOtpError(null);
+                        }}
+                      >
+                        Change email
+                      </button>
+                    </div>
                     <input
                       type="email"
                       value={state.email}

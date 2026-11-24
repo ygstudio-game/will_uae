@@ -21,6 +21,8 @@ import {
   User,
   ExternalLink,
   Users,
+  Settings,
+  LogOut,
 } from "lucide-react";
 import { useOwaStore } from "@/store/useOwaStore";
 import { ApplicationStatus } from "@prisma/client";
@@ -28,6 +30,7 @@ import { OwaSectionId } from "@/types/owa";
 import { OwaFooter } from "@/components/common/OwaFooter";
 import { CustomerSubNav } from "@/components/navigation/CustomerSubNav";
 import { useAuth } from "@/context/AuthContext";
+import { AccountSettingsModal } from "@/components/account/AccountSettingsModal";
 
 const CHECKLIST_SECTIONS: { id: OwaSectionId; title: string; subtitle: string }[] = [
   {
@@ -112,9 +115,12 @@ const STAGE_LABELS: Record<ApplicationStatus, { label: string; desc: string; pil
 
 function DashboardContent() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
   const searchParams = useSearchParams();
   const paymentNotification = searchParams.get("payment");
+
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [settingsTab, setSettingsTab] = useState<"profile" | "email">("profile");
 
   const {
     application,
@@ -260,32 +266,56 @@ function DashboardContent() {
             </p>
           </div>
 
-          {isCouples && (
-            <div className="flex items-center gap-1.5 bg-[#F7F4FC] border border-[#E4DFEE] p-1.5 rounded-xl text-xs font-medium self-start sm:self-auto">
-              <button
-                type="button"
-                onClick={() => setActiveWillIndex(0)}
-                className={`px-3 py-1.5 rounded-lg transition-all ${
-                  activeWillIndex === 0
-                    ? "bg-[#6243AD] text-white font-bold shadow-2xs"
-                    : "text-gray-600 hover:text-[#29213F]"
-                }`}
-              >
-                Will 1: {primaryWill?.testatorPerson?.fullName?.split(" ")[0] || "Partner 1"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveWillIndex(1)}
-                className={`px-3 py-1.5 rounded-lg transition-all ${
-                  activeWillIndex === 1
-                    ? "bg-[#6243AD] text-white font-bold shadow-2xs"
-                    : "text-gray-600 hover:text-[#29213F]"
-                }`}
-              >
-                Will 2: {partnerWill?.testatorPerson?.fullName?.split(" ")[0] || "Partner 2"}
-              </button>
-            </div>
-          )}
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+            {isCouples && (
+              <div className="flex items-center gap-1.5 bg-[#F7F4FC] border border-[#E4DFEE] p-1.5 rounded-xl text-xs font-medium">
+                <button
+                  type="button"
+                  onClick={() => setActiveWillIndex(0)}
+                  className={`px-3 py-1.5 rounded-lg transition-all ${
+                    activeWillIndex === 0
+                      ? "bg-[#6243AD] text-white font-bold shadow-2xs"
+                      : "text-gray-600 hover:text-[#29213F]"
+                  }`}
+                >
+                  Will 1: {primaryWill?.testatorPerson?.fullName?.split(" ")[0] || "Partner 1"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveWillIndex(1)}
+                  className={`px-3 py-1.5 rounded-lg transition-all ${
+                    activeWillIndex === 1
+                      ? "bg-[#6243AD] text-white font-bold shadow-2xs"
+                      : "text-gray-600 hover:text-[#29213F]"
+                  }`}
+                >
+                  Will 2: {partnerWill?.testatorPerson?.fullName?.split(" ")[0] || "Partner 2"}
+                </button>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                setSettingsTab("profile");
+                setIsSettingsOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E5E0D8] bg-white hover:bg-[#FAF9F6] text-xs font-semibold text-[#0B1528] shadow-2xs transition-colors"
+            >
+              <Settings className="w-3.5 h-3.5 text-[#A37E44]" />
+              <span>Account Settings</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => signOut()}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-xs font-semibold text-red-700 transition-colors"
+              title="Sign out of your session"
+            >
+              <LogOut className="w-3.5 h-3.5 text-red-600" />
+              <span>Sign Out</span>
+            </button>
+          </div>
         </div>
 
         {/* Payment Celebration Toast */}
@@ -612,6 +642,13 @@ function DashboardContent() {
 
       {/* Footer matching owa-platform-prototype.html */}
       <OwaFooter />
+
+      {/* Account Settings & Security Modal */}
+      <AccountSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        initialTab={settingsTab}
+      />
     </div>
   );
 }
